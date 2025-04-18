@@ -1,0 +1,56 @@
+$ go run .
+### Title: IBM Granite 3.3 Models
+
+**Summary:**
+IBM has released the Granite 3.3 model suite, which includes a refined speech recognition model and enhanced reasoning capabilities. The announcement highlights the improvements in speech recognition and reasoning over the previous versions.
+
+**Reason why this is relevant:**
+The release of the IBM Granite 3.3 models indicates advancements in speech recognition and reasoning abilities, which are critical for various AI applications. This update will likely improve the performance of AI systems in natural language processing tasks.
+
+### Title: Massive 5000 Tokens per Second on 2x3090
+
+**Summary:**
+A user has achieved a throughput of 5000 tokens per second on two NVIDIA RTX 3090 GPUs using the Qwen2.5-7B model with various optimizations such as quantization and speculative decoding. This performance improvement was achieved by fine-tuning parameters like model quantization and speculative decoding techniques.
+
+**Reason why this is relevant:**
+The optimization techniques described in the post provide valuable insights into achieving high throughput with large language models on consumer-grade GPUs. This can be useful for researchers and developers working on deploying large language models in real-time applications.
+
+### Title: OpenAI Introducing OpenAI o3 and o4-mini
+
+**Summary:**
+OpenAI has released new models called o3 and o4-mini, which are designed to think more thoroughly before responding. These models represent a step-change in the capabilities of their previous models and are expected to improve the overall quality of interactions with AI agents.
+
+**Reason why this is relevant:**
+The introduction of the o3 and o4-mini models by OpenAI showcases continuous advancements in AI technology, particularly in the areas of reasoning and response quality. This development is significant for both researchers and end-users looking for more sophisticated and thoughtful AI interactions.
+
+### Title: Droidrun is now Open Source
+
+**Summary:**
+The Droidrun framework, which is used for running and managing local language models, has been made open source. The framework can be accessed on GitHub, allowing developers and researchers to contribute to and utilize the framework for their projects.
+
+**Reason why this is relevant:**
+The open-sourcing of the Droidrun framework provides a valuable tool for the AI community. This can facilitate collaboration and innovation in the development and deployment of local language models, enhancing the accessibility and flexibility of AI applications.
+
+### Title: LocalAI v2.28.0 + Announcing LocalAGI: Build & Run AI Agents Locally Using Your Favorite LLMs
+
+**Summary:**
+LocalAI v2.28.0 has been released, and along with it, a new platform called LocalAGI has been introduced. LocalAGI allows users to build and run AI agents locally using their preferred LLMs, providing a local solution for complex agent workflows and autonomous tasks.
+
+**Reason why this is relevant:**
+The announcement of LocalAGI is significant as it offers a platform for creating and managing AI agents locally, leveraging existing local LLMs. This can be particularly useful for developers and researchers who want to build and test AI agents in a controlled, local environment without relying on cloud-based services.
+
+### Title: Hugging Face Launches Reasoning Datasets Competition
+
+**Summary:**
+Hugging Face, together with Bespoke Labs and Together AI, has launched a competition to create new reasoning datasets. The competition aims to diversify the current landscape of reasoning datasets and encourages the creation of datasets focusing on underexplored domains or tasks.
+
+**Reason why this is relevant:**
+The competition to create new reasoning datasets is a significant step towards improving the diversity and quality of datasets used in AI research. This initiative can lead to more robust and versatile AI models capable of handling a wider range of reasoning tasks across various domains.
+
+### Title: InternVL3: Advanced MLLM Series Just Got a Major Update
+
+**Summary:**
+OpenGVLab has released the InternVL3 series, which includes a range of multimodal large language models (MLLMs) with improved performance. Notably, the InternVL3-14B model reportedly matches the performance of the previous flagship model InternVL2.5-78B.
+
+**Reason why this is relevant:**
+The release of the InternVL3 series highlights advancements in multimodal AI, particularly in the areas of visual reasoning and performance. This update provides researchers and developers with powerful new tools for building and improving multimodal AI applications.
