@@ -4,44 +4,102 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/bakkerme/ai-news-processor/common"
+	"github.com/bakkerme/ai-news-processor/email"
+	"github.com/bakkerme/ai-news-processor/openai"
+	"github.com/bakkerme/ai-news-processor/rss"
 )
 
 func main() {
-	openaiClient := NewOpenAIClient("http://192.168.1.115:8080/v1", "")
-
-	// rss, err := getRSS()
-	// if err != nil {
-	// panic(fmt.Errorf("failed to load rss data %w", err))
-	// }
-
-	rssString := returnFakeRSS()
-	rss, err := processRSSFeed(rssString)
+	s, err := GetConfig()
 	if err != nil {
-		panic(err)
+		panic(s)
 	}
 
-	completionChannel := make(chan string, len(rss.Entries))
-	systemPrompt := getSystemPrompt()
-
-	for _, rssEntry := range rss.Entries {
-		userPrompt := entryToString(rssEntry)
-		go openaiClient.Query(systemPrompt, userPrompt, completionChannel)
+	emailer, err := email.New(s.EmailHost, s.EmailPort, s.EmailUsername, s.EmailPassword, s.EmailFrom)
+	if err != nil {
+		panic(fmt.Errorf("could not set up emailer: %w", err))
 	}
 
-	items := make([]Item, len(rss.Entries))
-	for i := range rss.Entries {
-		result := <-completionChannel
-		// fmt.Println(result)
-		item := llmResponseToItem(result)
+	openaiClient := openai.NewOpenAIClient(s.LlmUrl, s.LlmApiKey, s.LlmModel)
 
-		fmt.Printf("Processed %d\n", i)
-		items[i] = item
+	rssString := ""
+	if !s.DebugMockRss {
+		fmt.Println("Loading RSS feed")
+		rssString, err = getRSS()
+		if err != nil {
+			panic(fmt.Errorf("failed to load rss data %w", err))
+		}
+	} else {
+		fmt.Println("Loading Mock RSS feed")
+		rssString = rss.ReturnFakeRSS()
 	}
 
+	rss, err := rss.ProcessRSSFeed(rssString)
+	if err != nil {
+		panic(fmt.Errorf("could not process rss feed: %w", err))
+	}
+
+	items := make([]common.Item, len(rss.Entries))
+	if !s.DebugMockLLM {
+		fmt.Println("Sending to LLM")
+
+		completionChannel := make(chan common.ErrorString, len(rss.Entries))
+		systemPrompt := getSystemPrompt()
+
+		batchCounter := 0
+		batchSize := 5
+		for i := 0; i < len(rss.Entries); i += batchSize {
+			batch := rss.Entries[i:min(i+batchSize, len(rss.Entries))]
+			batchStrings := make([]string, len(batch))
+			for j, entry := range batch {
+				batchStrings[j] = entry.String()
+			}
+
+			go openaiClient.Query(systemPrompt, batchStrings, completionChannel)
+			batchCounter++
+		}
+
+		for i := 0; i < batchCounter; i++ {
+			fmt.Printf("Waiting for batch %d\n", i)
+			result := <-completionChannel
+			if result.Err != nil {
+				panic(fmt.Errorf("could not process value from LLM for entry %d: %s", i, result.Err))
+			}
+
+			processedValue := openaiClient.PreprocessJSON(result.Value)
+
+			item, err := llmResponseToItem(processedValue)
+			if err != nil {
+				panic(fmt.Errorf("could not convert llm output to json. %s: %w", result.Value, err))
+			}
+
+			fmt.Printf("Processed %d\n", i)
+			items = append(items, item...)
+		}
+	} else {
+		fmt.Println("Loading fake LLM response")
+		items = returnFakeLLMResponse()
+	}
+
+	toInclude := []common.Item{}
 	for _, item := range items {
 		if item.ShouldThisBeIncluded {
-			fmt.Println(item.FormatItem())
+			toInclude = append(toInclude, item)
 		}
+	}
+
+	email, err := email.RenderEmail(toInclude)
+	if err != nil {
+		panic(fmt.Errorf("could not render email: %w", err))
+	}
+
+	if !s.DebugMockSkipEmail {
+		fmt.Printf("Sending email to %s", s.EmailTo)
+		emailer.Send(s.EmailTo, "AI News", email)
+	} else {
+		fmt.Println(email)
 	}
 }
 
@@ -58,4 +116,11 @@ func getRSS() (string, error) {
 	}
 
 	return string(body), nil
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }

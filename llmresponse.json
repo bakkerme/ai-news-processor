@@ -1,0 +1,177 @@
+[
+  {
+    "Title": "Results of Ollama Leakage",
+    "Summary": "A recent post on Reddit highlights the security issues with many servers hosting the free Ollama model, indicating that basic security measures are often lacking.",
+    "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0p3h0/results_of_ollama_leakage/",
+    "Reason why this is relevant": "This issue underscores the need for improved security practices in the distribution and hosting of AI models, especially those that are freely available.",
+    "Should this be included": true
+  },
+  {
+    "Title": "Llama.cpp has much higher generation quality for Gemma 3 27B on M4 Max",
+    "Summary": "A user reports that using the llama.cpp WebUI with specific parameters results in much higher quality generation compared to Ollama through OpenWebUI for the Gemma 3 27B model.",
+    "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0r9pi/llamacpp_has_much_higher_generation_quality_for/",
+    "Reason why this is relevant": "This highlights a significant difference in performance between two popular LLM runners, which could be of interest to users looking to optimize their LLM usage.",
+    "Should this be included": true
+  },
+  {
+    "Title": "IBM Granite 3.3 Models",
+    "Summary": "IBM has released new versions of their Granite LLM models, including a refined speech recognition and reasoning model, as well as a 3.3 Speech model.",
+    "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0mesv/ibm_granite_33_models/",
+    "Reason why this is relevant": "The release of new and improved LLM models from a major tech company like IBM is significant and could impact various applications and industries.",
+    "Should this be included": true
+  },
+  {
+    "Title": "Open Source tool from OpenAI for Coding Agent in terminal",
+    "Summary": "OpenAI has released an open source tool for a coding agent that can be used in the terminal. The question is whether it can be used with local reasoning models.",
+    "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0qw6k/open_source_tool_from_openai_for_coding_agent_in/",
+    "Reason why this is relevant": "This tool could be a useful addition for developers looking to integrate AI assistance in their workflow, potentially enhancing productivity and code quality. It also opens up possibilities for integration with local models, which could be beneficial for privacy and performance.",
+    "Should this be included": true
+  },
+  {
+    "Title": "KoboldCpp with Gemma 3 27b. Local vision has gotten pretty good I would say...",
+    "Summary": "A user on Reddit discusses the improvements in local vision capabilities with the KoboldCpp model paired with the Gemma 3 27b model, sharing a link to an image for demonstration.",
+    "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0odhq/koboldcpp_with_gemma_3_27b_local_vision_has/",
+    "Reason why this is relevant": "The post highlights improvements in local vision capabilities, which is an important aspect of LLM performance, and showcases a community-driven project (KoboldCpp) that is relevant to enthusiasts and developers interested in local model implementations.",
+    "Should this be included": true
+  },
+  {
+    "Title": "",
+    "Summary": "",
+    "Link": "",
+    "Reason why this is relevant": "",
+    "Should this be included": false
+  },
+  {
+    "Title": "Announcing RealHarm: A Collection of Real-World Language Model Application Failure",
+    "Summary": "Giskard has released RealHarm, a dataset of real-world problematic interactions with AI agents. The dataset includes incidents involving deployed language models and is aimed at helping researchers, developers, and product teams better understand, test, and prevent real-world harms.",
+    "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0iu5z/announcing_realharm_a_collection_of_realworld/",
+    "Reason why this is relevant": "The dataset provides practical insights into real-world harms caused by AI agents, which can help improve the safety and reliability of deployed models.",
+    "Should this be included": true
+  },
+  {
+    "Title": "Price vs LiveBench Performance of non-reasoning LLMs",
+    "Summary": "A Reddit post comparing the pricing and performance of non-reasoning language models using the LiveBench benchmarking tool.",
+    "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0kape/price_vs_livebench_performance_of_nonreasoning/",
+    "Reason why this is relevant": "This comparison provides useful insights for users looking to balance cost and performance when choosing a non-reasoning LLM for their specific applications.",
+    "Should this be included": true
+  },
+  {
+    "Title": "It is almost May of 2025. What do you consider to be the best coding tools?",
+    "Summary": "A discussion on the best coding tools and AI models for programming, focusing on IDEs and AI assistants like Cursor and Gemini 2.5.",
+    "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0nxlb/it_is_almost_may_of_2025_what_do_you_consider_to/",
+    "Reason why this is relevant": "The discussion highlights the current state of AI integration in coding tools and IDEs, which is important for understanding the evolution of AI in software development.",
+    "Should this be included": false
+  },
+  {
+    "Title": "Hugging Face has launched a reasoning datasets competition with Bespoke Labs and Together AI",
+    "Summary": "Hugging Face, in collaboration with Bespoke Labs and Together AI, has launched a competition to create new reasoning datasets focusing on underexplored domains or tasks. Participants are encouraged to upload datasets to the Hugging Face Hub with a specific tag by a given deadline, with prizes and API credits awarded to participants.",
+    "Link": "https://huggingface.co/blog/bespokelabs/reasoning-datasets-competition",
+    "Reason why this is relevant": "This competition aims to diversify the current landscape of reasoning datasets and encourage the creation of new datasets in various domains, which can significantly contribute to the development of AI models capable of handling a wider range of reasoning tasks.",
+    "Should this be included": true
+  },
+  {
+    "Title": "What are some Local search offerings that are competitive with OpenAI/Google, if such a thing can exist?",
+    "Summary": "A user is seeking information about local search offerings that could compete with OpenAI and Google, but is having difficulty finding relevant answers from various AI models. The user expresses frustration with the performance of these models and points to a specific blog post on OpenAI's website that provides the right answer.",
+    "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0s2cx/what_are_some_local_search_offerings_that_are/",
+    "Reason why this is relevant": "This thread highlights the need for competitive local AI search offerings, which could be an area of innovation for AI labs. It also showcases the current limitations of existing models in providing accurate and relevant information.",
+    "Should this be included": true
+  },
+  {
+    "Title": "We GRPO-ed a Model to Keep Retrying 'Search' Until It Found What It Needed",
+    "Summary": "Menlo Research has introduced a new paper detailing a model called ReZero, which is based on the idea of repeating search actions to improve performance. The model uses GRPO and tool-calling to train with a retry_reward, resulting in a significantly better performance score compared to a baseline model.",
+    "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0c40c/we_grpoed_a_model_to_keep_retrying_search_until/",
+    "Reason why this is relevant": "This technique could be applied to improve the performance of LLMs in search and query generation, potentially leading to more accurate and relevant results.",
+    "Should this be included": true
+  },
+  {
+    "Title": "LocalAI v2.28.0 + Announcing LocalAGI: Build & Run AI Agents Locally Using Your Favorite LLMs",
+    "Summary": "LocalAI v2.28.0 has been released with updates and a new platform, LocalAGI, that enables the creation of AI agent workflows using local LLMs. LocalAGI is a self-hosted AI agent orchestration platform with a WebUI, allowing users to build complex agent tasks that utilize their local models.",
+    "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0haqw/localai_v2280_announcing_localagi_build_run_ai/",
+    "Reason why this is relevant": "This release and announcement are relevant because they provide a way for users to leverage their local LLMs for more advanced and autonomous tasks, enhancing the capabilities of AI models in a more secure and efficient manner.",
+    "Should this be included": true
+  },
+  {
+    "Title": "o4-mini is 186ᵗʰ best coder, sleep well platter! Enjoy retirement!",
+    "Summary": "A community post on Reddit claiming that the o4-mini model is the 186ᵗʰ best coder, suggesting it's time to retire the model.",
+    "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0qbme/o4mini_is_186ᵗʰ_best_coder_sleep_well_platter/",
+    "Reason why this is relevant": "This post reflects community sentiment and could indicate a decline in the model's performance or relevance, which is noteworthy for AI enthusiasts and users.",
+    "Should this be included": false
+  },
+  {
+    "Title": "The Budget Rig Goes Bigger, 5060tis Bought! Test Results Incoming Tonight",
+    "Summary": "A user is planning to upgrade their rig with 5060ti mobile cards that have 16GB of memory, purchased at a relatively low price of £400 per card. They are expecting to share test results on the performance of these cards with LLMs in the future.",
+    "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0kzgn/the_budget_rig_goes_bigger_5060tis_bought_test/",
+    "Reason why this is relevant": "The user is planning to use these cards for LLMs and may share performance results, which could provide insights into the capabilities of these cards for home use and LLM applications.",
+    "Should this be included": true
+  },
+  {
+    "Title": "Massive 5000 tokens per second on 2x3090",
+    "Summary": "A user shares their optimization techniques for achieving 5000 tokens per second on two 3090 GPUs. They discuss model selection, quantization, speculative decoding, and final optimizations to maximize processing speed.",
+    "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0tkca/massive_5000_tokens_per_second_on_2x3090/",
+    "Reason why this is relevant": "This post provides practical insights into optimizing LLM performance on GPU clusters, which is valuable for researchers and practitioners looking to speed up their LLM processing.",
+    "Should this be included": true
+  },
+  {
+    "Title": "Somebody needs to tell Nvidia to calm down with these new model names.",
+    "Summary": "A Reddit user expresses frustration with Nvidia's naming convention for their new AI models, suggesting it's unnecessary and confusing.",
+    "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0u8ew/somebody_needs_to_tell_nvidia_to_calm_down_with/",
+    "Reason why this is relevant": "The discussion highlights the importance of clear and understandable naming conventions in the AI community, which can impact user adoption and perception of new models.",
+    "Should this be included": false
+  },
+  {
+    "Title": "ByteDance releases Liquid model family of multimodal auto-regressive models (like GTP-4o)",
+    "Summary": "ByteDance has released the Liquid model family, a family of multimodal auto-regressive models that can generate text or images given text and image inputs. The architecture is transformer-based, similar to GPT-4o, and is available on Hugging Face and as an app demo.",
+    "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k05wpt/bytedance_releases_liquid_model_family_of/",
+    "Reason why this is relevant": "This release is relevant because it demonstrates a new approach to multimodal auto-regressive models, which could be significant for further advancements in AI technology and multimodal applications.",
+    "Should this be included": true
+  },
+  {
+    "Title": "What is the best option for running eight GPUs in a single motherboard?",
+    "Summary": "A user is seeking advice on whether an ASUS ROG CROSSHAIR VIII DARK HERO motherboard with an AMD 5950x CPU can support 8 AMD MI50 GPUs using PCIE splitters, or if they need to consider other options.",
+    "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0w7f9/what_is_the_best_option_for_running_eight_gpus_in/",
+    "Reason why this is relevant": "This question is relevant for those looking to build or upgrade a system for running large language models (LLMs) and requires a deep understanding of motherboard and GPU compatibility, which is crucial for high-performance computing with LLMs.",
+    "Should this be included": true
+  },
+  {
+    "Title": "OpenAI introduces codex: a lightweight coding agent that runs in your terminal",
+    "Summary": "OpenAI has released a new lightweight coding agent called Codex, which can run directly in your terminal, enabling developers to integrate AI into their coding workflows more easily.",
+    "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0qisr/openai_introduces_codex_a_lightweight_coding/",
+    "Reason why this is relevant": "Codex is a significant development as it allows for seamless integration of AI into the coding process, potentially enhancing productivity and innovation in software development.",
+    "Should this be included": true
+  },
+  {
+    "Title": "Setting Power Limit on RTX 3090 – LLM Test",
+    "Summary": "A user has submitted a video and thread on Reddit detailing the process of setting a power limit on an RTX 3090 GPU for running an LLM, showcasing a practical method for managing hardware resources during AI model training or inference.",
+    "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0mrrt/setting_power_limit_on_rtx_3090_llm_test/",
+    "Reason why this is relevant": "This post provides a practical guide for managing hardware resources, which can help in optimizing the performance and efficiency of LLM runners on home setups.",
+    "Should this be included": true
+  },
+  {
+    "Title": "OpenAI Introducing OpenAI o3 and o4-mini",
+    "Summary": "OpenAI has released the latest o-series models, o3 and o4-mini, which are designed to think for longer before responding, marking a significant improvement in capabilities for users and researchers alike.",
+    "Link": "https://openai.com/index/introducing-o3-and-o4-mini/",
+    "Reason why this is relevant": "These models represent a step change in the capabilities of LLMs, making them more suitable for complex tasks and longer conversations, which could impact a wide range of applications from customer service to research.",
+    "Should this be included": true
+  },
+  {
+    "Title": "InternVL3: Advanced MLLM series just got a major update – InternVL3-14B seems to match the older InternVL2.5-78B in performance",
+    "Summary": "OpenGVLab released a new series of InternVL3 models, which includes models with parameter counts of 1B, 2B, 8B, 9B, 14B, 38B, and 78B. The InternVL3-14B model is reported to match the performance of the older InternVL2.5-78B, while the 78B model is close to the Gemini-2.5-Pro. These models are advanced multimodal Process Reward Models that enhance MLLMs by selecting the best reasoning outputs during a Best-of-N evaluation strategy.",
+    "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0fjny/internvl3_advanced_mllm_series_just_got_a_major/",
+    "Reason why this is relevant": "This release is relevant because it showcases the ongoing progress in open-source large language models, demonstrating that open-source models can match the performance of their closed-source counterparts. This is particularly significant in the context of promoting accessibility and innovation in AI technology.",
+    "Should this be included": true
+  },
+  {
+    "Title": "Budget Build with 160gb VRAM for $1000",
+    "Summary": "A user details a low-cost build using MI50 GPUs and an Octominer XULTRA 12 case to achieve 160gb VRAM for approximately $1000. The build includes performance data for various models and comparisons with other GPU models.",
+    "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0b8wx/yes_you_could_have_160gb_of_vram_for_just_about/",
+    "Reason why this is relevant": "This build demonstrates an innovative way to achieve a high amount of VRAM at a low cost, which is relevant for those looking to build cost-effective AI infrastructure.",
+    "Should this be included": true
+  },
+  {
+    "Title": "Droidrun is now Open Source",
+    "Summary": "Droidrun, a framework for running local large language models, has been released as open-source on GitHub, allowing the community to contribute and improve the software.",
+    "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0h641/droidrun_is_now_open_source/",
+    "Reason why this is relevant": "The open-source release of Droidrun allows for community contributions, potentially leading to faster development and improvement of local LLM runners.",
+    "Should this be included": true
+  }
+]

@@ -20,13 +20,24 @@ Do not include articles that contain:
 
 Respond in valid JSON with the following fields. Do not add json tags.
 
+` +
+		" ```json \n" +
+		`[{
+	"Title": "",
+	"Summary": "",
+	"Link": "",
+	"Should this be included": true,
+	"Reason why this is relevant": ""
+},
 {
 	"Title": "",
 	"Summary": "",
 	"Link": "",
 	"Should this be included": true,
-	"Reason why this is relevant": "",
-}`
+	"Reason why this is relevant": ""
+}]
+` + "```\n" +
+		"```json"
 }
 
 func getPrompt(input string) string {

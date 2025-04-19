@@ -1,4 +1,4 @@
-package main
+package rss
 
 import (
 	"encoding/xml"
@@ -17,21 +17,21 @@ type Entry struct {
 	Content string `xml:"content"`
 }
 
-func processRSSFeed(input string) (*Feed, error) {
+func (e *Entry) String() string {
+	return fmt.Sprintf("Title: %s\nDate: %s\nSummary: %s\n\n",
+		e.Title,
+		e.Updated,
+		cleanContent(e.Content),
+	)
+}
+
+func ProcessRSSFeed(input string) (*Feed, error) {
 	var feed Feed
 	if err := xml.Unmarshal([]byte(input), &feed); err != nil {
 		return nil, err
 	}
 
 	return &feed, nil
-}
-
-func entryToString(entry Entry) string {
-	return fmt.Sprintf("Title: %s\nDate: %s\nSummary: %s\n\n",
-		entry.Title,
-		entry.Updated,
-		cleanContent(entry.Content),
-	)
 }
 
 func cleanContent(s string) string {
