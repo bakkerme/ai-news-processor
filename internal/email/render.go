@@ -6,7 +6,7 @@ import (
 	"text/template"
 
 	"embed"
-	"github.com/bakkerme/ai-news-processor/common"
+	"github.com/bakkerme/ai-news-processor/internal/common"
 )
 
 //go:embed templates/*.tmpl

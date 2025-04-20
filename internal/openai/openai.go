@@ -2,7 +2,7 @@ package openai
 
 import (
 	"context"
-	"github.com/bakkerme/ai-news-processor/common"
+	"github.com/bakkerme/ai-news-processor/internal/common"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 	"strings"
@@ -19,7 +19,7 @@ func NewOpenAIClient(baseURL, key, model string) *OpenAIClient {
 		option.WithBaseURL(baseURL),
 		option.WithJSONSet("cache_set", true),
 	)
-	return &OpenAIClient{client: &client}
+	return &OpenAIClient{client: &client, model: model}
 }
 
 func (c *OpenAIClient) Query(systemPrompt string, userPrompts []string, results chan common.ErrorString) {
@@ -30,7 +30,7 @@ func (c *OpenAIClient) Query(systemPrompt string, userPrompts []string, results 
 		openai.ChatCompletionNewParams{
 			Model: c.model,
 			Messages: []openai.ChatCompletionMessageParamUnion{
-				openai.DeveloperMessage(systemPrompt),
+				openai.SystemMessage(systemPrompt),
 				openai.UserMessage(userPrompt),
 			},
 		},
@@ -51,7 +51,26 @@ func (c *OpenAIClient) Query(systemPrompt string, userPrompts []string, results 
 }
 
 func (c *OpenAIClient) PreprocessJSON(response string) string {
-	response = strings.ReplaceAll(response, "```json", " ")
-	response = strings.ReplaceAll(response, "```", " ")
-	return strings.Join(strings.Fields(response), " ")
+	// Find the start and end markers
+	startMarker := "```json"
+	endMarker := "```"
+
+	startIdx := strings.Index(response, startMarker)
+	if startIdx == -1 {
+		// If no start marker found, return the original string trimmed
+		return strings.TrimSpace(response)
+	}
+
+	// Adjust start index to be after the marker
+	startIdx += len(startMarker)
+
+	endIdx := strings.Index(response[startIdx:], endMarker)
+	if endIdx == -1 {
+		// If no end marker found, return from start marker to end
+		return strings.TrimSpace(response[startIdx:])
+	}
+
+	// Extract the content between markers
+	jsonContent := response[startIdx : startIdx+endIdx]
+	return strings.TrimSpace(jsonContent)
 }

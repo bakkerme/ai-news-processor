@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/bakkerme/ai-news-processor/common"
+	"github.com/bakkerme/ai-news-processor/internal/common"
 	"log"
 	"os"
 )

@@ -13,31 +13,21 @@ Include:
 * Innovations in offline or uncensored models
 * Innovations in efficiency for home use
 
-Do not include articles that contain:
+An item is not relevant if it contains:
 * Random complaints or opinions
 * Politics
 * Questions that are only relevant for the user's specific setup
+* Opinion based
 
-Respond in valid JSON with the following fields. Do not add json tags.
-
-` +
-		" ```json \n" +
-		`[{
+Return empty JSON if irrelevant.
+[{
 	"Title": "",
 	"Summary": "",
 	"Link": "",
-	"Should this be included": true,
-	"Reason why this is relevant": ""
-},
-{
-	"Title": "",
-	"Summary": "",
-	"Link": "",
-	"Should this be included": true,
-	"Reason why this is relevant": ""
+	"Relevance": "", // Why is this relevant?
+	"ShouldInclude": true
 }]
-` + "```\n" +
-		"```json"
+`
 }
 
 func getPrompt(input string) string {

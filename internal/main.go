@@ -5,10 +5,10 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/bakkerme/ai-news-processor/common"
-	"github.com/bakkerme/ai-news-processor/email"
-	"github.com/bakkerme/ai-news-processor/openai"
-	"github.com/bakkerme/ai-news-processor/rss"
+	"github.com/bakkerme/ai-news-processor/internal/common"
+	"github.com/bakkerme/ai-news-processor/internal/email"
+	"github.com/bakkerme/ai-news-processor/internal/openai"
+	"github.com/bakkerme/ai-news-processor/internal/rss"
 )
 
 func main() {
@@ -41,6 +41,12 @@ func main() {
 		panic(fmt.Errorf("could not process rss feed: %w", err))
 	}
 
+	// fmt.Println(rss)
+	// for _, r := range rss.Entries {
+	// fmt.Printf("%+v", r)
+	// fmt.Println(r.String())
+	// }
+
 	items := make([]common.Item, len(rss.Entries))
 	if !s.DebugMockLLM {
 		fmt.Println("Sending to LLM")
@@ -52,11 +58,15 @@ func main() {
 		batchSize := 5
 		for i := 0; i < len(rss.Entries); i += batchSize {
 			batch := rss.Entries[i:min(i+batchSize, len(rss.Entries))]
+
+			fmt.Printf("Sending batch %d with %d items\n", i/batchSize, len(batch))
+
 			batchStrings := make([]string, len(batch))
 			for j, entry := range batch {
 				batchStrings[j] = entry.String()
 			}
 
+			// openaiClient.Query(systemPrompt, batchStrings, completionChannel)
 			go openaiClient.Query(systemPrompt, batchStrings, completionChannel)
 			batchCounter++
 		}
@@ -68,6 +78,8 @@ func main() {
 				panic(fmt.Errorf("could not process value from LLM for entry %d: %s", i, result.Err))
 			}
 
+			fmt.Println(result.Value)
+
 			processedValue := openaiClient.PreprocessJSON(result.Value)
 
 			item, err := llmResponseToItem(processedValue)
@@ -75,7 +87,7 @@ func main() {
 				panic(fmt.Errorf("could not convert llm output to json. %s: %w", result.Value, err))
 			}
 
-			fmt.Printf("Processed %d\n", i)
+			fmt.Printf("Processed batch %d, found %d items\n", i, len(item))
 			items = append(items, item...)
 		}
 	} else {
@@ -84,11 +96,11 @@ func main() {
 	}
 
 	toInclude := []common.Item{}
-	for _, item := range items {
-		if item.ShouldThisBeIncluded {
-			toInclude = append(toInclude, item)
-		}
-	}
+	// for _, item := range items {
+	// if item.ShouldThisBeIncluded {
+	// toInclude = append(toInclude, item)
+	// }
+	// }
 
 	email, err := email.RenderEmail(toInclude)
 	if err != nil {
@@ -99,7 +111,7 @@ func main() {
 		fmt.Printf("Sending email to %s", s.EmailTo)
 		emailer.Send(s.EmailTo, "AI News", email)
 	} else {
-		fmt.Println(email)
+		// fmt.Println(email)
 	}
 }
 

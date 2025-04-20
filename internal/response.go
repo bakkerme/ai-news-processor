@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bakkerme/ai-news-processor/common"
+	"github.com/bakkerme/ai-news-processor/internal/common"
 )
 
 func llmResponseToItem(jsonData string) ([]common.Item, error) {

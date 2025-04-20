@@ -3,7 +3,7 @@ package rss
 import (
 	"encoding/xml"
 	"fmt"
-	"strings"
+	"github.com/grokify/html-strip-tags-go"
 )
 
 type Feed struct {
@@ -12,15 +12,20 @@ type Feed struct {
 
 type Entry struct {
 	Title   string `xml:"title"`
-	Link    string `xml:"link>href"`
+	Link    Link   `xml:"link"`
 	Updated string `xml:"updated"`
 	Content string `xml:"content"`
 }
 
+type Link struct {
+	Href string `xml:"href,attr"`
+}
+
 func (e *Entry) String() string {
-	return fmt.Sprintf("Title: %s\nDate: %s\nSummary: %s\n\n",
+	return fmt.Sprintf("Title: %s\nDate: %s\nLink: %s\nSummary: %s\n\n",
 		e.Title,
 		e.Updated,
+		e.Link.Href,
 		cleanContent(e.Content),
 	)
 }
@@ -35,10 +40,5 @@ func ProcessRSSFeed(input string) (*Feed, error) {
 }
 
 func cleanContent(s string) string {
-	s = strings.ReplaceAll(s, "<!-- SC_ON -->", "")
-	s = strings.ReplaceAll(s, "<!-- SC_OFF -->", "")
-	s = strings.ReplaceAll(s, "&amp;#32;", " ")
-	s = strings.ReplaceAll(s, "```json", " ")
-	s = strings.ReplaceAll(s, "```", " ")
-	return strings.Join(strings.Fields(s), " ")
+	return strip.StripTags(s)
 }
