@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
-	"net/http"
 
 	"github.com/bakkerme/ai-news-processor/internal/common"
 	"github.com/bakkerme/ai-news-processor/internal/email"
@@ -41,23 +39,19 @@ func main() {
 		panic(fmt.Errorf("could not process rss feed: %w", err))
 	}
 
-	// fmt.Println(rss)
-	// for _, r := range rss.Entries {
-	// fmt.Printf("%+v", r)
-	// fmt.Println(r.String())
-	// }
+	entries := rss.Entries
 
-	items := make([]common.Item, len(rss.Entries))
+	items := make([]common.Item, len(entries))
 	if !s.DebugMockLLM {
 		fmt.Println("Sending to LLM")
 
-		completionChannel := make(chan common.ErrorString, len(rss.Entries))
+		completionChannel := make(chan common.ErrorString, len(entries))
 		systemPrompt := getSystemPrompt()
 
 		batchCounter := 0
 		batchSize := 5
-		for i := 0; i < len(rss.Entries); i += batchSize {
-			batch := rss.Entries[i:min(i+batchSize, len(rss.Entries))]
+		for i := 0; i < len(entries); i += batchSize {
+			batch := entries[i:min(i+batchSize, len(entries))]
 
 			fmt.Printf("Sending batch %d with %d items\n", i/batchSize, len(batch))
 
@@ -66,7 +60,6 @@ func main() {
 				batchStrings[j] = entry.String()
 			}
 
-			// openaiClient.Query(systemPrompt, batchStrings, completionChannel)
 			go openaiClient.Query(systemPrompt, batchStrings, completionChannel)
 			batchCounter++
 		}
@@ -95,14 +88,26 @@ func main() {
 		items = returnFakeLLMResponse()
 	}
 
-	toInclude := []common.Item{}
-	// for _, item := range items {
-	// if item.ShouldThisBeIncluded {
-	// toInclude = append(toInclude, item)
-	// }
-	// }
+	itemsToInclude := []common.Item{}
+	for _, item := range items {
+		if item.ShouldInclude {
+			itemsToInclude = append(itemsToInclude, item)
+		}
+	}
 
-	email, err := email.RenderEmail(toInclude)
+	// add the link from the RSS Entries to the Items
+	for i, item := range itemsToInclude {
+		id := item.ID
+		entry := getRSSEntryWithID(id, entries)
+		if entry == nil {
+			fmt.Printf("could not find item with ID %s in RSS entry\n", id)
+			continue
+		}
+
+		itemsToInclude[i].Link = entry.Link.Href
+	}
+
+	email, err := email.RenderEmail(itemsToInclude)
 	if err != nil {
 		panic(fmt.Errorf("could not render email: %w", err))
 	}
@@ -113,26 +118,4 @@ func main() {
 	} else {
 		// fmt.Println(email)
 	}
-}
-
-func getRSS() (string, error) {
-	resp, err := http.Get("https://reddit.com/r/localllama.rss")
-	if err != nil {
-		return "", fmt.Errorf("could not get from reddit rss: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("could not load response body: %w", err)
-	}
-
-	return string(body), nil
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }

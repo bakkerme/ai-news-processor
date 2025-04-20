@@ -13,6 +13,7 @@ type Feed struct {
 type Entry struct {
 	Title   string `xml:"title"`
 	Link    Link   `xml:"link"`
+	ID      string `xml:"id"`
 	Updated string `xml:"updated"`
 	Content string `xml:"content"`
 }
@@ -22,10 +23,10 @@ type Link struct {
 }
 
 func (e *Entry) String() string {
-	return fmt.Sprintf("Title: %s\nDate: %s\nLink: %s\nSummary: %s\n\n",
+	return fmt.Sprintf("Title: %s\nID: %s\nDate: %s\nSummary: %s\n\n",
 		e.Title,
+		e.ID,
 		e.Updated,
-		e.Link.Href,
 		cleanContent(e.Content),
 	)
 }

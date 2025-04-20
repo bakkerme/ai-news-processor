@@ -22,8 +22,8 @@ An item is not relevant if it contains:
 Return empty JSON if irrelevant.
 [{
 	"Title": "",
+	"ID": "",
 	"Summary": "",
-	"Link": "",
 	"Relevance": "", // Why is this relevant?
 	"ShouldInclude": true
 }]
