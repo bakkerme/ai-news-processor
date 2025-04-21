@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI News</title>
+    <style>
+        /* Same CSS as before */
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+        }
+        .email-container {
+            background-color: white;
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background-color: #1a365d;
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        .content {
+            padding: 0;
+        }
+        .footer {
+            padding: 15px;
+            text-align: center;
+            font-size: 0.8em;
+            color: #718096;
+            background-color: #edf2f7;
+        }
+        h1 {
+            margin: 0;
+            font-size: 1.8em;
+        }
+        h2 {
+            color: #2d3748;
+            font-size: 1.3em;
+            margin: 0 0 15px 0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .item {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .item:last-child {
+            border-bottom: none;
+        }
+        .item-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #1a365d;
+            margin-bottom: 8px;
+        }
+        .item-summary {
+            margin-bottom: 12px;
+        }
+        .highlight-box {
+            background-color: #f8fafc;
+            border-left: 4px solid #4299e1;
+            padding: 12px;
+            margin: 12px 0;
+        }
+        .cta-button {
+            display: inline-block;
+            background-color: #4299e1;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-top: 8px;
+        }
+        .reason {
+            font-style: italic;
+            background-color: #f0fff4;
+            padding: 10px;
+            border-left: 4px solid #48bb78;
+            margin: 12px 0;
+            font-size: 0.9em;
+        }
+        .item-footer {
+            font-size: 0.8em;
+            color: #718096;
+            margin-top: 10px;
+        }
+        @media only screen and (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .item {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>AI News</h1>
+        </div>
+        
+        <div class="content">
+            
+            <div class="item">
+                <div class="item-title">IBM Granite 3.3 Models</div>
+                <div class="item-summary">
+                    IBM has released the new Granite 3.3 speech model, which is an iteration of their existing models aimed at AI assistants across various domains. The model's performance and parameters are discussed, with some users noting that it performs worse than previous versions like Granite 3.2 in certain benchmarks.
+                </div>
+                <div class="item-summary">
+                    Comments include questions about the best use case, performance benchmarks relative to other models, and interest in Q8/QAT variants for smaller deployment footprints. Users noted it performs well for agentic systems but has some limitations compared to other models.
+                </div>
+                
+                <div class="reason">
+                    <strong>Why this matters:</strong> true
+                </div>
+                
+                <a href="https://www.reddit.com/r/LocalLLaMA/comments/1k0mesv/ibm_granite_33_models/" class="cta-button">Read Full Post</a>
+            </div>
+            
+            <div class="item">
+                <div class="item-title">LocalAI v2.28.0 + Announcing LocalAGI: Build & Run AI Agents Locally Using Your Favorite LLMs</div>
+                <div class="item-summary">
+                    LocalAI v2.28.0 update introduces enhancements to the open-source inference server, enabling a compatible OpenAI API for various backends. Additionally, LocalAGI is launched as a self-hosted AI agent orchestration platform written in Go with a WebUI, enabling the execution of complex tasks using locally hosted LLMs.
+                </div>
+                <div class="item-summary">
+                    Users have responded positively to the announcement, seeking more details on features like container management and parallel model execution. A video demo is requested.
+                </div>
+                
+                <div class="reason">
+                    <strong>Why this matters:</strong> This announcement introduces noteworthy advancements in local LLM infrastructure and tools for building AI agents, catering to the growing demand for self-hosted solutions that can handle complex tasks and multiple models.
+                </div>
+                
+                <a href="https://www.reddit.com/r/LocalLLaMA/comments/1k0haqw/localai_v2280_announcing_localagi_build_run_ai/" class="cta-button">Read Full Post</a>
+            </div>
+            
+            <div class="item">
+                <div class="item-title">Results of Ollama Leakage</div>
+                <div class="item-summary">
+                    A website called 'freeollama.com' claims to have leaked information related to Ollama, indicating ongoing security issues with servers not implementing basic security measures.
+                </div>
+                <div class="item-summary">
+                    Comments suggest concern over the lack of proper security practices and calls for better oversight.
+                </div>
+                
+                <div class="reason">
+                    <strong>Why this matters:</strong> This is interesting because it highlights the security vulnerabilities that still exist in some AI infrastructure, emphasizing the need for stronger security measures.
+                </div>
+                
+                <a href="https://www.reddit.com/r/LocalLLaMA/comments/1k0p3h0/results_of_ollama_leakage/" class="cta-button">Read Full Post</a>
+            </div>
+            
+            <div class="item">
+                <div class="item-title">OpenAI introduces codex: a lightweight coding agent that runs in your terminal</div>
+                <div class="item-summary">
+                    OpenAI has unveiled Codex, a lightweight coding agent designed to operate directly within a user's terminal. It leverages LLM technology to assist with coding tasks and is optimized for efficiency, making it a valuable tool for developers who need quick and accurate code generation. The release is noteworthy for its potential to enhance developer productivity without requiring complex setup processes.
+                </div>
+                <div class="item-summary">
+                    Comments indicate a mix of excitement about the potential and skepticism regarding its functionality. Highlights include discussions on how Codex could improve coding workflows, concerns about accuracy and privacy, and requests for more detailed documentation or examples.
+                </div>
+                
+                <div class="reason">
+                    <strong>Why this matters:</strong> true
+                </div>
+                
+                <a href="https://www.reddit.com/r/LocalLLaMA/comments/1k0qisr/openai_introduces_codex_a_lightweight_coding/" class="cta-button">Read Full Post</a>
+            </div>
+            
+            <div class="item">
+                <div class="item-title">KoboldCpp with Gemma 3 27b. Local vision has gotten pretty good I would say...</div>
+                <div class="item-summary">
+                    A user has experimented with Gemma 3 27B vision locally using KoboldCpp and found that while it can identify objects in images, there are significant hallucinations of details. The user notes that a 12B model may perform better for OCR tasks, and Qwen2.5-VL has been praised for its impressive results and compatibility with KoboldCpp.
+                </div>
+                <div class="item-summary">
+                    Comments highlight that Gemma 3 hallucinates details and struggles with distinguishing between similar objects. The computational complexity of using the model, especially in conjunction with a vision model, is also discussed. Some users noted poorer performance due to image downsizing in the web UI.
+                </div>
+                
+                <div class="reason">
+                    <strong>Why this matters:</strong> This thread is relevant for those interested in the performance and limitations of local vision models like Gemma 3 when integrated with KoboldCpp. It discusses model capabilities, hallucinations, and hardware considerations.
+                </div>
+                
+                <a href="https://www.reddit.com/r/LocalLLaMA/comments/1k0odhq/koboldcpp_with_gemma_3_27b_local_vision_has/" class="cta-button">Read Full Post</a>
+            </div>
+            
+            <div class="item">
+                <div class="item-title">Yes, you could have 160gb of vram for just about $1000.</div>
+                <div class="item-summary">
+                    The author details a budget build with 160GB of VRAM for around $1000, using 10 AMD MI50 GPUs and an Octominer XULTRA case. The setup includes Ubuntu 24.04, ROCm drivers, and uses llama.cpp for inference tasks with a Q8 model. The system performs at about 5 tokens/second.
+                </div>
+                <div class="item-summary">
+                    Comments include detailed technical advice, such as driver compatibility and power management. Some express concern regarding performance and the cost efficiency of this setup compared to CPU-based or more modern GPU options. Others praise the effort and suggest modifications.
+                </div>
+                
+                <div class="reason">
+                    <strong>Why this matters:</strong> The post and comments provide insights into cost-effective LLM infrastructure, benchmarks, and innovative methods for building budget GPU setups suitable for local LLM inference.
+                </div>
+                
+                <a href="https://www.reddit.com/r/LocalLLaMA/comments/1k0b8wx/yes_you_could_have_160gb_of_vram_for_just_about/" class="cta-button">Read Full Post</a>
+            </div>
+            
+            <div class="item">
+                <div class="item-title">Droidrun is now Open Source</div>
+                <div class="item-summary">
+                    Droidrun, a framework for running and managing large language models (LLMs), has been made open source on GitHub. The project gained significant interest, with over 900 people signing up for a waitlist before its release. The framework aims to streamline the process of working with LLMs, providing a new toolset for developers.
+                </div>
+                <div class="item-summary">
+                    The comments are positive and show enthusiasm about the project. Users praise the initiative for making it open source, with some expressing interest in contributing to its development.
+                </div>
+                
+                <div class="reason">
+                    <strong>Why this matters:</strong> This project is relevant as it introduces a new tool for managing and running LLMs, potentially making the process more accessible to developers and researchers.
+                </div>
+                
+                <a href="https://www.reddit.com/r/LocalLLaMA/comments/1k0h641/droidrun_is_now_open_source/" class="cta-button">Read Full Post</a>
+            </div>
+            
+            <div class="item">
+                <div class="item-title">Massive 5000 tokens per second on 2x3090</div>
+                <div class="item-summary">
+                    The author discusses the performance of Qwen2.5-7B model on large-scale data processing, using two NVIDIA 3090 GPUs. The tests were conducted with benchmarks MMLU-pro and BBH, indicating diminishing performance gains with larger models. The author explores the impact of model quantization on throughput speed, which improved performance significantly.
+                </div>
+                <div class="item-summary">
+                    Comments suggest positive sentiment around the performance gains achieved with quantization and interest in model quantization techniques. Some commenters are curious about the hardware setup.
+                </div>
+                
+                <div class="reason">
+                    <strong>Why this matters:</strong> This post is interesting as it involves testing and performance tuning of LLMs, especially around the use of quantization techniques to improve throughput speed, providing insights into optimizing LLMs on specific hardware configurations.
+                </div>
+                
+                <a href="https://www.reddit.com/r/LocalLLaMA/comments/1k0tkca/massive_5000_tokens_per_second_on_2x3090/" class="cta-button">Read Full Post</a>
+            </div>
+            
+            <div class="item">
+                <div class="item-title">the budget rig goes bigger, 5060tis bought! test results incoming tonight</div>
+                <div class="item-summary">
+                    A user is planning to upgrade their AI rig with NVIDIA 5060ti GPUs at a lower than expected price of £400 each, which could offer better performance and cost-effectiveness for running LLMs. The post promises updates on the model's efficiency with LLMs and performance benchmarks.
+                </div>
+                <div class="item-summary">
+                    Comments request testing SDXL/Flux in ComfyUI, inquire about specifications such as GPU performance measures (448gbps vs 912gbps), and discuss AI TOPS (759 vs 353) in pytorch performance. Some comments express a wait for detailed test results.
+                </div>
+                
+                <div class="reason">
+                    <strong>Why this matters:</strong> The post and comments indicate a relevant interest in new, potentially cost-effective GPUs for AI workloads, with expected detailed performance benchmarks and insights into their utility in running LLMs.
+                </div>
+                
+                <a href="https://www.reddit.com/r/LocalLLaMA/comments/1k0kzgn/the_budget_rig_goes_bigger_5060tis_bought_test/" class="cta-button">Read Full Post</a>
+            </div>
+            
+            <div class="item">
+                <div class="item-title">Price vs LiveBench Performance of non-reasoning LLMs</div>
+                <div class="item-summary">
+                    This post compares the performance and pricing of various non-reasoning LLMs using LiveBench. The analysis includes a detailed breakdown of cost-effectiveness and performance benchmarks, providing insights into the efficiency and value for different models.
+                </div>
+                <div class="item-summary">
+                    Comments are generally positive, highlighting the usefulness of such comparative analysis. Some users discuss potential improvements and additional metrics that could be included in future benchmarks.
+                </div>
+                
+                <div class="reason">
+                    <strong>Why this matters:</strong> true
+                </div>
+                
+                <a href="https://www.reddit.com/r/LocalLLaMA/comments/1k0kape/price_vs_livebench_performance_of_nonreasoning/" class="cta-button">Read Full Post</a>
+            </div>
+            
+            <div class="item">
+                <div class="item-title">OpenAI Introducing OpenAI o3 and o4-mini</div>
+                <div class="item-summary">
+                    OpenAI has released the latest o-series of models, OpenAI o3 and o4-mini, which are trained to think for longer before responding. These models represent a significant advancement in ChatGPT's capabilities, catering to both casual users and researchers.
+                </div>
+                <div class="item-summary">
+                    Comments indicate excitement about the new models, with many expressing interest in trying them out and speculating on potential improvements in response quality.
+                </div>
+                
+                <div class="reason">
+                    <strong>Why this matters:</strong> IsRelevant: true
+                </div>
+                
+                <a href="https://www.reddit.com/r/LocalLLaMA/comments/1k0pnvl/openai_introducing_openai_o3_and_o4mini/" class="cta-button">Read Full Post</a>
+            </div>
+            
+            <div class="item">
+                <div class="item-title">Hugging Face has launched a reasoning datasets competition with Bespoke Labs and Together AI</div>
+                <div class="item-summary">
+                    Hugging Face, Bespoke Labs, and Together AI have launched a competition to expand the scope of reasoning datasets on Hugging Face. The goal is to diversify datasets beyond code and math by encouraging submissions in underexplored domains like legal, financial, or literary reasoning. Participants must create a proof-of-concept dataset with at least 100 examples and upload it to the Hugging Face Hub by May 1, 2025. Prizes include cash/credits and a $50 credit for Together.ai API usage.
+                </div>
+                <div class="item-summary">
+                    Positive sentiment, with users expressing interest and excitement about the competition. Some seek clarification on method sharing and training classifiers.
+                </div>
+                
+                <div class="reason">
+                    <strong>Why this matters:</strong> This competition could drive innovation in reasoning datasets and expand the diversity of data available for training AI models, which is crucial for improving model performance across various domains.
+                </div>
+                
+                <a href="https://www.reddit.com/r/LocalLLaMA/comments/1k0q0bc/hugging_face_has_launched_a_reasoning_datasets/" class="cta-button">Read Full Post</a>
+            </div>
+            
+            <div class="item">
+                <div class="item-title">Llama.cpp has much higher generation quality for Gemma 3 27B on M4 Max</div>
+                <div class="item-summary">
+                    The user compares the performance of llama.cpp WebUI and Ollama through OpenWebUI in generating Python code. Using the same parameters, llama.cpp provides higher quality output, adding necessary code without errors, whereas Ollama generates incorrect and unnecessary rewrites.
+                </div>
+                <div class="item-summary">
+                    Comments suggest investigating context length settings, seed usage, quantization (Q6 vs Q4), and the impact of different sampling sequences on output quality.
+                </div>
+                
+                <div class="reason">
+                    <strong>Why this matters:</strong> IsRelevant: true
+                </div>
+                
+                <a href="https://www.reddit.com/r/LocalLLaMA/comments/1k0r9pi/llamacpp_has_much_higher_generation_quality_for/" class="cta-button">Read Full Post</a>
+            </div>
+            
+            <div class="item">
+                <div class="item-title">We GRPO-ed a Model to Keep Retrying 'Search' Until It Found What It Needed</div>
+                <div class="item-summary">
+                    This paper from Menlo Research introduces a model named ReZero, designed to improve search performance through repetitive retrying using GRPO and tool-calling techniques. The model achieved a 46% performance score compared to the baseline of 20%, suggesting that repetition can enhance search efficiency without causing hallucinations. The model's potential applications include acting as an abstraction layer for current LLMs or search engines, enhancing query generation and search relevance.
+                </div>
+                <div class="item-summary">
+                    Comments express curiosity about the model's performance, noting its innovative approach in improving diligence. Some question scenarios where over-trying might negatively impact results and suggest parallel search strategies as enhancements.
+                </div>
+                
+                <div class="reason">
+                    <strong>Why this matters:</strong> This research is interesting as it explores a novel technique to enhance LLM performance through persistent retrying, showing potential for improving search efficiency and relevance. The findings have implications for innovative query generation and enhancing current LLMs.
+                </div>
+                
+                <a href="https://www.reddit.com/r/LocalLLaMA/comments/1k0c40c/we_grpoed_a_model_to_keep_retrying_search_until/" class="cta-button">Read Full Post</a>
+            </div>
+            
+            <div class="item">
+                <div class="item-title">InternVL3: Advanced MLLM series just got a major update – InternVL3-14B seems to match the older InternVL2.5-78B in performance</div>
+                <div class="item-summary">
+                    OpenGVLab released InternVL3 with a range of models from 1B to 78B parameters, including advanced multimodal Process Reward Models (PRM) that enhance reasoning outputs. The InternVL3-14B model matches the performance of the previous flagship, InternVL2.5-78B, and the newly released 78B model performs comparably to Gemini-2.5-Pro on OpenCompass, a Chinese benchmark.
+                </div>
+                <div class="item-summary">
+                    Positive sentiment with highlights of the performance improvements and advancements in multimodal reasoning capabilities. Some comments noted the importance of testing on datasets across different languages to understand global applicability.
+                </div>
+                
+                <div class="reason">
+                    <strong>Why this matters:</strong> This release is interesting as it showcases significant advancements in multimodal language models and their performance. It's particularly relevant for researchers and practitioners interested in cost-effective, high-performance LLMs.
+                </div>
+                
+                <a href="https://www.reddit.com/r/LocalLLaMA/comments/1k0fjny/internvl3_advanced_mllm_series_just_got_a_major/" class="cta-button">Read Full Post</a>
+            </div>
+            
+            <div class="item">
+                <div class="item-title">Announcing RealHarm: A Collection of Real-World Language Model Application Failure</div>
+                <div class="item-summary">
+                    David from Giskard introduces RealHarm, a new dataset of real-world problematic interactions with AI agents based on publicly reported incidents. The goal is to address practical AI risks beyond theoretical ones, examining organizational impacts and identifying common hazards like misinformation. RealHarm includes hundreds of annotated incidents involving deployed language models.
+                </div>
+                <div class="item-summary">
+                    Comments range from questioning the utility and bias of the dataset to sarcastic remarks about its real-world impact. Some users highlight potential issues with censored or historically inaccurate AI interactions.
+                </div>
+                
+                <div class="reason">
+                    <strong>Why this matters:</strong> This dataset is relevant for understanding practical risks and failures of deployed AI models, providing essential insights into real-world interactions that go beyond theoretical scenarios.
+                </div>
+                
+                <a href="https://www.reddit.com/r/LocalLLaMA/comments/1k0iu5z/announcing_realharm_a_collection_of_realworld/" class="cta-button">Read Full Post</a>
+            </div>
+            
+            <div class="item">
+                <div class="item-title">Open Source tool from OpenAI for Coding Agent in terminal</div>
+                <div class="item-summary">
+                    The title refers to an open source tool created by OpenAI for a coding agent that operates in the terminal. The repository link provided points to 'https://github.com/openai/codex'. The post raises the question of whether this tool can be integrated with local reasoning models, suggesting a potential interest for developers looking to use it offline or customize it.
+                </div>
+                <div class="item-summary">
+                    Comments are neutral, with some users asking for more details on how to integrate local models and others inquiring about the differences between this tool and previous OpenAI offerings.
+                </div>
+                
+                <div class="reason">
+                    <strong>Why this matters:</strong> This tool is interesting for developers and researchers who are looking to enhance their coding efficiency with AI assistance, especially if they can run it locally or customize it.
+                </div>
+                
+                <a href="https://www.reddit.com/r/LocalLLaMA/comments/1k0qw6k/open_source_tool_from_openai_for_coding_agent_in/" class="cta-button">Read Full Post</a>
+            </div>
+            
+            <div class="item">
+                <div class="item-title">It is almost May of 2025. What do you consider to be the best coding tools?</div>
+                <div class="item-summary">
+                    The post discusses community opinions on the best coding tools and IDEs in 2025, with a focus on AI integration. Users mention tools like Cursor and Windsurf with improvements over the past months, and preferences for models such as Gemini 2.5 and Claude 3.7. Game developers suggest IDEs like Visual Studio Code with GitHub Copilot for Unity and Godot projects.
+                </div>
+                <div class="item-summary">
+                    Comments vary on AI-powered coding tools. Many suggest combining traditional IDEs like Visual Studio Code or NeoVim with extensions such as GitHub Copilot, Cursor, Windsurf, and Aider. Some community members prefer manual coding for productivity and understanding but acknowledge AI's role in ideation, searching, and prototyping.
+                </div>
+                
+                <div class="reason">
+                    <strong>Why this matters:</strong> The discussion revolves around modern AI-enhanced tools and models used in coding, which is relevant for understanding advancements and community preferences.
+                </div>
+                
+                <a href="https://www.reddit.com/r/LocalLLaMA/comments/1k0nxlb/it_is_almost_may_of_2025_what_do_you_consider_to/" class="cta-button">Read Full Post</a>
+            </div>
+            
+            <div class="item">
+                <div class="item-title">ByteDance releases Liquid model family of multimodal auto-regressive models (like GTP-4o)</div>
+                <div class="item-summary">
+                    Liquid is an auto-regressive model extending from existing LLMs with a transformer architecture similar to GPT-4o's image generation capabilities. It supports text and image inputs, generating either text or images. Despite not matching the quality of GPT-4o's image generation, it is significant as a single LLM using an auto-regressive paradigm for multimodal tasks.
+                </div>
+                <div class="item-summary">
+                    Comments are mixed but generally positive. Some note the importance of using a single LLM for multimodal generation as a significant advancement.
+                </div>
+                
+                <div class="reason">
+                    <strong>Why this matters:</strong> True
+                </div>
+                
+                <a href="https://www.reddit.com/r/LocalLLaMA/comments/1k05wpt/bytedance_releases_liquid_model_family_of/" class="cta-button">Read Full Post</a>
+            </div>
+            
+            <div class="item">
+                <div class="item-title">What are some Local search offerings that are competitive with OpenAI/Google, if such a thing can exist?</div>
+                <div class="item-summary">
+                    The author discusses their experience with local search offerings for AI models and finds that OpenAI, Google, and ChatGPT failed to provide relevant answers efficiently. The right answer was found elsewhere after multiple attempts.
+                </div>
+                <div class="item-summary">
+                    Comments vary in sentiment, with some suggesting alternatives and others expressing frustration. A few commenters provide links to relevant articles or models.
+                </div>
+                
+                <div class="reason">
+                    <strong>Why this matters:</strong> This discussion highlights the limitations of existing search functionalities within popular AI models and underscores the need for more efficient and accurate local search offerings, making it relevant to those interested in improving AI tooling.
+                </div>
+                
+                <a href="https://www.reddit.com/r/LocalLLaMA/comments/1k0s2cx/what_are_some_local_search_offerings_that_are/" class="cta-button">Read Full Post</a>
+            </div>
+            
+        </div>
+        
+        <div class="footer">
+            Generated by https://github.com/bakkerme/ai-news-processor
+        </div>
+    </div>
+</body>
+</html>

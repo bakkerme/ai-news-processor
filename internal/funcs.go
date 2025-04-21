@@ -10,8 +10,23 @@ import (
 	"os"
 )
 
-func getRSS() (string, error) {
+func getMainRSS() (string, error) {
 	resp, err := http.Get("https://reddit.com/r/localllama.rss")
+	if err != nil {
+		return "", fmt.Errorf("could not get from reddit rss: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("could not load response body: %w", err)
+	}
+
+	return string(body), nil
+}
+
+func getCommentRSS(entry rss.Entry) (string, error) {
+	resp, err := http.Get(entry.GetCommentRSSURL())
 	if err != nil {
 		return "", fmt.Errorf("could not get from reddit rss: %w", err)
 	}
@@ -48,4 +63,8 @@ func outputBenchmark(items []common.Item) error {
 		return err
 	}
 	return os.WriteFile("./bench/benchmark.json", data, 0644)
+}
+
+func writeEmailToDisk(email string) error {
+	return os.WriteFile("./email.html", []byte(email), 0644)
 }

@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+    image: ghcr.io/your-username/your-repo:latest
+    container_name: anp-app
+    environment:
+      - ANP_LLM_URL=${ANP_LLM_URL}
+      - ANP_LLM_API_KEY=${ANP_LLM_API_KEY}
+      - ANP_LLM_MODEL=${ANP_LLM_MODEL}
+      - ANP_EMAIL_TO=${ANP_EMAIL_TO}
+      - ANP_EMAIL_FROM=${ANP_EMAIL_FROM}
+      - ANP_EMAIL_HOST=${ANP_EMAIL_HOST}
+      - ANP_EMAIL_PORT=${ANP_EMAIL_PORT}
+      - ANP_EMAIL_USERNAME=${ANP_EMAIL_USERNAME}
+      - ANP_EMAIL_PASSWORD=${ANP_EMAIL_PASSWORD}
+    volumes:
+      - ./data:/app/data  # Example volume mount

@@ -25,7 +25,7 @@ func main() {
 	rssString := ""
 	if !s.DebugMockRss {
 		fmt.Println("Loading RSS feed")
-		rssString, err = getRSS()
+		rssString, err = getMainRSS()
 		if err != nil {
 			panic(fmt.Errorf("failed to load rss data %w", err))
 		}
@@ -34,12 +34,32 @@ func main() {
 		rssString = rss.ReturnFakeRSS()
 	}
 
-	rss, err := rss.ProcessRSSFeed(rssString)
+	rssFeed, err := rss.ProcessRSSFeed(rssString)
 	if err != nil {
 		panic(fmt.Errorf("could not process rss feed: %w", err))
 	}
 
-	entries := rss.Entries
+	entries := rssFeed.Entries
+
+	for i, entry := range entries {
+		commentFeedString := ""
+		if !s.DebugMockRss {
+			commentFeedString, err = getCommentRSS(entry)
+			if err != nil {
+				panic(fmt.Errorf("failed to load rss comment data %w", err))
+			}
+		} else {
+			commentFeedString = rss.ReturnFakeCommentRSS(entry.ID)
+		}
+
+		commentFeed, err := rss.ProcessCommentsRSSFeed(commentFeedString)
+		if err != nil {
+			panic(fmt.Errorf("could not process rss coment feed: %w", err))
+		}
+
+		entry.Comments = commentFeed.Entries
+		entries[i] = entry
+	}
 
 	items := make([]common.Item, len(entries))
 	if !s.DebugMockLLM {
@@ -49,7 +69,7 @@ func main() {
 		systemPrompt := getSystemPrompt()
 
 		batchCounter := 0
-		batchSize := 5
+		batchSize := 1
 		for i := 0; i < len(entries); i += batchSize {
 			batch := entries[i:min(i+batchSize, len(entries))]
 
@@ -88,27 +108,41 @@ func main() {
 		items = returnFakeLLMResponse()
 	}
 
-	itemsToInclude := []common.Item{}
-	for _, item := range items {
-		if item.ShouldInclude && item.ID != "" {
-			itemsToInclude = append(itemsToInclude, item)
-		}
-	}
-
 	// add the link from the RSS Entries to the Items
-	for i, item := range itemsToInclude {
+	for i, item := range items {
 		id := item.ID
+		if id == "" {
+			continue
+		}
+
 		entry := getRSSEntryWithID(id, entries)
 		if entry == nil {
 			fmt.Printf("could not find item with ID %s in RSS entry\n", id)
 			continue
 		}
 
-		itemsToInclude[i].Link = entry.Link.Href
+		items[i].Link = entry.Link.Href
 	}
 
 	if s.DebugOutputBenchmark {
+		itemsToInclude := []common.Item{}
+		for _, item := range items {
+			if item.IsRelevant && item.ID != "" {
+				if item.ID != "" {
+					itemsToInclude = append(itemsToInclude, item)
+				}
+			}
+		}
+
 		outputBenchmark(itemsToInclude)
+	}
+
+	itemsToInclude := []common.Item{}
+	for _, item := range items {
+		if item.IsRelevant && item.ID != "" {
+			// if item.ID != "" {
+			itemsToInclude = append(itemsToInclude, item)
+		}
 	}
 
 	email, err := email.RenderEmail(itemsToInclude)
@@ -121,5 +155,6 @@ func main() {
 		emailer.Send(s.EmailTo, "AI News", email)
 	} else {
 		// fmt.Println(email)
+		writeEmailToDisk(email)
 	}
 }
