@@ -9,11 +9,20 @@
     "Comments": "https://www.reddit.com/r/LocalLLaMA/comments/1k0mesv/ibm_granite_33_models/"
   },
   {
+    "Title": "Somebody needs to tell Nvidia to calm down with these new model names.",
+    "ShouldInclude": false,
+    "ID": "t3_1k0u8ew",
+    "Published": "2025-04-16T20:14:27+00:00",
+    "Content": "",
+    "Link": "https://i.redd.it/hl0xrywo89ve1.jpeg",
+    "Comments": "https://www.reddit.com/r/LocalLLaMA/comments/1k0u8ew/somebody_needs_to_tell_nvidia_to_calm_down_with/"
+  },
+  {
     "Title": "Massive 5000 tokens per second on 2x3090",
     "ShouldInclude": true,
     "ID": "t3_1k0tkca",
     "Published": "2025-04-16T19:47:07+00:00",
-    "Content": "For research purposes, I need to process huge amounts of data as quickly as possible.\n\nThe Model: Tested Qwen2.5-7B, which is \"just good enough.\" Larger models are better but slower. Performance tests included MMLU-pro (language understanding) and BBH (various tasks).\n\nProcessing Engine: Used Aphrodite engine due to tests with speculative decoding.\n\nModel Quantization: Tested unquantized, AWQ/GPTQ, and W4A16-G128/W8A8. W8A8 was superior in performance.",
+    "Content": "For research purposes, I need to process huge amounts of data as quickly as possible.\n\nThe Model:\nTested Qwen2.5-7B, which is \"just good enough.\" Larger models are better but slower. Performance tests included MMLU-pro (language understanding) and BBH (various tasks).",
     "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0tkca/massive_5000_tokens_per_second_on_2x3090/",
     "Comments": "https://www.reddit.com/r/LocalLLaMA/comments/1k0tkca/massive_5000_tokens_per_second_on_2x3090/"
   },
@@ -49,7 +58,7 @@
     "ShouldInclude": true,
     "ID": "t3_1k0p3h0",
     "Published": "2025-04-16T16:46:35+00:00",
-    "Content": "Many servers still seem to be missing basic security.",
+    "Content": "Many servers still seem to be missing basic security.\n[Link](https://www.freeollama.com/)",
     "Link": "https://i.redd.it/kl4bv7ne78ve1.png",
     "Comments": "https://www.reddit.com/r/LocalLLaMA/comments/1k0p3h0/results_of_ollama_leakage/"
   },
@@ -64,7 +73,7 @@
   },
   {
     "Title": "o4-mini is 186ᵗʰ best coder, sleep well platter! Enjoy retirement!",
-    "ShouldInclude": true,
+    "ShouldInclude": false,
     "ID": "t3_1k0qbme",
     "Published": "2025-04-16T17:34:46+00:00",
     "Content": "",
@@ -99,6 +108,15 @@
     "Comments": "https://www.reddit.com/r/LocalLLaMA/comments/1k0odhq/koboldcpp_with_gemma_3_27b_local_vision_has/"
   },
   {
+    "Title": "the budget rig goes bigger, 5060tis bought! test results incoming tonight",
+    "ShouldInclude": false,
+    "ID": "t3_1k0kzgn",
+    "Published": "2025-04-16T13:53:42+00:00",
+    "Content": "Bought 5060ti cards for £400 each (16GB). Testing performance with LLMs.",
+    "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0kzgn/the_budget_rig_goes_bigger_5060tis_bought_test/",
+    "Comments": "https://www.reddit.com/r/LocalLLaMA/comments/1k0kzgn/the_budget_rig_goes_bigger_5060tis_bought_test/"
+  },
+  {
     "Title": "Llama.cpp has much higher generation quality for Gemma 3 27B on M4 Max",
     "ShouldInclude": true,
     "ID": "t3_1k0r9pi",
@@ -121,7 +139,7 @@
     "ShouldInclude": true,
     "ID": "t3_1k0haqw",
     "Published": "2025-04-16T10:41:06+00:00",
-    "Content": "LocalAI v2.28.0 updates include SYCL support and Lumina Text-to-Image models. LocalAGI is a new platform for building AI agent workflows locally.",
+    "Content": "LocalAI v2.28.0 updates include SYCL support and Lumina Text-to-Image models. LocalAGI is a new platform for building AI agent workflows locally.\nGitHub: [Link](https://github.com/mudler/LocalAI)\nLocalAGI: [Link](https://github.com/mudler/LocalAGI)",
     "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0haqw/localai_v2280_announcing_localagi_build_run_ai/",
     "Comments": "https://www.reddit.com/r/LocalLLaMA/comments/1k0haqw/localai_v2280_announcing_localagi_build_run_ai/"
   },
@@ -130,9 +148,27 @@
     "ShouldInclude": true,
     "ID": "t3_1k0q0bc",
     "Published": "2025-04-16T17:22:21+00:00",
-    "Content": "Competition to create reasoning datasets in underexplored domains. Prizes include $3,000+ in cash/credits. Deadline: May 1, 2025.",
+    "Content": "Competition to create reasoning datasets in underexplored domains. Prizes include $3,000+ in cash/credits. Deadline: May 1, 2025.\nDetails: [Link](https://huggingface.co/blog/bespokelabs/reasoning-datasets-competition)",
     "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0q0bc/hugging_face_has_launched_a_reasoning_datasets/",
     "Comments": "https://www.reddit.com/r/LocalLLaMA/comments/1k0q0bc/hugging_face_has_launched_a_reasoning_datasets/"
+  },
+  {
+    "Title": "It is almost May of 2025. What do you consider to be the best coding tools?",
+    "ShouldInclude": true,
+    "ID": "t3_1k0nxlb",
+    "Published": "2025-04-16T15:58:33+00:00",
+    "Content": "Discussion on the best coding tools and IDEs for programming projects, including game development.",
+    "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0nxlb/it_is_almost_may_of_2025_what_do_you_consider_to/",
+    "Comments": "https://www.reddit.com/r/LocalLLaMA/comments/1k0nxlb/it_is_almost_may_of_2025_what_do_you_consider_to/"
+  },
+  {
+    "Title": "What is the best option for running eight GPUs in a single motherboard?",
+    "ShouldInclude": true,
+    "ID": "t3_1k0w7f9",
+    "Published": "2025-04-16T21:37:38+00:00",
+    "Content": "Question about running 8 AMD MI50 GPUs on an ASUS ROG CROSSHAIR VIII DARK HERO motherboard using PCIE splitters.",
+    "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0w7f9/what_is_the_best_option_for_running_eight_gpus_in/",
+    "Comments": "https://www.reddit.com/r/LocalLLaMA/comments/1k0w7f9/what_is_the_best_option_for_running_eight_gpus_in/"
   },
   {
     "Title": "ByteDance releases Liquid model family of multimodal auto-regressive models (like GTP-4o)",
@@ -148,7 +184,7 @@
     "ShouldInclude": true,
     "ID": "t3_1k0fjny",
     "Published": "2025-04-16T08:37:27+00:00",
-    "Content": "OpenGVLab released InternVL3 with models ranging from 1B to 78B parameters. InternVL3-14B matches InternVL2.5-78B in performance.",
+    "Content": "OpenGVLab released InternVL3 with models ranging from 1B to 78B parameters. InternVL3-14B matches InternVL2.5-78B in performance.\nHugging Face: [Link](https://huggingface.co/collections/OpenGVLab/internvl3-67f7f690be79c2fe9d74fe9d)",
     "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0fjny/internvl3_advanced_mllm_series_just_got_a_major/",
     "Comments": "https://www.reddit.com/r/LocalLLaMA/comments/1k0fjny/internvl3_advanced_mllm_series_just_got_a_major/"
   },
@@ -160,6 +196,15 @@
     "Content": "GitHub: [Link](https://github.com/openai/codex)\nQuestion: Can it be used with local reasoning models?",
     "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0qw6k/open_source_tool_from_openai_for_coding_agent_in/",
     "Comments": "https://www.reddit.com/r/LocalLLaMA/comments/1k0qw6k/open_source_tool_from_openai_for_coding_agent_in/"
+  },
+  {
+    "Title": "What are some Local search offerings that are competitive with OpenAI/Google, if such a thing can exist?",
+    "ShouldInclude": true,
+    "ID": "t3_1k0s2cx",
+    "Published": "2025-04-16T18:45:08+00:00",
+    "Content": "Discussion on local search alternatives to OpenAI/Google, highlighting issues with hallucinations and slow response times.",
+    "Link": "https://www.reddit.com/r/LocalLLaMA/comments/1k0s2cx/what_are_some_local_search_offerings_that_are/",
+    "Comments": "https://www.reddit.com/r/LocalLLaMA/comments/1k0s2cx/what_are_some_local_search_offerings_that_are/"
   },
   {
     "Title": "Setting Power Limit on RTX 3090 – LLM Test",

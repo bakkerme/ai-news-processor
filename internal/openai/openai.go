@@ -2,7 +2,9 @@ package openai
 
 import (
 	"context"
+	// "fmt"
 	"github.com/bakkerme/ai-news-processor/internal/common"
+	"github.com/invopop/jsonschema"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 	"strings"
@@ -22,8 +24,20 @@ func NewOpenAIClient(baseURL, key, model string) *OpenAIClient {
 	return &OpenAIClient{client: &client, model: model}
 }
 
+// Generate the JSON schema at initialization time
+var ItemResponseSchema = GenerateSchema[[]common.Item]()
+
 func (c *OpenAIClient) Query(systemPrompt string, userPrompts []string, results chan common.ErrorString) {
+	schemaParam := openai.ResponseFormatJSONSchemaJSONSchemaParam{
+		Name:        "post_item",
+		Description: openai.String("an object representing a post"),
+		Schema:      ItemResponseSchema,
+		Strict:      openai.Bool(true),
+	}
+
 	userPrompt := strings.Join(userPrompts, "\n")
+
+	// fmt.Println(userPrompt)
 
 	resp, err := c.client.Chat.Completions.New(
 		context.Background(),
@@ -33,12 +47,23 @@ func (c *OpenAIClient) Query(systemPrompt string, userPrompts []string, results 
 				openai.SystemMessage(systemPrompt),
 				openai.UserMessage(userPrompt),
 			},
+			ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
+				OfJSONSchema: &openai.ResponseFormatJSONSchemaParam{JSONSchema: schemaParam},
+			},
 		},
 	)
 
 	if err != nil {
 		results <- common.ErrorString{
 			Value: "",
+			Err:   err,
+		}
+		return
+	}
+
+	if len(resp.Choices) == 0 {
+		results <- common.ErrorString{
+			Value: "empty response from llm",
 			Err:   err,
 		}
 		return
@@ -73,4 +98,16 @@ func (c *OpenAIClient) PreprocessJSON(response string) string {
 	// Extract the content between markers
 	jsonContent := response[startIdx : startIdx+endIdx]
 	return strings.TrimSpace(jsonContent)
+}
+
+func GenerateSchema[T any]() interface{} {
+	// Structured Outputs uses a subset of JSON schema
+	// These flags are necessary to comply with the subset
+	reflector := jsonschema.Reflector{
+		AllowAdditionalProperties: false,
+		DoNotReference:            true,
+	}
+	var v T
+	schema := reflector.Reflect(v)
+	return schema
 }

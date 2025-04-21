@@ -18,9 +18,10 @@ type Specification struct {
 	EmailUsername string `split_words:"true"`
 	EmailPassword string `split_words:"true"`
 
-	DebugMockRss       bool `split_words:"true"`
-	DebugMockLLM       bool `split_words:"true"`
-	DebugMockSkipEmail bool `split_words:"true"`
+	DebugMockRss         bool `split_words:"true"`
+	DebugMockLLM         bool `split_words:"true"`
+	DebugMockSkipEmail   bool `split_words:"true"`
+	DebugOutputBenchmark bool `split_words:"true"`
 }
 
 func GetConfig() (*Specification, error) {

@@ -1,10 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/bakkerme/ai-news-processor/internal/common"
 	"github.com/bakkerme/ai-news-processor/internal/rss"
 	"io"
 	"net/http"
+	"os"
 )
 
 func getRSS() (string, error) {
@@ -37,4 +40,12 @@ func getRSSEntryWithID(id string, entries []rss.Entry) *rss.Entry {
 	}
 
 	return nil
+}
+
+func outputBenchmark(items []common.Item) error {
+	data, err := json.Marshal(items)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile("./bench/benchmark.json", data, 0644)
 }

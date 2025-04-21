@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"github.com/grokify/html-strip-tags-go"
+	"strings"
 )
 
 type Feed struct {
@@ -11,11 +12,11 @@ type Feed struct {
 }
 
 type Entry struct {
-	Title   string `xml:"title"`
-	Link    Link   `xml:"link"`
-	ID      string `xml:"id"`
-	Updated string `xml:"updated"`
-	Content string `xml:"content"`
+	Title     string `xml:"title"`
+	Link      Link   `xml:"link"`
+	ID        string `xml:"id"`
+	Published string `xml:"published"`
+	Content   string `xml:"content"`
 }
 
 type Link struct {
@@ -23,10 +24,9 @@ type Link struct {
 }
 
 func (e *Entry) String() string {
-	return fmt.Sprintf("Title: %s\nID: %s\nDate: %s\nSummary: %s\n\n",
-		e.Title,
+	return fmt.Sprintf("Title: %s\nID: %s\nSummary: %s\n\n",
+		strings.Trim(e.Title, " "),
 		e.ID,
-		e.Updated,
 		cleanContent(e.Content),
 	)
 }
@@ -41,5 +41,19 @@ func ProcessRSSFeed(input string) (*Feed, error) {
 }
 
 func cleanContent(s string) string {
-	return strip.StripTags(s)
+	stripped := strip.StripTags(s)
+	stripped = strings.ReplaceAll(stripped, "&#39;", "'")
+	stripped = strings.ReplaceAll(stripped, "&#32;", " ")
+	stripped = strings.ReplaceAll(stripped, "&quot;", "\"")
+
+	lenToUse := 500
+	maxLen := len(stripped)
+
+	if maxLen < lenToUse {
+		lenToUse = maxLen
+	}
+
+	truncated := stripped[0:lenToUse]
+
+	return truncated
 }

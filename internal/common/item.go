@@ -7,12 +7,12 @@ import (
 
 // Item represents the structure of the JSON object
 type Item struct {
-	Title         string `json:"Title"`
-	ID            string `json:"ID"`
-	Summary       string `json:"Summary"`
-	Link          string `json:"Link"`
-	Relevance     string `json:"Relevance"`
-	ShouldInclude bool   `json:"ShouldInclude"`
+	Title         string `json:"Title" jsonschema_description:"Title of the post"`
+	ID            string `json:"ID" jsonschema_description:"Post ID"`
+	Summary       string `json:"Summary" jsonschema_description:"Provide a summary of the post content"`
+	Link          string `json:"Link" jsonschema_description:"A link to the post"`
+	Relevance     string `json:"Relevance" jsonschema_description:"Why is this relevant?"`
+	ShouldInclude bool   `json:"ShouldInclude" jsonschema_description:"Should this be included?"`
 }
 
 func (i *Item) FormatItem() string {

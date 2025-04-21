@@ -90,7 +90,7 @@ func main() {
 
 	itemsToInclude := []common.Item{}
 	for _, item := range items {
-		if item.ShouldInclude {
+		if item.ShouldInclude && item.ID != "" {
 			itemsToInclude = append(itemsToInclude, item)
 		}
 	}
@@ -105,6 +105,10 @@ func main() {
 		}
 
 		itemsToInclude[i].Link = entry.Link.Href
+	}
+
+	if s.DebugOutputBenchmark {
+		outputBenchmark(itemsToInclude)
 	}
 
 	email, err := email.RenderEmail(itemsToInclude)
