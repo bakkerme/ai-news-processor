@@ -17,10 +17,13 @@ WORKDIR /app
 # Copy the binary from builder
 COPY --from=builder /app/main /app/main
 
+COPY build/crontab /etc/cron.d/appcron
+COPY build/init.sh /app/init.sh
+
 # Install CA certificates (needed for HTTPS requests)
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends ca-certificates && \
+    apt-get install -y --no-install-recommends ca-certificates cron && \
     rm -rf /var/lib/apt/lists/*
 
 # Command to run the executable
-CMD ["/app/main"]
+CMD ["sh", "/app/init.sh"]

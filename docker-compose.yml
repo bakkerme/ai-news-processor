@@ -4,9 +4,10 @@ services:
   app:
     build:
       context: .
-    image: ghcr.io/your-username/your-repo:latest
+    image: ghcr.io/bakkerme/ai-new-processor:latest
     container_name: anp-app
     environment:
+      - ANP_CRON_SCHEDULE=${ANP_CRON_SCHEDULE}
       - ANP_LLM_URL=${ANP_LLM_URL}
       - ANP_LLM_API_KEY=${ANP_LLM_API_KEY}
       - ANP_LLM_MODEL=${ANP_LLM_MODEL}
@@ -16,5 +17,3 @@ services:
       - ANP_EMAIL_PORT=${ANP_EMAIL_PORT}
       - ANP_EMAIL_USERNAME=${ANP_EMAIL_USERNAME}
       - ANP_EMAIL_PASSWORD=${ANP_EMAIL_PASSWORD}
-    volumes:
-      - ./data:/app/data  # Example volume mount
