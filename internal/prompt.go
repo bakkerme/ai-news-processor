@@ -6,7 +6,7 @@ func getSystemPrompt() string {
 Relevant items include:
 * New LLM models, runners or other infrastructure being released or open sourced
 * New tooling around LLMs
-* Big AI lab news (OpenAI, Anthropic, Mistral, Google, X)
+* Big AI lab news (OpenAI, Anthropic, Alibaba Cloud, DeepSeek, Mistral, Google, X)
 * Security news
 * Innovative techniques to speed up LLM performance or increase output quality
 * Innovations in offline or uncensored models
