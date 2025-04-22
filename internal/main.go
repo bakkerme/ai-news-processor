@@ -73,7 +73,7 @@ func main() {
 		systemPrompt := getSystemPrompt()
 
 		batchCounter := 0
-		batchSize := 1
+		batchSize := 5
 		for i := 0; i < len(entries); i += batchSize {
 			batch := entries[i:min(i+batchSize, len(entries))]
 

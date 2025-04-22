@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.24-bookworm AS builder
+FROM golang:1.24-alpine3.20 AS builder
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ COPY . .
 RUN GOOS=linux go build -o /app/main ./internal
 
 # Final stage
-FROM debian:bookworm-slim
+FROM alpine:latest
 
 WORKDIR /app
 
@@ -19,11 +19,6 @@ COPY --from=builder /app/main /app/main
 
 COPY build/crontab /etc/cron.d/appcron
 COPY build/init.sh /app/init.sh
-
-# Install CA certificates (needed for HTTPS requests)
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends ca-certificates cron && \
-    rm -rf /var/lib/apt/lists/*
 
 # Command to run the executable
 CMD ["sh", "/app/init.sh"]
