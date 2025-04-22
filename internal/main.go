@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/bakkerme/ai-news-processor/internal/common"
 	"github.com/bakkerme/ai-news-processor/internal/email"
@@ -21,6 +22,12 @@ func main() {
 	}
 
 	openaiClient := openai.NewOpenAIClient(s.LlmUrl, s.LlmApiKey, s.LlmModel)
+
+	// Print the duration it took to run the job
+	startTime := time.Now()
+	defer func() {
+		fmt.Printf("Job took %v\n", time.Since(startTime))
+	}()
 
 	rssString := ""
 	if !s.DebugMockRss {
@@ -144,7 +151,6 @@ func main() {
 	itemsToInclude := []common.Item{}
 	for _, item := range items {
 		if item.IsRelevant && item.ID != "" {
-			// if item.ID != "" {
 			itemsToInclude = append(itemsToInclude, item)
 		}
 	}
@@ -162,7 +168,6 @@ func main() {
 		fmt.Printf("Sending email to %s", s.EmailTo)
 		emailer.Send(s.EmailTo, "AI News", email)
 	} else {
-		// fmt.Println(email)
 		writeEmailToDisk(email)
 	}
 }
