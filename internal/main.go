@@ -41,6 +41,10 @@ func main() {
 
 	entries := rssFeed.Entries
 
+	if len(entries) == 0 {
+		panic("no entries found")
+	}
+
 	for i, entry := range entries {
 		commentFeedString := ""
 		if !s.DebugMockRss {
@@ -143,6 +147,10 @@ func main() {
 			// if item.ID != "" {
 			itemsToInclude = append(itemsToInclude, item)
 		}
+	}
+
+	if len(itemsToInclude) == 0 {
+		panic("no items render as an email")
 	}
 
 	email, err := email.RenderEmail(itemsToInclude)
