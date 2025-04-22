@@ -1,6 +1,6 @@
 # AI News Processor
 
-AI News Processor is a tool designed to process posts from the `/r/localllama` subreddit, their comments and email you a summary. You will need to provide an LLM accessible via an OpenAI-compatible API and SMTP details for an email service.
+AI News Processor is a tool designed to process posts from the `/r/localllama` subreddit, their comments, filter out unworthy posts and email you a summary. You will need to provide an LLM accessible via an OpenAI-compatible API and SMTP details for an email service.
 
 The prompt was built and tested with Qwen2.5 7B Instruct Q8 and Qwen2.5 32B Instruct Q4. 
 
