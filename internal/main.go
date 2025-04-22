@@ -165,7 +165,7 @@ func main() {
 	}
 
 	if !s.DebugMockSkipEmail {
-		fmt.Printf("Sending email to %s", s.EmailTo)
+		fmt.Printf("Sending email to %s\n", s.EmailTo)
 		emailer.Send(s.EmailTo, "AI News", email)
 	} else {
 		writeEmailToDisk(email)
