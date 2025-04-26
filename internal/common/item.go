@@ -10,3 +10,11 @@ type Item struct {
 	Relevance      string `json:"Relevance" jsonschema_description:"Why is this relevant?" jsonschema:"required"`
 	IsRelevant     bool   `json:"IsRelevant" jsonschema_description:"Should this be included?" jsonschema:"required"`
 }
+
+// SummaryResponse represents an overall summary of multiple relevant AI news items
+type SummaryResponse struct {
+	OverallSummary     string   `json:"OverallSummary" jsonschema_description:"A high-level summary of the major AI developments and trends" jsonschema:"required"`
+	KeyDevelopments    []string `json:"KeyDevelopments" jsonschema_description:"List of the most significant developments" jsonschema:"required"`
+	EmergingTrends     string   `json:"EmergingTrends" jsonschema_description:"Analysis of emerging trends across the articles" jsonschema:"required"`
+	TechnicalHighlight string   `json:"TechnicalHighlight" jsonschema_description:"Most technically significant development" jsonschema:"required"`
+}

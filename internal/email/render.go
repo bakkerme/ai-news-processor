@@ -6,13 +6,19 @@ import (
 	"text/template"
 
 	"embed"
+
 	"github.com/bakkerme/ai-news-processor/internal/common"
 )
 
 //go:embed templates/*.tmpl
 var templateFS embed.FS
 
-func RenderEmail(items []common.Item) (string, error) {
+type EmailData struct {
+	Summary *common.SummaryResponse
+	Items   []common.Item
+}
+
+func RenderEmail(items []common.Item, summary *common.SummaryResponse) (string, error) {
 	tmplContent, err := templateFS.ReadFile("templates/email_template.tmpl")
 	if err != nil {
 		return "", fmt.Errorf("failed to read template: %w", err)
@@ -24,9 +30,14 @@ func RenderEmail(items []common.Item) (string, error) {
 		return "", fmt.Errorf("failed to parse template: %w", err)
 	}
 
+	data := EmailData{
+		Summary: summary,
+		Items:   items,
+	}
+
 	// Execute the template into a buffer
 	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, items)
+	err = tmpl.Execute(&buf, data)
 	if err != nil {
 		panic(err)
 	}

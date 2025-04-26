@@ -2,32 +2,37 @@ package openai
 
 import (
 	"context"
+	"encoding/json"
+
 	// "fmt"
+	"fmt"
+	"strings"
+
 	"github.com/bakkerme/ai-news-processor/internal/common"
 	"github.com/invopop/jsonschema"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
-	"strings"
 )
 
-type OpenAIClient struct {
+type Client struct {
 	client *openai.Client
 	model  string
 }
 
-func NewOpenAIClient(baseURL, key, model string) *OpenAIClient {
+func New(baseURL, key, model string) *Client {
 	client := openai.NewClient(
 		option.WithAPIKey(key),
 		option.WithBaseURL(baseURL),
 		option.WithJSONSet("cache_set", true),
 	)
-	return &OpenAIClient{client: &client, model: model}
+	return &Client{client: &client, model: model}
 }
 
 // Generate the JSON schema at initialization time
 var ItemResponseSchema = GenerateSchema[[]common.Item]()
+var SummaryResponseSchema = GenerateSchema[common.SummaryResponse]()
 
-func (c *OpenAIClient) Query(systemPrompt string, userPrompts []string, results chan common.ErrorString) {
+func (c *Client) Query(systemPrompt string, userPrompts []string, results chan common.ErrorString) {
 	schemaParam := openai.ResponseFormatJSONSchemaJSONSchemaParam{
 		Name:        "post_item",
 		Description: openai.String("an object representing a post"),
@@ -63,8 +68,8 @@ func (c *OpenAIClient) Query(systemPrompt string, userPrompts []string, results 
 
 	if len(resp.Choices) == 0 {
 		results <- common.ErrorString{
-			Value: "empty response from llm",
-			Err:   err,
+			Value: "",
+			Err:   fmt.Errorf("empty response from llm"),
 		}
 		return
 	}
@@ -75,7 +80,62 @@ func (c *OpenAIClient) Query(systemPrompt string, userPrompts []string, results 
 	}
 }
 
-func (c *OpenAIClient) PreprocessJSON(response string) string {
+func (c *Client) QueryForSummary(systemPrompt string, userPrompts []string, results chan common.ErrorString) {
+	schemaParam := openai.ResponseFormatJSONSchemaJSONSchemaParam{
+		Name:        "summary",
+		Description: openai.String("a summary of multiple AI news items"),
+		Schema:      SummaryResponseSchema,
+		Strict:      openai.Bool(true),
+	}
+
+	userPrompt := strings.Join(userPrompts, "\n")
+
+	resp, err := c.client.Chat.Completions.New(
+		context.Background(),
+		openai.ChatCompletionNewParams{
+			Model: c.model,
+			Messages: []openai.ChatCompletionMessageParamUnion{
+				openai.SystemMessage(systemPrompt),
+				openai.UserMessage(userPrompt),
+			},
+			ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
+				OfJSONSchema: &openai.ResponseFormatJSONSchemaParam{JSONSchema: schemaParam},
+			},
+		},
+	)
+
+	if err != nil {
+		results <- common.ErrorString{
+			Value: "",
+			Err:   err,
+		}
+		return
+	}
+
+	if len(resp.Choices) == 0 {
+		results <- common.ErrorString{
+			Value: "",
+			Err:   fmt.Errorf("empty response from llm"),
+		}
+		return
+	}
+
+	results <- common.ErrorString{
+		Value: resp.Choices[0].Message.Content,
+		Err:   nil,
+	}
+}
+
+func (c *Client) ParseSummaryResponse(jsonStr string) (*common.SummaryResponse, error) {
+	var summary common.SummaryResponse
+	err := json.Unmarshal([]byte(jsonStr), &summary)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse summary response: %w", err)
+	}
+	return &summary, nil
+}
+
+func (c *Client) PreprocessJSON(response string) string {
 	// Find the start and end markers
 	startMarker := "```json"
 	endMarker := "```"

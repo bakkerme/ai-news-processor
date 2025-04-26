@@ -102,6 +102,51 @@
                 padding: 15px;
             }
         }
+        .summary-section {
+            padding: 20px;
+            background-color: #f0f9ff;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .summary-title {
+            color: #1a365d;
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .key-developments {
+            list-style-type: none;
+            padding: 0;
+            margin: 15px 0;
+        }
+        .key-developments-li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+        .key-developments-li:before {
+            content: "•";
+            color: #4299e1;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+        .trends-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .technical-highlight {
+            background-color: #f0fff4;
+            border-left: 4px solid #48bb78;
+            padding: 12px;
+            margin: 15px 0;
+        }
+        .technical-highlight h3 {
+            margin-top: 0;
+            margin-bottom: 8px;
+            color: #2d3748;
+            font-size: 1.1em;
+        }
     </style>
 </head>
 <body>
@@ -111,7 +156,31 @@
         </div>
         
         <div class="content">
-            {{range .}}
+            {{if .Summary}}
+            <div class="summary-section">
+                <div class="summary-title">Today's AI Developments</div>
+                <div>{{.Summary.OverallSummary}}</div>
+                
+                <div class="key-developments">
+                    <h3>Key Developments</h3>
+                    {{range .Summary.KeyDevelopments}}
+                        <div class="key-developments-li">{{.}}</div>
+                    {{end}}
+                </div>
+                
+                <div class="trends-section">
+                    <h3>Emerging Trends</h3>
+                    <div>{{.Summary.EmergingTrends}}</div>
+                </div>
+                
+                <div class="technical-highlight">
+                    <h3>Technical Highlight of the Day</h3>
+                    <div>{{.Summary.TechnicalHighlight}}</div>
+                </div>
+            </div>
+            {{end}}
+            
+            {{range .Items}}
             <div class="item">
                 <div class="item-title">{{.Title}}</div>
                 <div class="item-summary">

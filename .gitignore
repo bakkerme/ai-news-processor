@@ -1,2 +1,3 @@
 .envrc.local
 bench/benchmark.json
+.env

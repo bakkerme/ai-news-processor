@@ -3,8 +3,12 @@ package rss
 import (
 	"encoding/xml"
 	"fmt"
-	"github.com/grokify/html-strip-tags-go"
+	"io"
+	"net/http"
 	"strings"
+	"time"
+
+	strip "github.com/grokify/html-strip-tags-go"
 )
 
 type Feed struct {
@@ -12,11 +16,11 @@ type Feed struct {
 }
 
 type Entry struct {
-	Title     string `xml:"title"`
-	Link      Link   `xml:"link"`
-	ID        string `xml:"id"`
-	Published string `xml:"published"`
-	Content   string `xml:"content"`
+	Title     string    `xml:"title"`
+	Link      Link      `xml:"link"`
+	ID        string    `xml:"id"`
+	Published time.Time `xml:"published"`
+	Content   string    `xml:"content"`
 	Comments  []EntryComments
 }
 
@@ -90,4 +94,73 @@ func cleanContent(s string, maxLen int) string {
 	}
 
 	return truncated
+}
+
+// UnmarshalXML implements xml.Unmarshaler for custom time parsing
+func (e *Entry) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	type Alias Entry
+	aux := &struct {
+		Published string `xml:"published"`
+		*Alias
+	}{
+		Alias: (*Alias)(e),
+	}
+	if err := d.DecodeElement(aux, &start); err != nil {
+		return err
+	}
+
+	// Parse the time string
+	if aux.Published != "" {
+		t, err := time.Parse(time.RFC3339, aux.Published)
+		if err != nil {
+			return fmt.Errorf("failed to parse published time: %w", err)
+		}
+		e.Published = t
+	}
+	return nil
+}
+
+// GetFeeds retrieves RSS feeds from the provided URLs
+func GetFeeds(urls []string) ([]*Feed, error) {
+	var feeds []*Feed
+	for _, url := range urls {
+		rssString, err := fetchRSS(url)
+		if err != nil {
+			return nil, fmt.Errorf("could not fetch RSS from %s: %w", url, err)
+		}
+
+		feed, err := ProcessRSSFeed(rssString)
+		if err != nil {
+			return nil, fmt.Errorf("could not process RSS feed from %s: %w", url, err)
+		}
+
+		feeds = append(feeds, feed)
+	}
+	return feeds, nil
+}
+
+// GetMockFeeds returns mock RSS feeds for testing
+func GetMockFeeds() []*Feed {
+	feedString := ReturnFakeRSS()
+	feed, err := ProcessRSSFeed(feedString)
+	if err != nil {
+		panic(fmt.Sprintf("could not process mock feed: %v", err))
+	}
+	return []*Feed{feed}
+}
+
+// fetchRSS retrieves RSS content from a URL
+func fetchRSS(url string) (string, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", fmt.Errorf("could not fetch RSS: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("could not read response body: %w", err)
+	}
+
+	return string(body), nil
 }

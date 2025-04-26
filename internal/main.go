@@ -13,7 +13,7 @@ import (
 func main() {
 	s, err := GetConfig()
 	if err != nil {
-		panic(s)
+		panic(err)
 	}
 
 	emailer, err := email.New(s.EmailHost, s.EmailPort, s.EmailUsername, s.EmailPassword, s.EmailFrom)
@@ -21,7 +21,7 @@ func main() {
 		panic(fmt.Errorf("could not set up emailer: %w", err))
 	}
 
-	openaiClient := openai.NewOpenAIClient(s.LlmUrl, s.LlmApiKey, s.LlmModel)
+	openaiClient := openai.New(s.LlmUrl, s.LlmApiKey, s.LlmModel)
 
 	// Print the duration it took to run the job
 	startTime := time.Now()
@@ -50,6 +50,11 @@ func main() {
 
 	if len(entries) == 0 {
 		panic("no entries found")
+	}
+
+	// Limit entries if DebugMaxEntries is set
+	if s.DebugMaxEntries > 0 && len(entries) > s.DebugMaxEntries {
+		entries = entries[:s.DebugMaxEntries]
 	}
 
 	for i, entry := range entries {
@@ -159,12 +164,41 @@ func main() {
 		panic("no items render as an email")
 	}
 
-	email, err := email.RenderEmail(itemsToInclude)
+	// Generate summary for relevant items
+	fmt.Println("Generating summary of relevant items")
+	relevantEntries := make([]rss.Entry, 0, len(itemsToInclude))
+	for _, item := range itemsToInclude {
+		if entry := getRSSEntryWithID(item.ID, entries); entry != nil {
+			relevantEntries = append(relevantEntries, *entry)
+		}
+	}
+
+	// Create input for summary
+	summaryInputs := make([]string, len(relevantEntries))
+	for i, entry := range relevantEntries {
+		summaryInputs[i] = entry.String()
+	}
+
+	summaryChannel := make(chan common.ErrorString, 1)
+	go openaiClient.QueryForSummary(getSummarySystemPrompt(), summaryInputs, summaryChannel)
+
+	summaryResult := <-summaryChannel
+	if summaryResult.Err != nil {
+		panic(fmt.Errorf("could not generate summary: %w", summaryResult.Err))
+	}
+
+	processedSummary := openaiClient.PreprocessJSON(summaryResult.Value)
+	summary, err := openaiClient.ParseSummaryResponse(processedSummary)
+	if err != nil {
+		panic(fmt.Errorf("could not parse summary response: %w", err))
+	}
+
+	email, err := email.RenderEmail(itemsToInclude, summary)
 	if err != nil {
 		panic(fmt.Errorf("could not render email: %w", err))
 	}
 
-	if !s.DebugMockSkipEmail {
+	if !s.DebugSkipEmail {
 		fmt.Printf("Sending email to %s\n", s.EmailTo)
 		emailer.Send(s.EmailTo, "AI News", email)
 	} else {
