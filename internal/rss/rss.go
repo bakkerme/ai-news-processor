@@ -36,16 +36,16 @@ type Link struct {
 	Href string `xml:"href,attr"`
 }
 
-func (e *Entry) String() string {
+func (e *Entry) String(disableTruncation bool) string {
 	var s strings.Builder
 	s.WriteString(fmt.Sprintf("Title: %s\nID: %s\nSummary: %s\n",
 		strings.Trim(e.Title, " "),
 		e.ID,
-		cleanContent(e.Content, 1200),
+		cleanContent(e.Content, 1200, disableTruncation),
 	))
 
 	for _, comment := range e.Comments {
-		s.WriteString(fmt.Sprintf("Comment: %s\n", cleanContent(comment.Content, 600)))
+		s.WriteString(fmt.Sprintf("Comment: %s\n", cleanContent(comment.Content, 600, disableTruncation)))
 	}
 
 	return s.String()
@@ -73,11 +73,15 @@ func ProcessCommentsRSSFeed(input string) (*CommentFeed, error) {
 	return &commentFeed, nil
 }
 
-func cleanContent(s string, maxLen int) string {
+func cleanContent(s string, maxLen int, disableTruncation bool) string {
 	stripped := strip.StripTags(s)
 	stripped = strings.ReplaceAll(stripped, "&#39;", "'")
 	stripped = strings.ReplaceAll(stripped, "&#32;", " ")
 	stripped = strings.ReplaceAll(stripped, "&quot;", "\"")
+
+	if disableTruncation {
+		return stripped
+	}
 
 	lenToUse := maxLen
 	strLen := len(stripped)

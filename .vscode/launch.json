@@ -10,7 +10,22 @@
             "request": "launch",
             "mode": "auto",
             "program": "./internal",
-            "envFile": "${workspaceFolder}/.env"
+            "envFile": [
+                "${workspaceFolder}/.env",
+                "${workspaceFolder}/.envdebug"
+            ]
+        },
+        {
+            "name": "Launch Benchmark",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "./bench",
+            "envFile": [
+                "${workspaceFolder}/.env",
+                "${workspaceFolder}/.envdebug"
+            ],
+            "cwd": "${workspaceFolder}/bench",
         }
     ]
 }

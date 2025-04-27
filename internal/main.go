@@ -8,10 +8,11 @@ import (
 	"github.com/bakkerme/ai-news-processor/internal/email"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
 	"github.com/bakkerme/ai-news-processor/internal/rss"
+	"github.com/bakkerme/ai-news-processor/internal/specification"
 )
 
 func main() {
-	s, err := GetConfig()
+	s, err := specification.GetConfig()
 	if err != nil {
 		panic(err)
 	}
@@ -28,6 +29,9 @@ func main() {
 	defer func() {
 		fmt.Printf("Job took %v\n", time.Since(startTime))
 	}()
+
+	// Store all raw inputs for benchmarking
+	var benchmarkInputs []string
 
 	rssString := ""
 	if !s.DebugMockRss {
@@ -49,6 +53,7 @@ func main() {
 	entries := rssFeed.Entries
 
 	if len(entries) == 0 {
+		fmt.Println(rssString)
 		panic("no entries found")
 	}
 
@@ -93,10 +98,15 @@ func main() {
 
 			batchStrings := make([]string, len(batch))
 			for j, entry := range batch {
-				batchStrings[j] = entry.String()
+				batchStrings[j] = entry.String(s.DebugOutputBenchmark)
 			}
 
-			go openaiClient.Query(systemPrompt, batchStrings, completionChannel)
+			// Store inputs for benchmarking
+			if s.DebugOutputBenchmark {
+				benchmarkInputs = append(benchmarkInputs, batchStrings...)
+			}
+
+			go openaiClient.QueryForEntrySummary(systemPrompt, batchStrings, completionChannel)
 			batchCounter++
 		}
 
@@ -143,14 +153,17 @@ func main() {
 	if s.DebugOutputBenchmark {
 		itemsToInclude := []common.Item{}
 		for _, item := range items {
-			if item.IsRelevant && item.ID != "" {
-				if item.ID != "" {
-					itemsToInclude = append(itemsToInclude, item)
-				}
+			if item.ID != "" {
+				itemsToInclude = append(itemsToInclude, item)
 			}
 		}
 
-		outputBenchmark(itemsToInclude)
+		// Create benchmark data with both inputs and results
+		benchmarkData := &common.BenchmarkData{
+			RawInput: benchmarkInputs,
+			Results:  itemsToInclude,
+		}
+		outputBenchmark(benchmarkData)
 	}
 
 	itemsToInclude := []common.Item{}
@@ -176,11 +189,11 @@ func main() {
 	// Create input for summary
 	summaryInputs := make([]string, len(relevantEntries))
 	for i, entry := range relevantEntries {
-		summaryInputs[i] = entry.String()
+		summaryInputs[i] = entry.String(false)
 	}
 
 	summaryChannel := make(chan common.ErrorString, 1)
-	go openaiClient.QueryForSummary(getSummarySystemPrompt(), summaryInputs, summaryChannel)
+	go openaiClient.QueryForFeedSummary(getSummarySystemPrompt(), summaryInputs, summaryChannel)
 
 	summaryResult := <-summaryChannel
 	if summaryResult.Err != nil {

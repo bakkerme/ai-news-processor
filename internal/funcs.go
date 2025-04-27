@@ -3,11 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bakkerme/ai-news-processor/internal/common"
-	"github.com/bakkerme/ai-news-processor/internal/rss"
 	"io"
 	"net/http"
 	"os"
+
+	"github.com/bakkerme/ai-news-processor/internal/common"
+	"github.com/bakkerme/ai-news-processor/internal/rss"
 )
 
 func getMainRSS() (string, error) {
@@ -57,12 +58,20 @@ func getRSSEntryWithID(id string, entries []rss.Entry) *rss.Entry {
 	return nil
 }
 
-func outputBenchmark(items []common.Item) error {
-	data, err := json.Marshal(items)
+func outputBenchmark(data *common.BenchmarkData) error {
+	// Marshal the benchmark data
+	jsonData, err := json.Marshal(data)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal benchmark data: %w", err)
 	}
-	return os.WriteFile("./bench/benchmark.json", data, 0644)
+
+	// Write to benchmark.json
+	err = os.WriteFile("../bench/benchmark.json", jsonData, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write benchmark data: %w", err)
+	}
+
+	return nil
 }
 
 func writeEmailToDisk(email string) error {

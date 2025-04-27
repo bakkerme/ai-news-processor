@@ -164,13 +164,19 @@
                 <div class="key-developments">
                     <h3>Key Developments</h3>
                     {{range .Summary.KeyDevelopments}}
-                        <div class="key-developments-li">{{.}}</div>
+                        <div class="key-developments-li">
+                            <a href="#item-{{.ItemID}}">{{.Text}}</a>
+                        </div>
                     {{end}}
                 </div>
                 
                 <div class="trends-section">
                     <h3>Emerging Trends</h3>
-                    <div>{{.Summary.EmergingTrends}}</div>
+                    <ul style="padding-left: 0; list-style: none;">
+                    {{range .Summary.EmergingTrends}}
+                        <li class="key-developments-li">{{.}}</li>
+                    {{end}}
+                    </ul>
                 </div>
                 
                 <div class="technical-highlight">
@@ -181,6 +187,7 @@
             {{end}}
             
             {{range .Items}}
+            <a name="item-{{.ID}}"></a>
             <div class="item">
                 <div class="item-title">{{.Title}}</div>
                 <div class="item-summary">

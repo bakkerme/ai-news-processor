@@ -32,59 +32,40 @@ func New(baseURL, key, model string) *Client {
 var ItemResponseSchema = GenerateSchema[[]common.Item]()
 var SummaryResponseSchema = GenerateSchema[common.SummaryResponse]()
 
-func (c *Client) Query(systemPrompt string, userPrompts []string, results chan common.ErrorString) {
-	schemaParam := openai.ResponseFormatJSONSchemaJSONSchemaParam{
-		Name:        "post_item",
-		Description: openai.String("an object representing a post"),
-		Schema:      ItemResponseSchema,
-		Strict:      openai.Bool(true),
-	}
-
-	userPrompt := strings.Join(userPrompts, "\n")
-
-	// fmt.Println(userPrompt)
-
-	resp, err := c.client.Chat.Completions.New(
-		context.Background(),
-		openai.ChatCompletionNewParams{
-			Model: c.model,
-			Messages: []openai.ChatCompletionMessageParamUnion{
-				openai.SystemMessage(systemPrompt),
-				openai.UserMessage(userPrompt),
-			},
-			ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
-				OfJSONSchema: &openai.ResponseFormatJSONSchemaParam{JSONSchema: schemaParam},
-			},
-		},
+func (c *Client) QueryForEntrySummary(systemPrompt string, userPrompts []string, results chan common.ErrorString) {
+	c.QueryWithSchema(
+		systemPrompt,
+		userPrompts,
+		ItemResponseSchema,
+		"post_item",
+		"an object representing a post",
+		results,
 	)
-
-	if err != nil {
-		results <- common.ErrorString{
-			Value: "",
-			Err:   err,
-		}
-		return
-	}
-
-	if len(resp.Choices) == 0 {
-		results <- common.ErrorString{
-			Value: "",
-			Err:   fmt.Errorf("empty response from llm"),
-		}
-		return
-	}
-
-	results <- common.ErrorString{
-		Value: resp.Choices[0].Message.Content,
-		Err:   nil,
-	}
 }
 
-func (c *Client) QueryForSummary(systemPrompt string, userPrompts []string, results chan common.ErrorString) {
+func (c *Client) QueryForFeedSummary(systemPrompt string, userPrompts []string, results chan common.ErrorString) {
+	c.QueryWithSchema(
+		systemPrompt,
+		userPrompts,
+		SummaryResponseSchema,
+		"summary",
+		"a summary of multiple AI news items",
+		results,
+	)
+}
+
+func (c *Client) QueryWithSchema(
+	systemPrompt string,
+	userPrompts []string,
+	schema interface{},
+	schemaName string,
+	schemaDescription string,
+	results chan common.ErrorString,
+) {
 	schemaParam := openai.ResponseFormatJSONSchemaJSONSchemaParam{
-		Name:        "summary",
-		Description: openai.String("a summary of multiple AI news items"),
-		Schema:      SummaryResponseSchema,
+		Name:        schemaName,
+		Description: openai.String(schemaDescription),
+		Schema:      schema,
 		Strict:      openai.Bool(true),
 	}
 
@@ -132,6 +113,7 @@ func (c *Client) ParseSummaryResponse(jsonStr string) (*common.SummaryResponse, 
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse summary response: %w", err)
 	}
+
 	return &summary, nil
 }
 
