@@ -24,6 +24,8 @@ type Specification struct {
 	DebugSkipEmail       bool `split_words:"true"`
 	DebugOutputBenchmark bool `split_words:"true"`
 	DebugMaxEntries      int  `split_words:"true"`
+
+	PersonasPath string `split_words:"true"`
 }
 
 // Validate checks if the specification is valid

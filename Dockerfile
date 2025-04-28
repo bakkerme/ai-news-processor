@@ -5,6 +5,7 @@ WORKDIR /app
 
 # Copy the source code
 COPY . .
+COPY personas/ /app/personas/
 
 # Build the application
 RUN GOOS=linux go build -o /app/main ./internal

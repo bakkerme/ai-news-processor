@@ -1,0 +1,14 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Cursor Rule: Cursor Rule File Location and Naming
+
+rule "cursor-rule-location-naming" {
+  description = "All cursor rules must be in .cursor/rules and end in .mdc"
+  match = /(.+\/)?(.+\.mdc)$/
+  condition = starts_with($MATCH, ".cursor/rules/") && ends_with($MATCH, ".mdc")
+  error = "Cursor rule files must be located in .cursor/rules and have a .mdc extension"
+  applies_to = ["cursor_rule_file"]
+}

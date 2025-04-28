@@ -128,7 +128,7 @@ func (e *Entry) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 func GetFeeds(urls []string) ([]*Feed, error) {
 	var feeds []*Feed
 	for _, url := range urls {
-		rssString, err := fetchRSS(url)
+		rssString, err := FetchRSS(url)
 		if err != nil {
 			return nil, fmt.Errorf("could not fetch RSS from %s: %w", url, err)
 		}
@@ -153,8 +153,8 @@ func GetMockFeeds() []*Feed {
 	return []*Feed{feed}
 }
 
-// fetchRSS retrieves RSS content from a URL
-func fetchRSS(url string) (string, error) {
+// FetchRSS retrieves RSS content from a URL
+func FetchRSS(url string) (string, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return "", fmt.Errorf("could not fetch RSS: %w", err)

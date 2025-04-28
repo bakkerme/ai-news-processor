@@ -10,6 +10,7 @@
             "request": "launch",
             "mode": "auto",
             "program": "./internal",
+            "args": ["-persona", "LocalLLaMA"],
             "envFile": [
                 "${workspaceFolder}/.env",
                 "${workspaceFolder}/.envdebug"

@@ -1,0 +1,12 @@
+---
+description: 
+globs: *.go
+alwaysApply: false
+---
+rule "no-ioutil-use-os" {
+  description = "Do not use the 'ioutil' package as it is deprecated. Use the 'os' package instead."
+  match = /ioutil/ 
+  condition = contains($FILE_CONTENT, "ioutil")
+  error = "The 'ioutil' package is deprecated. Please use the 'os' package (and/or 'io', 'os', 'bufio', etc.) instead."
+  applies_to = ["go_source"]
+}

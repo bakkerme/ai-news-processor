@@ -26,6 +26,7 @@ The following environment variables are used to configure the AI News Processor:
 | `ANP_EMAIL_USERNAME`          | Username for the email account.              |                    |
 | `ANP_EMAIL_PASSWORD`          | Password for the email account.              |                    |
 | `ANP_CRON_SCHEDULE`           | Cron schedule for running the processor.     | `0 0 * * *` (Midnight) |
+| `ANP_PERSONAS_PATH`           | Directory containing persona YAML files.     | `/app/personas/`   |
 
 ### Debug Configuration
 
@@ -38,6 +39,20 @@ The following environment variables are used for debugging purposes, The Mock RS
 | `ANP_DEBUG_MOCK_SKIP_EMAIL`      | Skip sending email notifications during processing.       | `false`       |
 | `ANP_DEBUG_OUTPUT_BENCHMARK`     | Output benchmark data for LLM performance benchmarking.   | `false`       |
 | `ANP_DEBUG_MAX_ENTRIES`          | Limit the number of entries processed (0 = no limit).     | `0`           |
+
+## Personas System
+
+- Each persona is defined in a YAML file in the `personas/` directory at the project root.
+- At runtime, set the environment variable `ANP_PERSONAS_PATH` to the directory containing persona YAML files (default: `/app/personas/` in Docker).
+- To select a persona at runtime, use the CLI flag `--persona=NAME` or `--persona=all` to process all personas.
+- To add a new persona, create a new YAML file in the `personas/` directory with the required fields (see examples in `planning/persona.md`).
+
+Example CLI usage:
+
+```sh
+go run main.go --persona=LocalLLaMA
+go run main.go --persona=all
+```
 
 ## Getting Started
 

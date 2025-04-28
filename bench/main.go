@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/bakkerme/ai-news-processor/internal/common"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
@@ -71,6 +72,8 @@ type BenchmarkResults struct {
 	TotalItems          int                         `json:"total_items"`
 	RelevanceAccuracy   float64                     `json:"relevance_accuracy"`
 	DetailedEvaluations map[string]EvaluationResult `json:"detailed_evaluations"`
+	PersonaName         string                      `json:"persona_name"`
+	PersonaFocusAreas   []string                    `json:"persona_focus_areas"`
 }
 
 func main() {
@@ -94,17 +97,48 @@ func main() {
 	)
 	log.Println("OpenAI client initialized.")
 
-	// Generate evaluation prompt with original system prompt
-	fullPrompt := fmt.Sprintf(evaluationPrompt, prompts.GetSystemPrompt())
-
 	// Load benchmark data from benchmark.json
 	log.Println("Loading benchmark data from benchmark.json...")
-	benchmarkData, err := loadBenchmarkData("./benchmark.json")
+	benchmarkData, err := loadBenchmarkData("./results/benchmark.json")
 	if err != nil {
 		log.Printf("Error loading benchmark data: %v\n", err)
 		os.Exit(1)
 	}
-	log.Printf("Loaded %d benchmark entries.\n", len(benchmarkData.RawInput))
+	log.Printf("Loaded benchmark data with persona: %s\n", benchmarkData.Persona)
+
+	// Set up persona handling
+	personaPath := "../personas/" // default to Docker path
+
+	// Load all personas and find the matching one
+	personas, err := common.LoadPersonas(personaPath)
+	if err != nil {
+		log.Printf("Error loading personas: %v\n", err)
+		os.Exit(1)
+	}
+
+	var selectedPersona *common.Persona
+	for i, p := range personas {
+		if p.Name == benchmarkData.Persona {
+			selectedPersona = &personas[i]
+			break
+		}
+	}
+
+	if selectedPersona == nil {
+		log.Printf("Error: Could not find persona %s in personas directory\n", benchmarkData.Persona)
+		os.Exit(1)
+	}
+
+	log.Printf("Found matching persona: %s\n", selectedPersona.Name)
+
+	// Generate evaluation prompt with persona-specific information
+	systemPrompt, err := prompts.ComposePrompt(*selectedPersona)
+	if err != nil {
+		log.Printf("Error composing prompt: %v\n", err)
+		os.Exit(1)
+	}
+
+	fullPrompt := fmt.Sprintf(evaluationPrompt, systemPrompt)
 
 	// Build a map from ID to raw_input for matching
 	rawInputByID := make(map[string]string)
@@ -125,6 +159,8 @@ func main() {
 
 	var results BenchmarkResults
 	results.DetailedEvaluations = make(map[string]EvaluationResult)
+	results.PersonaName = selectedPersona.Name
+	results.PersonaFocusAreas = selectedPersona.FocusAreas
 
 	// Process each entry in the benchmark data
 	for _, result := range benchmarkData.Results {
@@ -186,7 +222,7 @@ func main() {
 
 	// Output results
 	log.Println("Outputting results...")
-	outputResults(results, benchmarkData.Results)
+	outputResults(results, benchmarkData.Results, selectedPersona)
 }
 
 func loadBenchmarkData(filename string) (*common.BenchmarkData, error) {
@@ -215,7 +251,7 @@ func formatSummary(item common.Item) string {
 	return summary.String()
 }
 
-func outputResults(results BenchmarkResults, items []common.Item) {
+func outputResults(results BenchmarkResults, items []common.Item, persona *common.Persona) {
 	// Build a map from ID to Title
 	titleMap := make(map[string]string)
 	for _, item := range items {
@@ -223,7 +259,7 @@ func outputResults(results BenchmarkResults, items []common.Item) {
 	}
 
 	// Print summary
-	fmt.Printf("\nBenchmark Results:\n")
+	fmt.Printf("\nBenchmark Results for Persona: %s\n", persona.Name)
 	fmt.Printf("Total Items Evaluated: %d\n", results.TotalItems)
 	fmt.Printf("Relevance Accuracy: %.2f%%\n", results.RelevanceAccuracy*100)
 
@@ -247,10 +283,14 @@ func outputResults(results BenchmarkResults, items []common.Item) {
 		return
 	}
 
-	err = os.WriteFile("benchmark_results.json", resultsJson, 0644)
+	// Create filename with persona name
+	personaUsed := strings.ToLower(strings.ReplaceAll(persona.Name, " ", "_"))
+	filename := fmt.Sprintf("./results/benchmark_results_%s_%s.json", personaUsed, time.Now().Format("2006-01-02_15-04-05"))
+
+	err = os.WriteFile(filename, resultsJson, 0644)
 	if err != nil {
 		log.Printf("Error writing results file: %v\n", err)
 	} else {
-		log.Println("Results written to benchmark_results.json.")
+		log.Printf("Results written to %s\n", filename)
 	}
 }

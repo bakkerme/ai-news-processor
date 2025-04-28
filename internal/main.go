@@ -1,14 +1,20 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/bakkerme/ai-news-processor/internal/common"
 	"github.com/bakkerme/ai-news-processor/internal/email"
+	"github.com/bakkerme/ai-news-processor/internal/llm"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
+	"github.com/bakkerme/ai-news-processor/internal/persona"
+	"github.com/bakkerme/ai-news-processor/internal/prompts"
 	"github.com/bakkerme/ai-news-processor/internal/rss"
 	"github.com/bakkerme/ai-news-processor/internal/specification"
+	"github.com/bakkerme/ai-news-processor/internal/summary"
 )
 
 func main() {
@@ -17,204 +23,155 @@ func main() {
 		panic(err)
 	}
 
-	emailer, err := email.New(s.EmailHost, s.EmailPort, s.EmailUsername, s.EmailPassword, s.EmailFrom)
-	if err != nil {
-		panic(fmt.Errorf("could not set up emailer: %w", err))
-	}
-
-	openaiClient := openai.New(s.LlmUrl, s.LlmApiKey, s.LlmModel)
-
 	// Print the duration it took to run the job
 	startTime := time.Now()
 	defer func() {
 		fmt.Printf("Job took %v\n", time.Since(startTime))
 	}()
 
-	// Store all raw inputs for benchmarking
-	var benchmarkInputs []string
+	// Initialize the OpenAI client
+	openaiClient := openai.New(s.LlmUrl, s.LlmApiKey, s.LlmModel)
 
-	rssString := ""
-	if !s.DebugMockRss {
-		fmt.Println("Loading RSS feed")
-		rssString, err = getMainRSS()
-		if err != nil {
-			panic(fmt.Errorf("failed to load rss data %w", err))
-		}
-	} else {
-		fmt.Println("Loading Mock RSS feed")
-		rssString = rss.ReturnFakeRSS()
-	}
-
-	rssFeed, err := rss.ProcessRSSFeed(rssString)
+	// Initialize email service
+	emailService, err := email.NewService(s)
 	if err != nil {
-		panic(fmt.Errorf("could not process rss feed: %w", err))
+		panic(fmt.Errorf("could not initialize email service: %w", err))
 	}
 
-	entries := rssFeed.Entries
-
-	if len(entries) == 0 {
-		fmt.Println(rssString)
-		panic("no entries found")
+	// Set up persona handling
+	personaPath := s.PersonasPath
+	if personaPath == "" {
+		personaPath = "/app/personas/" // default to Docker path
 	}
 
-	// Limit entries if DebugMaxEntries is set
-	if s.DebugMaxEntries > 0 && len(entries) > s.DebugMaxEntries {
-		entries = entries[:s.DebugMaxEntries]
+	personaFlag := flag.String("persona", "", "Persona to use (name or 'all')")
+	flag.Parse()
+
+	// Load and select personas
+	selectedPersonas, err := persona.LoadAndSelect(personaPath, *personaFlag)
+	if err != nil {
+		panic(err)
 	}
 
-	for i, entry := range entries {
-		commentFeedString := ""
-		if !s.DebugMockRss {
-			commentFeedString, err = getCommentRSS(entry)
+	// Process each persona
+	for _, persona := range selectedPersonas {
+		fmt.Printf("Processing persona: %s\n", persona.Name)
+
+		// 1. Fetch and process RSS feed
+		entries, err := rss.FetchAndProcessFeed(persona.FeedURL, s.DebugMockRss)
+		if err != nil {
+			panic(fmt.Errorf("failed to process RSS feed for persona %s: %w", persona.Name, err))
+		}
+
+		// Limit entries if DebugMaxEntries is set
+		if s.DebugMaxEntries > 0 && len(entries) > s.DebugMaxEntries {
+			entries = entries[:s.DebugMaxEntries]
+		}
+
+		// 2. Enrich entries with comments
+		entries, err = rss.EnrichWithComments(entries, s.DebugMockRss)
+		if err != nil {
+			panic(fmt.Errorf("failed to enrich entries with comments for persona %s: %w", persona.Name, err))
+		}
+
+		// Store all raw inputs for benchmarking
+		var benchmarkInputs []string
+		var items []common.Item
+
+		// 3. Process entries with LLM
+		if !s.DebugMockLLM {
+			fmt.Println("Sending to LLM")
+			systemPrompt, err := prompts.ComposePrompt(persona)
 			if err != nil {
-				panic(fmt.Errorf("failed to load rss comment data %w", err))
+				panic(fmt.Errorf("could not compose prompt for persona %s: %w", persona.Name, err))
+			}
+
+			items, benchmarkInputs, err = llm.ProcessEntries(openaiClient, systemPrompt, entries, 5, s.DebugOutputBenchmark)
+			if err != nil {
+				panic(fmt.Errorf("could not process entries with LLM: %w", err))
 			}
 		} else {
-			commentFeedString = rss.ReturnFakeCommentRSS(entry.ID)
+			fmt.Println("Loading fake LLM response")
+			items = GetMockLLMResponse()
 		}
 
-		commentFeed, err := rss.ProcessCommentsRSSFeed(commentFeedString)
-		if err != nil {
-			panic(fmt.Errorf("could not process rss coment feed: %w", err))
+		// 4. Enrich items with links from RSS entries
+		items = llm.EnrichItems(items, entries)
+
+		// Output benchmark data if requested
+		if s.DebugOutputBenchmark {
+			benchData := &common.BenchmarkData{
+				RawInput: benchmarkInputs,
+				Results:  items,
+				Persona:  persona.Name,
+			}
+			outputBenchmarkData(benchData)
 		}
 
-		entry.Comments = commentFeed.Entries
-		entries[i] = entry
-	}
-
-	items := make([]common.Item, len(entries))
-	if !s.DebugMockLLM {
-		fmt.Println("Sending to LLM")
-
-		completionChannel := make(chan common.ErrorString, len(entries))
-		systemPrompt := getSystemPrompt()
-
-		batchCounter := 0
-		batchSize := 5
-		for i := 0; i < len(entries); i += batchSize {
-			batch := entries[i:min(i+batchSize, len(entries))]
-
-			fmt.Printf("Sending batch %d with %d items\n", i/batchSize, len(batch))
-
-			batchStrings := make([]string, len(batch))
-			for j, entry := range batch {
-				batchStrings[j] = entry.String(s.DebugOutputBenchmark)
-			}
-
-			// Store inputs for benchmarking
-			if s.DebugOutputBenchmark {
-				benchmarkInputs = append(benchmarkInputs, batchStrings...)
-			}
-
-			go openaiClient.QueryForEntrySummary(systemPrompt, batchStrings, completionChannel)
-			batchCounter++
+		// 5. Filter for relevant items
+		relevantItems := llm.FilterRelevantItems(items)
+		if len(relevantItems) == 0 {
+			panic("no items to render as an email")
 		}
 
-		for i := 0; i < batchCounter; i++ {
-			fmt.Printf("Waiting for batch %d\n", i)
-			result := <-completionChannel
-			if result.Err != nil {
-				panic(fmt.Errorf("could not process value from LLM for entry %d: %s", i, result.Err))
+		// 6. Get relevant entries for summary
+		relevantEntries := make([]rss.Entry, 0, len(relevantItems))
+		for _, item := range relevantItems {
+			entry := rss.FindEntryByID(item.ID, entries)
+			if entry != nil {
+				relevantEntries = append(relevantEntries, *entry)
 			}
+		}
 
-			fmt.Println(result.Value)
-
-			processedValue := openaiClient.PreprocessJSON(result.Value)
-
-			item, err := llmResponseToItem(processedValue)
+		// 7. Generate summary for relevant items
+		var summaryResponse *common.SummaryResponse
+		if !s.DebugMockLLM {
+			summaryResponse, err = summary.Generate(openaiClient, relevantEntries, persona)
 			if err != nil {
-				panic(fmt.Errorf("could not convert llm output to json. %s: %w", result.Value, err))
+				panic(fmt.Errorf("could not generate summary: %w", err))
 			}
-
-			fmt.Printf("Processed batch %d, found %d items\n", i, len(item))
-			items = append(items, item...)
-		}
-	} else {
-		fmt.Println("Loading fake LLM response")
-		items = returnFakeLLMResponse()
-	}
-
-	// add the link from the RSS Entries to the Items
-	for i, item := range items {
-		id := item.ID
-		if id == "" {
-			continue
+		} else {
+			// Mock summary for debug mode
+			summaryResponse = GetMockSummaryResponse()
 		}
 
-		entry := getRSSEntryWithID(id, entries)
-		if entry == nil {
-			fmt.Printf("could not find item with ID %s in RSS entry\n", id)
-			continue
-		}
-
-		items[i].Link = entry.Link.Href
-	}
-
-	if s.DebugOutputBenchmark {
-		itemsToInclude := []common.Item{}
-		for _, item := range items {
-			if item.ID != "" {
-				itemsToInclude = append(itemsToInclude, item)
-			}
-		}
-
-		// Create benchmark data with both inputs and results
-		benchmarkData := &common.BenchmarkData{
-			RawInput: benchmarkInputs,
-			Results:  itemsToInclude,
-		}
-		outputBenchmark(benchmarkData)
-	}
-
-	itemsToInclude := []common.Item{}
-	for _, item := range items {
-		if item.IsRelevant && item.ID != "" {
-			itemsToInclude = append(itemsToInclude, item)
+		// 8. Render and send email
+		err = emailService.RenderAndSend(relevantItems, summaryResponse)
+		if err != nil {
+			panic(fmt.Errorf("could not send email: %w", err))
 		}
 	}
+}
 
-	if len(itemsToInclude) == 0 {
-		panic("no items render as an email")
-	}
+// outputBenchmarkData writes benchmark data to a file
+func outputBenchmarkData(data *common.BenchmarkData) {
+	filename := "bench/results/benchmark.json"
 
-	// Generate summary for relevant items
-	fmt.Println("Generating summary of relevant items")
-	relevantEntries := make([]rss.Entry, 0, len(itemsToInclude))
-	for _, item := range itemsToInclude {
-		if entry := getRSSEntryWithID(item.ID, entries); entry != nil {
-			relevantEntries = append(relevantEntries, *entry)
-		}
-	}
-
-	// Create input for summary
-	summaryInputs := make([]string, len(relevantEntries))
-	for i, entry := range relevantEntries {
-		summaryInputs[i] = entry.String(false)
-	}
-
-	summaryChannel := make(chan common.ErrorString, 1)
-	go openaiClient.QueryForFeedSummary(getSummarySystemPrompt(), summaryInputs, summaryChannel)
-
-	summaryResult := <-summaryChannel
-	if summaryResult.Err != nil {
-		panic(fmt.Errorf("could not generate summary: %w", summaryResult.Err))
-	}
-
-	processedSummary := openaiClient.PreprocessJSON(summaryResult.Value)
-	summary, err := openaiClient.ParseSummaryResponse(processedSummary)
+	// Ensure the directory exists
+	err := os.MkdirAll("bench/results", 0755)
 	if err != nil {
-		panic(fmt.Errorf("could not parse summary response: %w", err))
+		fmt.Printf("Error creating benchmark directory: %v\n", err)
+		return
 	}
 
-	email, err := email.RenderEmail(itemsToInclude, summary)
+	file, err := os.Create(filename)
 	if err != nil {
-		panic(fmt.Errorf("could not render email: %w", err))
+		fmt.Printf("Error creating benchmark file: %v\n", err)
+		return
+	}
+	defer file.Close()
+
+	jsonData, err := common.SerializeBenchmarkData(data)
+	if err != nil {
+		fmt.Printf("Error serializing benchmark data: %v\n", err)
+		return
 	}
 
-	if !s.DebugSkipEmail {
-		fmt.Printf("Sending email to %s\n", s.EmailTo)
-		emailer.Send(s.EmailTo, "AI News", email)
-	} else {
-		writeEmailToDisk(email)
+	_, err = file.Write(jsonData)
+	if err != nil {
+		fmt.Printf("Error writing benchmark data: %v\n", err)
+		return
 	}
+
+	fmt.Printf("Benchmark data written to %s\n", filename)
 }
