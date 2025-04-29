@@ -15,16 +15,12 @@ import (
 	"github.com/bakkerme/ai-news-processor/internal/specification"
 )
 
-const evaluationPrompt = `You are an expert in evaluating AI-generated content. Your task is to evaluate how well the following news summary adheres to the persona's requirements and criteria.
+const evaluationPrompt = `You are an expert in evaluating AI-generated content. Your task is to evaluate the quality of the following news summary, focusing purely on how well it summarizes and analyzes the content.
 
 The persona is {{.PersonaIdentity}}
 
 The persona's focus areas are:
 {{range .FocusAreas}}* {{.}}
-{{end}}
-
-The summary must meet these relevance criteria:
-{{range .RelevanceCriteria}}* {{.}}
 {{end}}
 
 The summary should be marked as irrelevant if it matches:
@@ -33,30 +29,30 @@ The summary should be marked as irrelevant if it matches:
 
 For each summary, evaluate:
 
-1. Content Quality (choose one):
-   - Excellent: Fully meets persona criteria with exceptional insight and technical depth
-   - Good: Meets most persona criteria with solid technical content
-   - Fair: Meets some criteria but lacks depth or precision
-   - Poor: Fails to meet most persona criteria
+1. Summary Quality (choose one):
+   - Excellent: Comprehensive summary with exceptional technical depth, clear analysis, and insightful commentary
+   - Good: Clear summary with solid technical details and meaningful analysis
+   - Fair: Basic summary with some technical details but lacks depth or clarity
+   - Poor: Incomplete or unclear summary lacking essential details
 
-2. Technical Analysis:
-   - Evaluate technical accuracy and depth
-   - Check for specific details, metrics, and benchmarks
-   - Assess novel approaches and techniques coverage
-   - Verify alignment with persona's focus areas
+2. Evaluation Criteria:
+   - Comprehensiveness: Does it capture all key technical details and developments?
+   - Technical Accuracy: Are technical concepts and specifications explained correctly?
+   - Clarity: Is the information presented in a clear, well-structured manner?
+   - Analysis Depth: Does it provide meaningful insights and commentary?
+   - Comment Integration: Are community discussions and feedback well-analyzed?
 
-3. Relevance Assessment:
-   - Verify if the content matches the persona's focus areas
-   - Check against relevance criteria
-   - Verify against exclusion criteria
-   - Evaluate the quality of the relevance explanation
+3. Relevance Assessment (separate from quality rating):
+   - Check if the content matches any exclusion criteria
+   - Evaluate if the IsRelevant flag is set appropriately
+   - Assess if the relevance explanation is clear and justified
 
 Respond with a JSON object containing:
 {
   "quality_rating": string,  // One of: "Excellent", "Good", "Fair", "Poor"
-  "quality_explanation": string,  // Detailed explanation referencing specific persona criteria
-  "relevance_correct": boolean,  // Whether IsRelevant flag was set correctly per persona criteria
-  "relevance_explanation": string // Explanation based on persona's relevance/exclusion criteria
+  "quality_explanation": string,  // Detailed explanation of the summary quality
+  "relevance_correct": boolean,  // Whether IsRelevant flag was set correctly based on exclusion criteria
+  "relevance_explanation": string // Explanation of relevance assessment
 }`
 
 // EvaluationResult represents the structure of the benchmark evaluation response
