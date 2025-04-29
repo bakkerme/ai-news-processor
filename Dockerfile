@@ -5,7 +5,6 @@ WORKDIR /app
 
 # Copy the source code
 COPY . .
-COPY personas/ /app/personas/
 
 # Build the application
 RUN GOOS=linux go build -o /app/main ./internal
@@ -17,6 +16,7 @@ WORKDIR /app
 
 # Copy the binary from builder
 COPY --from=builder /app/main /app/main
+COPY --from=builder /app/personas /app/personas
 
 COPY build/crontab /etc/cron.d/appcron
 COPY build/init.sh /app/init.sh
