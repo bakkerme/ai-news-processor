@@ -136,16 +136,20 @@ func main() {
 		}
 
 		// 8. Render and send email
-		err = emailService.RenderAndSend(relevantItems, summaryResponse)
-		if err != nil {
-			panic(fmt.Errorf("could not send email: %w", err))
+		if !s.DebugSkipEmail {
+			err = emailService.RenderAndSend(relevantItems, summaryResponse)
+			if err != nil {
+				panic(fmt.Errorf("could not send email: %w", err))
+			}
+		} else {
+			fmt.Println("Skipping email")
 		}
 	}
 }
 
 // outputBenchmarkData writes benchmark data to a file
 func outputBenchmarkData(data *common.BenchmarkData) {
-	filename := "bench/results/benchmark.json"
+	filename := "../bench/results/benchmark.json"
 
 	// Ensure the directory exists
 	err := os.MkdirAll("bench/results", 0755)

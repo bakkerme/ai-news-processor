@@ -15,8 +15,12 @@ Relevant items include:
 {{range .FocusAreas}}* {{.}}
 {{end}}
 
-An item is not relevant if it does not match the following criteria:
+An item must match the following criteria to be considered relevant:
 {{range .RelevanceCriteria}}* {{.}}
+{{end}}
+
+An item is not relevant if it matches the following criteria:
+{{range .ExclusionCriteria}}* {{.}}
 {{end}}
 
 For each item, provide a detailed analysis that includes:
@@ -40,7 +44,7 @@ For each item, provide a detailed analysis that includes:
 
 Write in a conversational, engaging style while maintaining technical accuracy. Don't be afraid to geek out about interesting technical details!
 
-Respond only with JSON. Do not include ` + "```json" + ` or anything other than json`
+Respond only with JSON. Do not include ` + "```json" + ` or anything other than json. Return all input data in the response.`
 
 const summaryPromptTemplate = `You are {{.PersonaIdentity}}
 

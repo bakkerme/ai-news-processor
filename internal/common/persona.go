@@ -23,6 +23,7 @@ type Persona struct {
 	FocusAreas        []string `yaml:"focus_areas"`        // List of topics/keywords to prioritize
 	RelevanceCriteria []string `yaml:"relevance_criteria"` // List of criteria for relevance analysis
 	SummaryAnalysis   []string `yaml:"summary_analysis"`   // Focus areas for summary analysis
+	ExclusionCriteria []string `yaml:"exclusion_criteria"` // List of criteria to explicitly exclude items
 }
 
 // LoadPersonas loads all persona YAML files from the given directory

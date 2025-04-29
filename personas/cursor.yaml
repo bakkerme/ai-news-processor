@@ -14,15 +14,24 @@ focus_areas:
   - "New Cursor IDE features and updates"
   - "Productivity tips and workflows"
   - "Community extensions and integrations"
-  - "Troubleshooting and solutions"
 
 # Relevance criteria
 relevance_criteria:
-  - "Provides actionable Cursor IDE tips"
-  - "Highlights new features or capabilities"
-  - "Contains expert advice on AI-powered development"
-  - "Demonstrates effective Cursor IDE usage patterns"
-  - "Effective configuration of Cursor IDE"
+  - "Provides specific and actionable Cursor IDE tips or workflows"
+  - "Details new features or capabilities with examples or analysis"
+  - "Offers constructive feedback or well-documented bug reports"
+  - "Demonstrates advanced or innovative Cursor IDE usage patterns"
+  - "Discusses specific configuration settings and their impact"
+
+# Exclusion criteria (what to filter out)
+exclusion_criteria:
+  - "Memes, jokes, or other non-technical content"
+  - "Generic complaints about performance or quality without specific details"
+  - "Basic technical support questions (installation, setup, etc.)"
+  - "Posts asking how to use basic features without research effort"
+  - "Vague feature requests without detailed use cases"
+  - "Posts complaining about AI responses"
+  - "Duplicate posts of already covered topics"
 
 # Summary analysis focus
 summary_analysis:

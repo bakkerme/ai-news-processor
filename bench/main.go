@@ -14,7 +14,7 @@ import (
 	"github.com/bakkerme/ai-news-processor/internal/specification"
 )
 
-const evaluationPrompt = `You are an AI researcher and enthusiast who loves diving deep into technical details. Your task is to evaluate the quality of AI news summaries and their relevance assessment.
+const evaluationPrompt = `You are an expert in evaluating news summaries. Your task is to evaluate the quality of the following news summaries.
 
 First, here is the original prompt used to generate the summaries:
 
@@ -30,7 +30,7 @@ Now, your task is to evaluate:
    - Fair: Some important criteria are missing or weak.
    - Poor: Fails to meet most criteria.
 
-Consider accuracy of technical details, completeness, clarity, emphasis, technical depth, comment analysis, and relevance explanation.
+Consider accuracy of technical details, completeness, clarity, emphasis, technical depth, comment analysis, and relevance explanation to the original text.
 
 2. Relevance Assessment:
    - Evaluate if the IsRelevant flag is correctly set based on the original criteria
@@ -71,6 +71,7 @@ func QueryForBenchmarkEvaluation(llmClient *openai.Client, systemPrompt string, 
 type BenchmarkResults struct {
 	TotalItems          int                         `json:"total_items"`
 	RelevanceAccuracy   float64                     `json:"relevance_accuracy"`
+	QualityScore        float64                     `json:"quality_score"`
 	DetailedEvaluations map[string]EvaluationResult `json:"detailed_evaluations"`
 	PersonaName         string                      `json:"persona_name"`
 	PersonaFocusAreas   []string                    `json:"persona_focus_areas"`
@@ -218,6 +219,22 @@ func main() {
 
 	if results.TotalItems > 0 {
 		results.RelevanceAccuracy = float64(correctRelevance) / float64(results.TotalItems)
+
+		// Calculate quality score with Poor rated at 0%
+		var totalQualityScore float64
+		for _, eval := range results.DetailedEvaluations {
+			switch eval.QualityRating {
+			case "Excellent":
+				totalQualityScore += 100.0
+			case "Good":
+				totalQualityScore += 75.0
+			case "Fair":
+				totalQualityScore += 50.0
+			case "Poor":
+				totalQualityScore += 0.0
+			}
+		}
+		results.QualityScore = totalQualityScore / float64(results.TotalItems)
 	}
 
 	// Output results
@@ -262,6 +279,7 @@ func outputResults(results BenchmarkResults, items []common.Item, persona *commo
 	fmt.Printf("\nBenchmark Results for Persona: %s\n", persona.Name)
 	fmt.Printf("Total Items Evaluated: %d\n", results.TotalItems)
 	fmt.Printf("Relevance Accuracy: %.2f%%\n", results.RelevanceAccuracy*100)
+	fmt.Printf("Quality Score: %.2f%%\n", results.QualityScore)
 
 	// Print detailed evaluations
 	fmt.Printf("\nDetailed Evaluations:\n")

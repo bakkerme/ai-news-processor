@@ -22,7 +22,6 @@ type Specification struct {
 	DebugMockRss         bool `split_words:"true"`
 	DebugMockLLM         bool `split_words:"true"`
 	DebugSkipEmail       bool `split_words:"true"`
-	DebugSkipCron        bool `split_words:"true"`
 	DebugOutputBenchmark bool `split_words:"true"`
 	DebugMaxEntries      int  `split_words:"true"`
 

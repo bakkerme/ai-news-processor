@@ -24,7 +24,7 @@ func ProcessEntries(client *openai.Client, systemPrompt string, entries []rss.En
 
 		batchStrings := make([]string, len(batch))
 		for j, entry := range batch {
-			batchStrings[j] = entry.String(debugOutputBenchmark)
+			batchStrings[j] = entry.String(false)
 		}
 
 		// Store inputs for benchmarking

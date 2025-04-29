@@ -2,7 +2,7 @@
 
 echo "Initialising AI News Processor"
 
-if [ "$DEBUG_SKIP_CRON" = "true" ]; then
+if [ "$ANP_DEBUG_SKIP_CRON" = "true" ]; then
     echo "Debug mode: Skipping cron setup and running main directly"
     /app/main
 else

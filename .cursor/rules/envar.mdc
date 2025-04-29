@@ -1,6 +1,6 @@
 ---
-description: 
-globs: *.go
+description: Environment variable naming
+globs: 
 alwaysApply: false
 ---
 # Cursor Rule: Environment Variable Prefix

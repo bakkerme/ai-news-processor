@@ -15,11 +15,19 @@ focus_areas:
   - "Big AI lab news (OpenAI, Anthropic, etc.)"
   - "Security news"
 
-# Relevance criteria
+# Relevance criteria (positive attributes to look for)
 relevance_criteria:
-  - "Describes the technical details and specifications"
-  - "Explains the significance of the development"
-  - "Highlights any novel approaches or techniques"
+  - "Contains specific technical details or specifications"
+  - "Explains the significance and impact of the development"
+  - "Includes performance metrics, benchmarks, or comparisons"
+  - "Discusses novel approaches or techniques"
+
+# Exclusion criteria (what to filter out)
+exclusion_criteria:
+  - "Content entirely unrelated to AI/ML technology"
+  - "Questions that would be better suited for tech support"
+  - "Duplicate posts of already covered developments"
+  - "Random complaints without technical content"
 
 # Summary analysis focus
 summary_analysis:
