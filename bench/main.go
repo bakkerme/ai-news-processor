@@ -1,47 +1,62 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/bakkerme/ai-news-processor/internal/common"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
-	"github.com/bakkerme/ai-news-processor/internal/prompts"
 	"github.com/bakkerme/ai-news-processor/internal/specification"
 )
 
-const evaluationPrompt = `You are an expert in evaluating news summaries. Your task is to evaluate the quality of the following news summaries.
+const evaluationPrompt = `You are an expert in evaluating AI-generated content. Your task is to evaluate how well the following news summary adheres to the persona's requirements and criteria.
 
-First, here is the original prompt used to generate the summaries:
+The persona is {{.PersonaIdentity}}
 
-` + "```prompt" + `
-%s
-` + "```" + `
+The persona's focus areas are:
+{{range .FocusAreas}}* {{.}}
+{{end}}
 
-Now, your task is to evaluate:
+The summary must meet these relevance criteria:
+{{range .RelevanceCriteria}}* {{.}}
+{{end}}
 
-1. Summary Quality (choose one):
-   - Excellent: Meets all criteria with high quality and insight.
-   - Good: Meets most criteria, minor issues.
-   - Fair: Some important criteria are missing or weak.
-   - Poor: Fails to meet most criteria.
+The summary should be marked as irrelevant if it matches:
+{{range .ExclusionCriteria}}* {{.}}
+{{end}}
 
-Consider accuracy of technical details, completeness, clarity, emphasis, technical depth, comment analysis, and relevance explanation to the original text.
+For each summary, evaluate:
 
-2. Relevance Assessment:
-   - Evaluate if the IsRelevant flag is correctly set based on the original criteria
-   - Consider both the content and the quality of the explanation
+1. Content Quality (choose one):
+   - Excellent: Fully meets persona criteria with exceptional insight and technical depth
+   - Good: Meets most persona criteria with solid technical content
+   - Fair: Meets some criteria but lacks depth or precision
+   - Poor: Fails to meet most persona criteria
+
+2. Technical Analysis:
+   - Evaluate technical accuracy and depth
+   - Check for specific details, metrics, and benchmarks
+   - Assess novel approaches and techniques coverage
+   - Verify alignment with persona's focus areas
+
+3. Relevance Assessment:
+   - Verify if the content matches the persona's focus areas
+   - Check against relevance criteria
+   - Verify against exclusion criteria
+   - Evaluate the quality of the relevance explanation
 
 Respond with a JSON object containing:
 {
   "quality_rating": string,  // One of: "Excellent", "Good", "Fair", "Poor"
-  "quality_explanation": string,  // Detailed explanation of the rating
-  "relevance_correct": boolean,  // Whether IsRelevant flag was set correctly
-  "relevance_explanation": string // Explanation of relevance assessment
+  "quality_explanation": string,  // Detailed explanation referencing specific persona criteria
+  "relevance_correct": boolean,  // Whether IsRelevant flag was set correctly per persona criteria
+  "relevance_explanation": string // Explanation based on persona's relevance/exclusion criteria
 }`
 
 // EvaluationResult represents the structure of the benchmark evaluation response
@@ -133,13 +148,20 @@ func main() {
 	log.Printf("Found matching persona: %s\n", selectedPersona.Name)
 
 	// Generate evaluation prompt with persona-specific information
-	systemPrompt, err := prompts.ComposePrompt(*selectedPersona)
+	tmpl, err := template.New("evaluation").Parse(evaluationPrompt)
 	if err != nil {
-		log.Printf("Error composing prompt: %v\n", err)
+		log.Printf("Error parsing evaluation prompt template: %v\n", err)
 		os.Exit(1)
 	}
 
-	fullPrompt := fmt.Sprintf(evaluationPrompt, systemPrompt)
+	var buf bytes.Buffer
+	err = tmpl.Execute(&buf, selectedPersona)
+	if err != nil {
+		log.Printf("Error executing evaluation prompt template: %v\n", err)
+		os.Exit(1)
+	}
+
+	fullPrompt := buf.String()
 
 	// Build a map from ID to raw_input for matching
 	rawInputByID := make(map[string]string)
