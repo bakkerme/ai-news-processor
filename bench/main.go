@@ -69,7 +69,7 @@ var EvaluationResultSchema = openai.GenerateSchema[EvaluationResult]()
 
 // QueryForBenchmarkEvaluation queries the LLM for a benchmark evaluation using the EvaluationResult schema
 func QueryForBenchmarkEvaluation(llmClient *openai.Client, systemPrompt string, userPrompts []string, results chan common.ErrorString) {
-	llmClient.QueryWithSchema(
+	llmClient.Query(
 		systemPrompt,
 		userPrompts,
 		EvaluationResultSchema,
@@ -86,6 +86,7 @@ type BenchmarkResults struct {
 	DetailedEvaluations map[string]EvaluationResult `json:"detailed_evaluations"`
 	PersonaName         string                      `json:"persona_name"`
 	PersonaFocusAreas   []string                    `json:"persona_focus_areas"`
+	MissingItems        []string                    `json:"missing_items"`
 }
 
 func main() {
@@ -161,6 +162,7 @@ func main() {
 
 	// Build a map from ID to raw_input for matching
 	rawInputByID := make(map[string]string)
+	processedIDs := make(map[string]bool)
 	for _, raw := range benchmarkData.RawInput {
 		// Try to extract the ID from the raw input (assuming 'ID: <id>' is present)
 		lines := strings.Split(raw, "\n")
@@ -180,6 +182,7 @@ func main() {
 	results.DetailedEvaluations = make(map[string]EvaluationResult)
 	results.PersonaName = selectedPersona.Name
 	results.PersonaFocusAreas = selectedPersona.FocusAreas
+	results.MissingItems = make([]string, 0)
 
 	// Process each entry in the benchmark data
 	for _, result := range benchmarkData.Results {
@@ -188,6 +191,7 @@ func main() {
 			continue
 		}
 
+		processedIDs[result.ID] = true
 		log.Printf("Processing entry (ID: %s)...\n", result.ID)
 
 		// Find the matching raw input by ID
@@ -224,6 +228,23 @@ func main() {
 		log.Printf("Evaluation for entry ID %s: Quality Rating = %s, Relevance Correct = %v\n", result.ID, evalResult.QualityRating, evalResult.RelevanceCorrect)
 		results.DetailedEvaluations[result.ID] = evalResult
 		results.TotalItems++
+	}
+
+	// Check for missing items
+	for id := range rawInputByID {
+		if !processedIDs[id] {
+			log.Printf("Found missing item (ID: %s)...\n", id)
+			results.MissingItems = append(results.MissingItems, id)
+
+			// Add a Poor rating evaluation for the missing item
+			results.DetailedEvaluations[id] = EvaluationResult{
+				QualityRating:        "Poor",
+				QualityExplanation:   "Item was present in raw input but missing from processed results",
+				RelevanceCorrect:     false,
+				RelevanceExplanation: "Unable to assess relevance as item was not processed",
+			}
+			results.TotalItems++
+		}
 	}
 
 	// Calculate aggregate metrics
@@ -298,6 +319,15 @@ func outputResults(results BenchmarkResults, items []common.Item, persona *commo
 	fmt.Printf("Total Items Evaluated: %d\n", results.TotalItems)
 	fmt.Printf("Relevance Accuracy: %.2f%%\n", results.RelevanceAccuracy*100)
 	fmt.Printf("Quality Score: %.2f%%\n", results.QualityScore)
+	fmt.Printf("Missing Items: %d\n", len(results.MissingItems))
+
+	// Print missing items if any
+	if len(results.MissingItems) > 0 {
+		fmt.Printf("\nMissing Items:\n")
+		for _, id := range results.MissingItems {
+			fmt.Printf("- Item ID: %s\n", id)
+		}
+	}
 
 	// Print detailed evaluations
 	fmt.Printf("\nDetailed Evaluations:\n")

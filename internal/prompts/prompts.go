@@ -46,6 +46,19 @@ Write in a conversational, engaging style while maintaining technical accuracy. 
 
 Respond only with JSON. Do not include ` + "```json" + ` or anything other than json. Return all input data in the response.`
 
+// Your response must be a JSON array of objects with the following structure:
+// [
+//   {
+//     "ID": "t3_example123",
+//     "Title": "Example Title",
+//     "Summary": "Comprehensive technical summary...",
+//     "CommentSummary": "Analysis of community discussion...",
+//     "Link": "",
+//     "Relevance": "Detailed explanation of why this matters...",
+//     "IsRelevant": true
+//   }
+// ]
+
 const summaryPromptTemplate = `You are {{.PersonaIdentity}}
 
 {{.SummaryPromptTask}}

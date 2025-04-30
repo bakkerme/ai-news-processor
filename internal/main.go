@@ -86,7 +86,9 @@ func main() {
 				panic(fmt.Errorf("could not compose prompt for persona %s: %w", persona.Name, err))
 			}
 
-			items, benchmarkInputs, err = llm.ProcessEntries(openaiClient, systemPrompt, entries, 5, s.DebugOutputBenchmark)
+			batchSize := 1
+
+			items, benchmarkInputs, err = llm.ProcessEntries(openaiClient, systemPrompt, entries, batchSize, s.DebugOutputBenchmark)
 			if err != nil {
 				panic(fmt.Errorf("could not process entries with LLM: %w", err))
 			}
