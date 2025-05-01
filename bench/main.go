@@ -36,14 +36,13 @@ For each summary, evaluate:
    - Poor: Incomplete or unclear summary lacking essential details
 
 2. Evaluation Criteria:
-   - Comprehensiveness: Does it capture all key technical details and developments?
+   - Comprehensiveness: Does it capture all key details?
    - Technical Accuracy: Are technical concepts and specifications explained correctly?
    - Clarity: Is the information presented in a clear, well-structured manner?
-   - Analysis Depth: Does it provide meaningful insights and commentary?
    - Comment Integration: Are community discussions and feedback well-analyzed?
 
 3. Relevance Assessment (separate from quality rating):
-   - Check if the content matches any exclusion criteria
+   - Check if the original content matches any exclusion criteria. If it does, the IsRelevant flag should be false.
    - Evaluate if the IsRelevant flag is set appropriately
    - Assess if the relevance explanation is clear and justified
 
@@ -60,8 +59,8 @@ Respond with a JSON object containing:
 type EvaluationResult struct {
 	QualityRating        string `json:"quality_rating" jsonschema_description:"Descriptive rating for summary quality (Excellent, Good, Fair, Poor)" jsonschema:"required"`
 	QualityExplanation   string `json:"quality_explanation" jsonschema_description:"Detailed explanation of the rating" jsonschema:"required"`
-	RelevanceCorrect     bool   `json:"relevance_correct" jsonschema_description:"Whether IsRelevant flag was set correctly" jsonschema:"required"`
 	RelevanceExplanation string `json:"relevance_explanation" jsonschema_description:"Explanation of relevance assessment" jsonschema:"required"`
+	RelevanceCorrect     bool   `json:"relevance_correct" jsonschema_description:"Whether IsRelevant flag was set correctly" jsonschema:"required"`
 }
 
 // Generate the JSON schema for EvaluationResult
@@ -302,7 +301,7 @@ func formatSummary(item common.Item) string {
 	summary.WriteString(fmt.Sprintf("ID: %s\n", item.ID))
 	summary.WriteString(fmt.Sprintf("Summary: %s\n", item.Summary))
 	summary.WriteString(fmt.Sprintf("Comment Summary: %s\n", item.CommentSummary))
-	summary.WriteString(fmt.Sprintf("Relevance: %s\n", item.Relevance))
+	// summary.WriteString(fmt.Sprintf("Relevance: %s\n", item.Relevance))
 	summary.WriteString(fmt.Sprintf("IsRelevant: %v\n", item.IsRelevant))
 	return summary.String()
 }
