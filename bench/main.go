@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/bakkerme/ai-news-processor/internal/common"
+	"github.com/bakkerme/ai-news-processor/internal/llm"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
 	"github.com/bakkerme/ai-news-processor/internal/specification"
 )
@@ -64,10 +65,10 @@ type EvaluationResult struct {
 }
 
 // Generate the JSON schema for EvaluationResult
-var EvaluationResultSchema = openai.GenerateSchema[EvaluationResult]()
+var EvaluationResultSchema = llm.GenerateSchema[EvaluationResult]()
 
 // QueryForBenchmarkEvaluation queries the LLM for a benchmark evaluation using the EvaluationResult schema
-func QueryForBenchmarkEvaluation(llmClient *openai.Client, systemPrompt string, userPrompts []string, results chan common.ErrorString) {
+func QueryForBenchmarkEvaluation(llmClient openai.OpenAIClient, systemPrompt string, userPrompts []string, results chan common.ErrorString) {
 	llmClient.Query(
 		systemPrompt,
 		userPrompts,

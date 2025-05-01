@@ -7,10 +7,63 @@ import (
 	"github.com/bakkerme/ai-news-processor/internal/common"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
 	"github.com/bakkerme/ai-news-processor/internal/rss"
+	"github.com/invopop/jsonschema"
 )
 
+// Generate the JSON schema at initialization time
+var ItemResponseSchema = GenerateSchema[[]common.Item]()
+var SummaryResponseSchema = GenerateSchema[common.SummaryResponse]()
+
+// GenerateSchema creates a JSON schema for the given type
+func GenerateSchema[T any]() interface{} {
+	// Structured Outputs uses a subset of JSON schema
+	// These flags are necessary to comply with the subset
+	reflector := jsonschema.Reflector{
+		AllowAdditionalProperties: false,
+		DoNotReference:            true,
+	}
+	var v T
+	schema := reflector.Reflect(v)
+	return schema
+}
+
+// QueryForEntrySummary sends a query to get summaries for RSS entries
+func QueryForEntrySummary(client openai.OpenAIClient, systemPrompt string, userPrompts []string, results chan common.ErrorString) {
+	client.Query(
+		systemPrompt,
+		userPrompts,
+		ItemResponseSchema,
+		"post_item",
+		"an object representing a post",
+		results,
+	)
+}
+
+// QueryForFeedSummary sends a query to get a summary for an entire feed
+func QueryForFeedSummary(client openai.OpenAIClient, systemPrompt string, userPrompts []string, results chan common.ErrorString) {
+	client.Query(
+		systemPrompt,
+		userPrompts,
+		SummaryResponseSchema,
+		"summary",
+		"a summary of multiple AI news items",
+		results,
+	)
+}
+
+// ParseSummaryResponse parses a JSON string into a SummaryResponse
+func ParseSummaryResponse(jsonStr string) (*common.SummaryResponse, error) {
+	var summary common.SummaryResponse
+	err := json.Unmarshal([]byte(jsonStr), &summary)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse summary response: %w", err)
+	}
+
+	return &summary, nil
+}
+
 // ProcessEntries takes RSS entries, processes them through an LLM in batches, and returns processed items
-func ProcessEntries(client *openai.Client, systemPrompt string, entries []rss.Entry, batchSize int, debugOutputBenchmark bool) ([]common.Item, []string, error) {
+func ProcessEntries(client openai.OpenAIClient, systemPrompt string, entries []rss.Entry, batchSize int, debugOutputBenchmark bool) ([]common.Item, []string, error) {
 	var items []common.Item
 	var benchmarkInputs []string
 
@@ -32,7 +85,7 @@ func ProcessEntries(client *openai.Client, systemPrompt string, entries []rss.En
 			benchmarkInputs = append(benchmarkInputs, batchStrings...)
 		}
 
-		go client.QueryForEntrySummary(systemPrompt, batchStrings, completionChannel)
+		go QueryForEntrySummary(client, systemPrompt, batchStrings, completionChannel)
 		batchCounter++
 	}
 

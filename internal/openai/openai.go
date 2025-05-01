@@ -2,17 +2,40 @@ package openai
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/bakkerme/ai-news-processor/internal/common"
-	"github.com/invopop/jsonschema"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 )
+
+// OpenAIClient defines the interface for interacting with an OpenAI-compatible API
+type OpenAIClient interface {
+	// Query performs a general-purpose chat completion request
+	// systemPrompt: The system prompt to use
+	// userPrompts: A list of user messages to send
+	// schema: Optional JSON schema for response formatting (can be nil)
+	// schemaName: Name for the schema when provided
+	// schemaDescription: Description for the schema when provided
+	// returns: Channel that will receive the response or error
+	Query(
+		systemPrompt string,
+		userPrompts []string,
+		schema interface{},
+		schemaName string,
+		schemaDescription string,
+		results chan common.ErrorString,
+	)
+
+	// SetRetryConfig updates the retry behavior configuration
+	SetRetryConfig(config common.RetryConfig)
+
+	// PreprocessJSON cleans up JSON responses from the API
+	PreprocessJSON(response string) string
+}
 
 // DefaultOpenAIRetryConfig provides sensible default values for OpenAI retry behavior
 var DefaultOpenAIRetryConfig = common.RetryConfig{
@@ -29,6 +52,7 @@ type Client struct {
 	retry  common.RetryConfig
 }
 
+// New creates a new OpenAI client
 func New(baseURL, key, model string) *Client {
 	client := openai.NewClient(
 		option.WithAPIKey(key),
@@ -42,32 +66,6 @@ func New(baseURL, key, model string) *Client {
 	}
 }
 
-// Generate the JSON schema at initialization time
-var ItemResponseSchema = GenerateSchema[[]common.Item]()
-var SummaryResponseSchema = GenerateSchema[common.SummaryResponse]()
-
-func (c *Client) QueryForEntrySummary(systemPrompt string, userPrompts []string, results chan common.ErrorString) {
-	c.Query(
-		systemPrompt,
-		userPrompts,
-		ItemResponseSchema,
-		"post_item",
-		"an object representing a post",
-		results,
-	)
-}
-
-func (c *Client) QueryForFeedSummary(systemPrompt string, userPrompts []string, results chan common.ErrorString) {
-	c.Query(
-		systemPrompt,
-		userPrompts,
-		SummaryResponseSchema,
-		"summary",
-		"a summary of multiple AI news items",
-		results,
-	)
-}
-
 // isModelLoadingError checks if the error is specifically a 404 due to model loading
 func isModelLoadingError(err error) bool {
 	if err == nil {
@@ -79,6 +77,7 @@ func isModelLoadingError(err error) bool {
 		strings.Contains(errStr, "Model does not exist")
 }
 
+// Query sends a request to the OpenAI API with the given prompts and schema
 func (c *Client) Query(
 	systemPrompt string,
 	userPrompts []string,
@@ -146,16 +145,7 @@ func (c *Client) Query(
 	}
 }
 
-func (c *Client) ParseSummaryResponse(jsonStr string) (*common.SummaryResponse, error) {
-	var summary common.SummaryResponse
-	err := json.Unmarshal([]byte(jsonStr), &summary)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse summary response: %w", err)
-	}
-
-	return &summary, nil
-}
-
+// PreprocessJSON extracts JSON content from the API response
 func (c *Client) PreprocessJSON(response string) string {
 	// Find the start and end markers
 	startMarker := "```json"
@@ -181,14 +171,7 @@ func (c *Client) PreprocessJSON(response string) string {
 	return strings.TrimSpace(jsonContent)
 }
 
-func GenerateSchema[T any]() interface{} {
-	// Structured Outputs uses a subset of JSON schema
-	// These flags are necessary to comply with the subset
-	reflector := jsonschema.Reflector{
-		AllowAdditionalProperties: false,
-		DoNotReference:            true,
-	}
-	var v T
-	schema := reflector.Reflect(v)
-	return schema
+// SetRetryConfig updates the retry configuration
+func (c *Client) SetRetryConfig(config common.RetryConfig) {
+	c.retry = config
 }
