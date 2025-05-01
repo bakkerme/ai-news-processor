@@ -1,22 +1,9 @@
 ---
-description: Environment variable naming
+description: Environment variable
 globs: 
 alwaysApply: false
 ---
-# Cursor Rule: Environment Variable Prefix
-
-rule "env-var-prefix" {
-  description = "All generated environment variables must start with ANP_"
-  match = /\b[A-Z0-9_]+\b/
-  condition = starts_with($MATCH, "ANP_")
-  error = "Environment variable names must start with ANP_"
-  applies_to = ["env_var_declaration"]
-}
-
-rule "env-var-through-specification" {
-  description = "All environment variables must be loaded through the Specification feature. Do not access environment variables directly; use the Specification struct and its GetConfig method."
-  match = /os\.Getenv\(|os\.LookupEnv\(|os\.Setenv\(/ 
-  condition = false
-  error = "Direct access to environment variables is not allowed. Use the Specification feature (internal/specification) to load all environment variables."
-  applies_to = ["env_var_access"]
-}
+- All environment variables must start with ANP_
+- All environment variables must be loaded through the Specification feature. Do not access environment variables directly; use the Specification struct and its GetConfig method.
+- Upper case acronyms are not allowed in Specification naming. For example, ANP_RSS_URL translates to RssUrl, not RSSURL.
+- All Specificiations must have a Validate() rule

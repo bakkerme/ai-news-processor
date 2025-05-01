@@ -1,0 +1,24 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Project Structure
+
+- `internal/`: Core application logic
+  - `rss/`: RSS feed processing (see ./docs/rss.md)
+  - `llm/`: Language model integration
+  - `openai/`: OpenAI-api specific implementations
+  - `summary/`: Content summarization
+  - `email/`: Email handling and templates
+  - `persona/`: Persona management (see ./docs/persona.md)
+  - `prompts/`: System prompts
+  - `common/`: Shared utilities
+
+- `feed_mocks/`: Mock RSS feed data for testing
+- `bench/`: Benchmarking tools and results (see ./docs/bench.md)
+- `docs/`: Project documentation
+- `personas/`: Persona configurations
+
+- CWD = ./internal
+- There are currently no test files

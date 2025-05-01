@@ -1,0 +1,7 @@
+---
+description: Cursor Rules
+globs: 
+alwaysApply: false
+---
+- Cursor rule files must be located in .cursor/rules and have a .mdc extension
+- All cursor rules must be written in .mdc format.
