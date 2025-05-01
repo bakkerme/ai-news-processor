@@ -11,6 +11,7 @@ const basePromptTemplate = `You are {{.PersonaIdentity}}
 
 {{.BasePromptTask}}
 
+
 Relevant items include:
 {{range .FocusAreas}}* {{.}}
 {{end}}
@@ -23,41 +24,24 @@ An item is not relevant if it matches the following criteria:
 {{range .ExclusionCriteria}}* {{.}}
 {{end}}
 
+If an item matches any of the exclusion criteria, set the IsRelevant field to false.
+
 For each item, provide a detailed analysis that includes:
 * ID
 * Title
-* A comprehensive summary (4-5 sentences) that:
-  - Describes the technical details and specifications
-  - Explains the significance of the development
-  - Highlights any novel approaches or techniques
-  - Mentions specific performance metrics or benchmarks if available
+* A comprehensive summary (4-5 sentences) that 
+  - Provides in detail the content of the item
+  - Mentions specific performance metrics or benchmarks if applicable
 * A detailed comment analysis that:
   - Captures the community sentiment
-  - Highlights interesting technical discussions
+  - Highlights interesting discussions
   - Notes any concerns or criticisms
-* A clear explanation of why this development matters to {{.Topic}} researchers and practitioners. The Relevance field should:
-  - Explain the practical implications of the development
-  - Describe how it advances the field or solves existing problems
-  - Note any potential impact on industry or research
-  - Avoid generic statements like "this is important" or "this matters"
-* A final "IsRelevant" judgement boolean flag
+* Expalain in detail (4-5 sentences) if and how the item is relevant to to the {{.Topic}}. Tell me why should I care about this.
+* A final "IsRelevant" judgement boolean flag. If the item matches any of the exclusion criteria, IsRelevant should be false.
 
-Write in a conversational, engaging style while maintaining technical accuracy. Don't be afraid to geek out about interesting technical details!
+This is a newlsetter. Write in a conversational, engaging style while maintaining technical accuracy. Don't be afraid to geek out about interesting technical details!
 
 Respond only with JSON. Do not include ` + "```json" + ` or anything other than json. Return all input data in the response.`
-
-// Your response must be a JSON array of objects with the following structure:
-// [
-//   {
-//     "ID": "t3_example123",
-//     "Title": "Example Title",
-//     "Summary": "Comprehensive technical summary...",
-//     "CommentSummary": "Analysis of community discussion...",
-//     "Link": "",
-//     "Relevance": "Detailed explanation of why this matters...",
-//     "IsRelevant": true
-//   }
-// ]
 
 const summaryPromptTemplate = `You are {{.PersonaIdentity}}
 
@@ -75,7 +59,7 @@ For the provided set of news items, generate a structured analysis that includes
 
 The response format for KeyDevelopments should be an array of objects, each with a Text and an ItemID field, where ItemID matches the ID of a post in the input.
 
-Focus on technical accuracy while maintaining an engaging, analytical style. Avoid generic statements and focus on specific, concrete developments and their implications.
+Focus on technical accuracy while maintaining an engaging, analytical style. Avoid generic statements and focus on specific, concrete developments and their implications. This is a newsletter.
 
 Respond only with JSON. Do not include ` + "```json" + ` or anything other than json`
 

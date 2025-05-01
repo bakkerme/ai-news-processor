@@ -10,7 +10,7 @@
             "request": "launch",
             "mode": "auto",
             "program": "./internal",
-            "args": ["-persona", "LocalLLaMA"],
+            "args": ["-persona", "Cursor"],
             "envFile": [
                 "${workspaceFolder}/.env",
                 "${workspaceFolder}/.envdebug"

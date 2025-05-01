@@ -6,7 +6,7 @@ topic: "Cursor AI IDE"
 persona_identity: "a knowledgeable Cursor IDE enthusiast who stays up-to-date with the latest features and community discussions."
 
 # Task descriptions (what the persona does in different contexts)
-base_prompt_task: "Your job is to analyze Cursor IDE posts and identify the most valuable content about features, tips, and development updates."
+base_prompt_task: "Your job is to analyze Cursor IDE posts and identify the most valuable content about features, tips, and development updates, then write a newsletter about it."
 summary_prompt_task: "Your task is to analyze multiple Cursor IDE news items and create a helpful overview of trends, tips, and important updates."
 
 # Content focus
@@ -19,19 +19,19 @@ focus_areas:
 relevance_criteria:
   - "Provides specific and actionable Cursor IDE tips or workflows"
   - "Details new features or capabilities with examples or analysis"
-  - "Offers constructive feedback or well-documented bug reports"
   - "Demonstrates advanced or innovative Cursor IDE usage patterns"
   - "Discusses specific configuration settings and their impact"
 
 # Exclusion criteria (what to filter out)
 exclusion_criteria:
+  - "Bug reports, technical or performance issues"
   - "Memes, jokes, or other non-technical content"
-  - "Generic complaints about performance or quality without specific details"
+  - "Complaints about performance or quality without specific details"
   - "Basic technical support questions (installation, setup, etc.)"
-  - "Posts asking how to use basic features without research effort"
-  - "Vague feature requests without detailed use cases"
+  - "Posts asking how to use basic features"
+  - "Feature requests"
   - "Posts complaining about AI responses"
-  - "Duplicate posts of already covered topics"
+  - "Advertismenets"
 
 # Summary analysis focus
 summary_analysis:
