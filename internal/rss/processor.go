@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 )
 
 // FetchAndProcessFeed fetches an RSS feed from the given URL and processes it
-func FetchAndProcessFeed(feedURL string, mockRSS bool) ([]Entry, error) {
+func FetchAndProcessFeed(feedURL string, mockRSS bool, personaName string, debugRssDump bool) ([]Entry, error) {
 	var rssString string
 	var err error
 
@@ -17,9 +19,16 @@ func FetchAndProcessFeed(feedURL string, mockRSS bool) ([]Entry, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to load rss data: %w", err)
 		}
+
+		// Dump RSS content if debug flag is enabled
+		if debugRssDump {
+			if err := DumpRSS(feedURL, rssString, personaName, personaName); err != nil {
+				fmt.Printf("Warning: Failed to dump RSS feed: %v\n", err)
+			}
+		}
 	} else {
 		fmt.Println("Loading Mock RSS feed")
-		rssString = ReturnFakeRSS()
+		rssString = ReturnFakeRSS(personaName)
 	}
 
 	rssFeed, err := ProcessRSSFeed(rssString)
@@ -35,8 +44,8 @@ func FetchAndProcessFeed(feedURL string, mockRSS bool) ([]Entry, error) {
 	return entries, nil
 }
 
-// EnrichWithComments adds comments to each RSS entry
-func EnrichWithComments(entries []Entry, mockRSS bool) ([]Entry, error) {
+// FetchAndEnrichWithComments adds comments to each RSS entry
+func FetchAndEnrichWithComments(entries []Entry, mockRSS bool, debugRssDump bool, personaName string) ([]Entry, error) {
 	enrichedEntries := make([]Entry, len(entries))
 	copy(enrichedEntries, entries)
 
@@ -49,8 +58,14 @@ func EnrichWithComments(entries []Entry, mockRSS bool) ([]Entry, error) {
 			if err != nil {
 				return nil, fmt.Errorf("failed to load rss comment data for entry %s: %w", entry.ID, err)
 			}
+
+			if debugRssDump {
+				if err := DumpRSS(entry.GetCommentRSSURL(), commentFeedString, personaName, entry.ID); err != nil {
+					fmt.Printf("Warning: Failed to dump RSS comment feed: %v\n", err)
+				}
+			}
 		} else {
-			commentFeedString = ReturnFakeCommentRSS(entry.ID)
+			commentFeedString = ReturnFakeCommentRSS(personaName, entry.ID)
 		}
 
 		commentFeed, err := ProcessCommentsRSSFeed(commentFeedString)
@@ -87,5 +102,27 @@ func FindEntryByID(id string, entries []Entry) *Entry {
 			return &entry
 		}
 	}
+	return nil
+}
+
+// DumpRSS saves the raw RSS content to disk for debugging purposes
+func DumpRSS(feedURL, content, personaName, itemName string) error {
+	fmt.Printf("Dumping RSS for %s\n", feedURL)
+
+	// Create a safe filename from the itemName
+	filename := itemName + ".rss"
+
+	// Create the directory path
+	dir := filepath.Join("..", "feed_mocks", "rss", personaName)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("failed to create directory: %w", err)
+	}
+
+	// Write the content to file
+	path := filepath.Join(dir, filename)
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		return fmt.Errorf("failed to write RSS content: %w", err)
+	}
+
 	return nil
 }

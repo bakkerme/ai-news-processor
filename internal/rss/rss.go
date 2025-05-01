@@ -1,6 +1,7 @@
 package rss
 
 import (
+	"context"
 	"encoding/xml"
 	"fmt"
 	"io"
@@ -8,8 +9,70 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bakkerme/ai-news-processor/internal/common"
 	strip "github.com/grokify/html-strip-tags-go"
 )
+
+// DefaultRSSRetryConfig provides default retry settings for RSS fetching
+var DefaultRSSRetryConfig = common.RetryConfig{
+	MaxRetries:      3,
+	InitialBackoff:  1 * time.Second,
+	MaxBackoff:      30 * time.Second,
+	BackoffFactor:   2.0,
+	MaxTotalTimeout: 1 * time.Minute,
+}
+
+// fetchWithRetry attempts to fetch a URL with exponential backoff retry
+func fetchWithRetry(url string, config common.RetryConfig) (*http.Response, error) {
+	ctx := context.Background()
+
+	// Define the retryable function that performs the HTTP request
+	fetchFn := func(ctx context.Context) (*http.Response, error) {
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create request: %w", err)
+		}
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("failed to execute request: %w", err)
+		}
+
+		// Check for rate limiting
+		if common.IsRateLimitError(resp) {
+			retryAfter := common.GetRetryAfterDuration(resp)
+			resp.Body.Close() // Close the body before returning error
+			return nil, fmt.Errorf("rate limited, retry after %v", retryAfter)
+		}
+
+		if resp.StatusCode >= 400 {
+			resp.Body.Close() // Close the body before returning error
+			return nil, fmt.Errorf("HTTP error: %d", resp.StatusCode)
+		}
+
+		return resp, nil
+	}
+
+	// Define retry condition
+	shouldRetry := func(err error) bool {
+		if err == nil {
+			return false
+		}
+		// Retry on network errors and rate limits
+		return strings.Contains(err.Error(), "rate limited") ||
+			strings.Contains(err.Error(), "connection refused") ||
+			strings.Contains(err.Error(), "no such host") ||
+			strings.Contains(err.Error(), "timeout")
+	}
+
+	// Execute with retry
+	resp, err := common.RetryWithBackoff(ctx, config, fetchFn, shouldRetry)
+	if err != nil {
+		return nil, fmt.Errorf("failed after retries: %w", err)
+	}
+
+	return resp, nil
+}
 
 type Feed struct {
 	Entries []Entry `xml:"entry"`
@@ -144,8 +207,8 @@ func GetFeeds(urls []string) ([]*Feed, error) {
 }
 
 // GetMockFeeds returns mock RSS feeds for testing
-func GetMockFeeds() []*Feed {
-	feedString := ReturnFakeRSS()
+func GetMockFeeds(personaName string) []*Feed {
+	feedString := ReturnFakeRSS(personaName)
 	feed, err := ProcessRSSFeed(feedString)
 	if err != nil {
 		panic(fmt.Sprintf("could not process mock feed: %v", err))
@@ -155,7 +218,7 @@ func GetMockFeeds() []*Feed {
 
 // FetchRSS retrieves RSS content from a URL
 func FetchRSS(url string) (string, error) {
-	resp, err := http.Get(url)
+	resp, err := fetchWithRetry(url, DefaultRSSRetryConfig)
 	if err != nil {
 		return "", fmt.Errorf("could not fetch RSS: %w", err)
 	}

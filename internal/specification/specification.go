@@ -8,9 +8,10 @@ import (
 )
 
 type Specification struct {
-	LlmUrl    string `split_words:"true"`
-	LlmApiKey string `split_words:"true"`
-	LlmModel  string `split_words:"true"`
+	LlmUrl       string `split_words:"true"`
+	LlmApiKey    string `split_words:"true"`
+	LlmModel     string `split_words:"true"`
+	LlmBatchSize int    `split_words:"true"`
 
 	EmailTo       string `split_words:"true"`
 	EmailFrom     string `split_words:"true"`
@@ -24,6 +25,7 @@ type Specification struct {
 	DebugSkipEmail       bool `split_words:"true"`
 	DebugOutputBenchmark bool `split_words:"true"`
 	DebugMaxEntries      int  `split_words:"true"`
+	DebugRssDump         bool `split_words:"true"`
 
 	PersonasPath string `split_words:"true"`
 }
@@ -63,6 +65,9 @@ func (s *Specification) Validate() error {
 		// }
 		if s.LlmModel == "" {
 			return fmt.Errorf("LLM model is required when not in mock mode")
+		}
+		if s.LlmBatchSize < 1 {
+			s.LlmBatchSize = 1 // Set default batch size to 1 if not specified or invalid
 		}
 	}
 

@@ -14,28 +14,19 @@ import (
 	"github.com/openai/openai-go/option"
 )
 
-// RetryConfig holds configuration for retry behavior
-type RetryConfig struct {
-	MaxRetries      int
-	InitialBackoff  time.Duration
-	MaxBackoff      time.Duration
-	BackoffFactor   float64
-	MaxTotalTimeout time.Duration
-}
-
-// DefaultRetryConfig provides sensible default values for retry behavior
-var DefaultRetryConfig = RetryConfig{
+// DefaultOpenAIRetryConfig provides sensible default values for OpenAI retry behavior
+var DefaultOpenAIRetryConfig = common.RetryConfig{
 	MaxRetries:      5,
 	InitialBackoff:  1 * time.Second,
 	MaxBackoff:      30 * time.Second,
 	BackoffFactor:   2.0,
-	MaxTotalTimeout: 2 * time.Minute,
+	MaxTotalTimeout: 30 * time.Minute, // LLM calls can take a while
 }
 
 type Client struct {
 	client *openai.Client
 	model  string
-	retry  RetryConfig
+	retry  common.RetryConfig
 }
 
 func New(baseURL, key, model string) *Client {
@@ -47,7 +38,7 @@ func New(baseURL, key, model string) *Client {
 	return &Client{
 		client: &client,
 		model:  model,
-		retry:  DefaultRetryConfig,
+		retry:  DefaultOpenAIRetryConfig,
 	}
 }
 
@@ -116,55 +107,22 @@ func (c *Client) Query(
 		}
 	}
 
-	var resp *openai.ChatCompletion
-	var lastErr error
-	currentBackoff := c.retry.InitialBackoff
-	startTime := time.Now()
-
-	for attempt := 0; attempt <= c.retry.MaxRetries; attempt++ {
-		// Create a new context for each attempt
-		ctx := context.Background()
-		resp, lastErr = c.client.Chat.Completions.New(ctx, params)
-
-		if lastErr == nil {
-			break
-		}
-
-		// Only retry on specific model loading errors
-		if isModelLoadingError(lastErr) {
-			if attempt == c.retry.MaxRetries {
-				break
-			}
-
-			// Check if we've exceeded total timeout
-			if time.Since(startTime) > c.retry.MaxTotalTimeout {
-				lastErr = fmt.Errorf("exceeded maximum total timeout of %v waiting for model to load: %w",
-					c.retry.MaxTotalTimeout, lastErr)
-				break
-			}
-
-			// Wait with exponential backoff
-			time.Sleep(currentBackoff)
-
-			// Calculate next backoff
-			currentBackoff = time.Duration(float64(currentBackoff) * c.retry.BackoffFactor)
-			if currentBackoff > c.retry.MaxBackoff {
-				currentBackoff = c.retry.MaxBackoff
-			}
-			continue
-		} else {
-			// If it's not a model loading error, don't retry
-			break
-		}
+	shouldRetry := func(err error) bool {
+		return isModelLoadingError(err)
 	}
 
-	if lastErr != nil {
+	queryFn := func(ctx context.Context) (*openai.ChatCompletion, error) {
+		return c.client.Chat.Completions.New(ctx, params)
+	}
+
+	resp, err := common.RetryWithBackoff(context.Background(), c.retry, queryFn, shouldRetry)
+
+	if err != nil {
 		var errMsg string
-		if isModelLoadingError(lastErr) {
-			errMsg = fmt.Sprintf("model failed to load after %d retries over %v: %w",
-				c.retry.MaxRetries, time.Since(startTime), lastErr)
+		if isModelLoadingError(err) {
+			errMsg = fmt.Sprintf("model failed to load after retries: %v", err)
 		} else {
-			errMsg = fmt.Sprintf("error during API call: %w", lastErr)
+			errMsg = fmt.Sprintf("error during API call: %v", err)
 		}
 
 		results <- common.ErrorString{

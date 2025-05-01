@@ -58,7 +58,7 @@ func main() {
 		fmt.Printf("Processing persona: %s\n", persona.Name)
 
 		// 1. Fetch and process RSS feed
-		entries, err := rss.FetchAndProcessFeed(persona.FeedURL, s.DebugMockRss)
+		entries, err := rss.FetchAndProcessFeed(persona.FeedURL, s.DebugMockRss, persona.Name, s.DebugRssDump)
 		if err != nil {
 			panic(fmt.Errorf("failed to process RSS feed for persona %s: %w", persona.Name, err))
 		}
@@ -69,7 +69,7 @@ func main() {
 		}
 
 		// 2. Enrich entries with comments
-		entries, err = rss.EnrichWithComments(entries, s.DebugMockRss)
+		entries, err = rss.FetchAndEnrichWithComments(entries, s.DebugMockRss, s.DebugRssDump, persona.Name)
 		if err != nil {
 			panic(fmt.Errorf("failed to enrich entries with comments for persona %s: %w", persona.Name, err))
 		}
@@ -86,9 +86,7 @@ func main() {
 				panic(fmt.Errorf("could not compose prompt for persona %s: %w", persona.Name, err))
 			}
 
-			batchSize := 1
-
-			items, benchmarkInputs, err = llm.ProcessEntries(openaiClient, systemPrompt, entries, batchSize, s.DebugOutputBenchmark)
+			items, benchmarkInputs, err = llm.ProcessEntries(openaiClient, systemPrompt, entries, s.LlmBatchSize, s.DebugOutputBenchmark)
 			if err != nil {
 				panic(fmt.Errorf("could not process entries with LLM: %w", err))
 			}
