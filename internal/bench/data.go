@@ -1,15 +1,17 @@
-package common
+package bench
 
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/bakkerme/ai-news-processor/internal/models"
 )
 
 // BenchmarkData represents the data collected during benchmarking
 type BenchmarkData struct {
-	RawInput []string `json:"raw_input"` // The raw input strings sent to the LLM
-	Results  []Item   `json:"results"`   // The processed results from the LLM
-	Persona  string   `json:"persona"`   // The persona used for this benchmark
+	RawInput []string      `json:"raw_input"` // The raw input strings sent to the LLM
+	Results  []models.Item `json:"results"`   // The processed results from the LLM
+	Persona  string        `json:"persona"`   // The persona used for this benchmark
 }
 
 // SerializeBenchmarkData converts benchmark data to JSON byte array

@@ -1,4 +1,4 @@
-package common
+package persona
 
 import (
 	"os"

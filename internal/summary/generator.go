@@ -3,15 +3,17 @@ package summary
 import (
 	"fmt"
 
-	"github.com/bakkerme/ai-news-processor/internal/common"
+	"github.com/bakkerme/ai-news-processor/internal/customerrors"
 	"github.com/bakkerme/ai-news-processor/internal/llm"
+	"github.com/bakkerme/ai-news-processor/internal/models"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
+	"github.com/bakkerme/ai-news-processor/internal/persona"
 	"github.com/bakkerme/ai-news-processor/internal/prompts"
 	"github.com/bakkerme/ai-news-processor/internal/rss"
 )
 
 // Generate creates a summary for a set of relevant RSS entries
-func Generate(client openai.OpenAIClient, entries []rss.Entry, persona common.Persona) (*common.SummaryResponse, error) {
+func Generate(client openai.OpenAIClient, entries []rss.Entry, p persona.Persona) (*models.SummaryResponse, error) {
 	fmt.Println("Generating summary of relevant items")
 
 	// Create input for summary
@@ -20,13 +22,13 @@ func Generate(client openai.OpenAIClient, entries []rss.Entry, persona common.Pe
 		summaryInputs[i] = entry.String(false)
 	}
 
-	summaryChannel := make(chan common.ErrorString, 1)
-	summaryPrompt, err := prompts.ComposeSummaryPrompt(persona)
+	summaryChannel := make(chan customerrors.ErrorString, 1)
+	summaryPrompt, err := prompts.ComposeSummaryPrompt(p)
 	if err != nil {
-		return nil, fmt.Errorf("could not compose summary prompt for persona %s: %w", persona.Name, err)
+		return nil, fmt.Errorf("could not compose summary prompt for persona %s: %w", p.Name, err)
 	}
 
-	go llm.QueryForFeedSummary(client, summaryPrompt, summaryInputs, summaryChannel)
+	go llm.ChatCompletionForFeedSummary(client, summaryPrompt, summaryInputs, summaryChannel)
 
 	summaryResult := <-summaryChannel
 	if summaryResult.Err != nil {

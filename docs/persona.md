@@ -84,7 +84,7 @@ At runtime, the application loads and filters personas using:
 
 ```go
 // internal/persona/manager.go
-func LoadAndSelect(path, personaName string) ([]common.Persona, error)
+func LoadAndSelect(path, personaName string) ([]persona.Persona, error)
 ```
 - **Load**: Scans `path` for `.yaml` files and returns all parsed personas.
 - **Select**: If `personaName == "all"` or empty, returns all; otherwise filters by `Name`.

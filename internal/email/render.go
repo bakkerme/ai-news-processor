@@ -7,18 +7,18 @@ import (
 
 	"embed"
 
-	"github.com/bakkerme/ai-news-processor/internal/common"
+	"github.com/bakkerme/ai-news-processor/internal/models"
 )
 
 //go:embed templates/*.tmpl
 var templateFS embed.FS
 
 type EmailData struct {
-	Summary *common.SummaryResponse
-	Items   []common.Item
+	Summary *models.SummaryResponse
+	Items   []models.Item
 }
 
-func RenderEmail(items []common.Item, summary *common.SummaryResponse) (string, error) {
+func RenderEmail(items []models.Item, summary *models.SummaryResponse) (string, error) {
 	tmplContent, err := templateFS.ReadFile("templates/email_template.tmpl")
 	if err != nil {
 		return "", fmt.Errorf("failed to read template: %w", err)

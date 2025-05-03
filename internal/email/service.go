@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/bakkerme/ai-news-processor/internal/common"
+	"github.com/bakkerme/ai-news-processor/internal/models"
 	"github.com/bakkerme/ai-news-processor/internal/specification"
 )
 
@@ -35,7 +35,7 @@ func NewService(config *specification.Specification) (*Service, error) {
 }
 
 // RenderAndSend handles rendering and sending an email with the specified items and summary
-func (s *Service) RenderAndSend(items []common.Item, summary *common.SummaryResponse) error {
+func (s *Service) RenderAndSend(items []models.Item, summary *models.SummaryResponse) error {
 	email, err := RenderEmail(items, summary)
 	if err != nil {
 		return fmt.Errorf("could not render email: %w", err)

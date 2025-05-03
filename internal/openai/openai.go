@@ -7,38 +7,39 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bakkerme/ai-news-processor/internal/common"
+	"github.com/bakkerme/ai-news-processor/internal/customerrors"
+	"github.com/bakkerme/ai-news-processor/internal/http/retry"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 )
 
 // OpenAIClient defines the interface for interacting with an OpenAI-compatible API
 type OpenAIClient interface {
-	// Query performs a general-purpose chat completion request
+	// ChatCompletion performs a general-purpose chat completion request
 	// systemPrompt: The system prompt to use
 	// userPrompts: A list of user messages to send
 	// schema: Optional JSON schema for response formatting (can be nil)
 	// schemaName: Name for the schema when provided
 	// schemaDescription: Description for the schema when provided
 	// returns: Channel that will receive the response or error
-	Query(
+	ChatCompletion(
 		systemPrompt string,
 		userPrompts []string,
 		schema interface{},
 		schemaName string,
 		schemaDescription string,
-		results chan common.ErrorString,
+		results chan customerrors.ErrorString,
 	)
 
 	// SetRetryConfig updates the retry behavior configuration
-	SetRetryConfig(config common.RetryConfig)
+	SetRetryConfig(config retry.RetryConfig)
 
 	// PreprocessJSON cleans up JSON responses from the API
 	PreprocessJSON(response string) string
 }
 
 // DefaultOpenAIRetryConfig provides sensible default values for OpenAI retry behavior
-var DefaultOpenAIRetryConfig = common.RetryConfig{
+var DefaultOpenAIRetryConfig = retry.RetryConfig{
 	MaxRetries:      5,
 	InitialBackoff:  1 * time.Second,
 	MaxBackoff:      30 * time.Second,
@@ -49,7 +50,7 @@ var DefaultOpenAIRetryConfig = common.RetryConfig{
 type Client struct {
 	client *openai.Client
 	model  string
-	retry  common.RetryConfig
+	retry  retry.RetryConfig
 }
 
 // New creates a new OpenAI client
@@ -77,14 +78,14 @@ func isModelLoadingError(err error) bool {
 		strings.Contains(errStr, "Model does not exist")
 }
 
-// Query sends a request to the OpenAI API with the given prompts and schema
-func (c *Client) Query(
+// ChatCompletion sends a request to the OpenAI API with the given prompts and schema
+func (c *Client) ChatCompletion(
 	systemPrompt string,
 	userPrompts []string,
 	schema interface{},
 	schemaName string,
 	schemaDescription string,
-	results chan common.ErrorString,
+	results chan customerrors.ErrorString,
 ) {
 	params := openai.ChatCompletionNewParams{
 		Model: c.model,
@@ -110,11 +111,11 @@ func (c *Client) Query(
 		return isModelLoadingError(err)
 	}
 
-	queryFn := func(ctx context.Context) (*openai.ChatCompletion, error) {
+	ChatCompletionFn := func(ctx context.Context) (*openai.ChatCompletion, error) {
 		return c.client.Chat.Completions.New(ctx, params)
 	}
 
-	resp, err := common.RetryWithBackoff(context.Background(), c.retry, queryFn, shouldRetry)
+	resp, err := retry.RetryWithBackoff(context.Background(), c.retry, ChatCompletionFn, shouldRetry)
 
 	if err != nil {
 		var errMsg string
@@ -124,7 +125,7 @@ func (c *Client) Query(
 			errMsg = fmt.Sprintf("error during API call: %v", err)
 		}
 
-		results <- common.ErrorString{
+		results <- customerrors.ErrorString{
 			Value: "",
 			Err:   errors.New(errMsg),
 		}
@@ -132,14 +133,14 @@ func (c *Client) Query(
 	}
 
 	if len(resp.Choices) == 0 {
-		results <- common.ErrorString{
+		results <- customerrors.ErrorString{
 			Value: "",
 			Err:   fmt.Errorf("empty response from llm"),
 		}
 		return
 	}
 
-	results <- common.ErrorString{
+	results <- customerrors.ErrorString{
 		Value: resp.Choices[0].Message.Content,
 		Err:   nil,
 	}
@@ -172,6 +173,6 @@ func (c *Client) PreprocessJSON(response string) string {
 }
 
 // SetRetryConfig updates the retry configuration
-func (c *Client) SetRetryConfig(config common.RetryConfig) {
+func (c *Client) SetRetryConfig(config retry.RetryConfig) {
 	c.retry = config
 }

@@ -35,7 +35,7 @@ The following environment variables are used for debugging purposes, The Mock RS
 | Environment Variable             | Description                                               | Default Value |
 |----------------------------------|-----------------------------------------------------------|---------------|
 | `ANP_DEBUG_MOCK_RSS`             | Use mock RSS data instead of fetching real feeds.         | `false`       |
-| `ANP_DEBUG_MOCK_LLM`             | Use mock LLM responses instead of querying the LLM.       | `false`       |
+| `ANP_DEBUG_MOCK_LLM`             | Use mock LLM responses instead of ChatCompletioning the LLM.       | `false`       |
 | `ANP_DEBUG_SKIP_EMAIL`           | Skip sending email notifications during processing.       | `false`       |
 | `ANP_DEBUG_OUTPUT_BENCHMARK`     | Output benchmark data for LLM performance benchmarking.   | `false`       |
 | `ANP_DEBUG_MAX_ENTRIES`          | Limit the number of entries processed (0 = no limit).     | `0`           |

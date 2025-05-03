@@ -4,15 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/bakkerme/ai-news-processor/internal/common"
+	"github.com/bakkerme/ai-news-processor/internal/customerrors"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
 	"github.com/bakkerme/ai-news-processor/internal/rss"
 	"github.com/invopop/jsonschema"
+
+	"github.com/bakkerme/ai-news-processor/internal/models"
 )
 
 // Generate the JSON schema at initialization time
-var ItemResponseSchema = GenerateSchema[[]common.Item]()
-var SummaryResponseSchema = GenerateSchema[common.SummaryResponse]()
+var ItemResponseSchema = GenerateSchema[[]models.Item]()
+var SummaryResponseSchema = GenerateSchema[models.SummaryResponse]()
 
 // GenerateSchema creates a JSON schema for the given type
 func GenerateSchema[T any]() interface{} {
@@ -27,9 +29,9 @@ func GenerateSchema[T any]() interface{} {
 	return schema
 }
 
-// QueryForEntrySummary sends a query to get summaries for RSS entries
-func QueryForEntrySummary(client openai.OpenAIClient, systemPrompt string, userPrompts []string, results chan common.ErrorString) {
-	client.Query(
+// ChatCompletionForEntrySummary sends a ChatCompletion to get summaries for RSS entries
+func ChatCompletionForEntrySummary(client openai.OpenAIClient, systemPrompt string, userPrompts []string, results chan customerrors.ErrorString) {
+	client.ChatCompletion(
 		systemPrompt,
 		userPrompts,
 		ItemResponseSchema,
@@ -39,9 +41,9 @@ func QueryForEntrySummary(client openai.OpenAIClient, systemPrompt string, userP
 	)
 }
 
-// QueryForFeedSummary sends a query to get a summary for an entire feed
-func QueryForFeedSummary(client openai.OpenAIClient, systemPrompt string, userPrompts []string, results chan common.ErrorString) {
-	client.Query(
+// ChatCompletionForFeedSummary sends a ChatCompletion to get a summary for an entire feed
+func ChatCompletionForFeedSummary(client openai.OpenAIClient, systemPrompt string, userPrompts []string, results chan customerrors.ErrorString) {
+	client.ChatCompletion(
 		systemPrompt,
 		userPrompts,
 		SummaryResponseSchema,
@@ -52,8 +54,8 @@ func QueryForFeedSummary(client openai.OpenAIClient, systemPrompt string, userPr
 }
 
 // ParseSummaryResponse parses a JSON string into a SummaryResponse
-func ParseSummaryResponse(jsonStr string) (*common.SummaryResponse, error) {
-	var summary common.SummaryResponse
+func ParseSummaryResponse(jsonStr string) (*models.SummaryResponse, error) {
+	var summary models.SummaryResponse
 	err := json.Unmarshal([]byte(jsonStr), &summary)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse summary response: %w", err)
@@ -63,11 +65,11 @@ func ParseSummaryResponse(jsonStr string) (*common.SummaryResponse, error) {
 }
 
 // ProcessEntries takes RSS entries, processes them through an LLM in batches, and returns processed items
-func ProcessEntries(client openai.OpenAIClient, systemPrompt string, entries []rss.Entry, batchSize int, debugOutputBenchmark bool) ([]common.Item, []string, error) {
-	var items []common.Item
+func ProcessEntries(client openai.OpenAIClient, systemPrompt string, entries []rss.Entry, batchSize int, debugOutputBenchmark bool) ([]models.Item, []string, error) {
+	var items []models.Item
 	var benchmarkInputs []string
 
-	completionChannel := make(chan common.ErrorString, len(entries))
+	completionChannel := make(chan customerrors.ErrorString, len(entries))
 	batchCounter := 0
 
 	// Process entries in batches
@@ -85,7 +87,7 @@ func ProcessEntries(client openai.OpenAIClient, systemPrompt string, entries []r
 			benchmarkInputs = append(benchmarkInputs, batchStrings...)
 		}
 
-		go QueryForEntrySummary(client, systemPrompt, batchStrings, completionChannel)
+		go ChatCompletionForEntrySummary(client, systemPrompt, batchStrings, completionChannel)
 		batchCounter++
 	}
 
@@ -114,8 +116,8 @@ func ProcessEntries(client openai.OpenAIClient, systemPrompt string, entries []r
 }
 
 // EnrichItems adds links from RSS entries to items based on item ID
-func EnrichItems(items []common.Item, entries []rss.Entry) []common.Item {
-	enrichedItems := make([]common.Item, len(items))
+func EnrichItems(items []models.Item, entries []rss.Entry) []models.Item {
+	enrichedItems := make([]models.Item, len(items))
 	copy(enrichedItems, items)
 
 	for i, item := range enrichedItems {
@@ -137,8 +139,8 @@ func EnrichItems(items []common.Item, entries []rss.Entry) []common.Item {
 }
 
 // FilterRelevantItems filters items by relevance and non-empty ID
-func FilterRelevantItems(items []common.Item) []common.Item {
-	var relevantItems []common.Item
+func FilterRelevantItems(items []models.Item) []models.Item {
+	var relevantItems []models.Item
 	for _, item := range items {
 		if item.IsRelevant && item.ID != "" {
 			relevantItems = append(relevantItems, item)
@@ -148,8 +150,8 @@ func FilterRelevantItems(items []common.Item) []common.Item {
 }
 
 // llmResponseToItems converts a JSON LLM response to a slice of Items
-func llmResponseToItems(jsonStr string) ([]common.Item, error) {
-	var items []common.Item
+func llmResponseToItems(jsonStr string) ([]models.Item, error) {
+	var items []models.Item
 	err := json.Unmarshal([]byte(jsonStr), &items)
 	if err != nil {
 		return nil, err

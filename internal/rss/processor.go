@@ -1,39 +1,33 @@
 package rss
 
 import (
+	"context"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 )
 
 // FetchAndProcessFeed fetches an RSS feed from the given URL and processes it
-func FetchAndProcessFeed(feedURL string, mockRSS bool, personaName string, debugRssDump bool) ([]Entry, error) {
-	var rssString string
+func FetchAndProcessFeed(provider FeedProvider, feedURL string, mockRSS bool, personaName string, debugRssDump bool) ([]Entry, error) {
+	var rssFeed *Feed
 	var err error
 
 	if !mockRSS {
 		fmt.Printf("Loading RSS feed: %s\n", feedURL)
-		rssString, err = FetchRSS(feedURL)
+		rssFeed, err = provider.FetchFeed(context.Background(), feedURL)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load rss data: %w", err)
 		}
 
 		// Dump RSS content if debug flag is enabled
 		if debugRssDump {
-			if err := DumpRSS(feedURL, rssString, personaName, personaName); err != nil {
+			if err := DumpFeed(feedURL, rssFeed, personaName, personaName); err != nil {
 				fmt.Printf("Warning: Failed to dump RSS feed: %v\n", err)
 			}
 		}
 	} else {
 		fmt.Println("Loading Mock RSS feed")
-		rssString = ReturnFakeRSS(personaName)
-	}
-
-	rssFeed, err := ProcessRSSFeed(rssString)
-	if err != nil {
-		return nil, fmt.Errorf("could not process rss feed: %w", err)
+		rssFeed = ReturnFakeRSS(personaName)
 	}
 
 	entries := rssFeed.Entries
@@ -45,54 +39,33 @@ func FetchAndProcessFeed(feedURL string, mockRSS bool, personaName string, debug
 }
 
 // FetchAndEnrichWithComments adds comments to each RSS entry
-func FetchAndEnrichWithComments(entries []Entry, mockRSS bool, debugRssDump bool, personaName string) ([]Entry, error) {
+func FetchAndEnrichWithComments(provider FeedProvider, entries []Entry, mockRSS bool, debugRssDump bool, personaName string) ([]Entry, error) {
 	enrichedEntries := make([]Entry, len(entries))
 	copy(enrichedEntries, entries)
 
 	for i, entry := range enrichedEntries {
-		commentFeedString := ""
+		var commentFeed *CommentFeed
 		var err error
 
 		if !mockRSS {
-			commentFeedString, err = getCommentRSS(entry)
+			commentFeed, err = provider.FetchComments(context.Background(), entry)
 			if err != nil {
 				return nil, fmt.Errorf("failed to load rss comment data for entry %s: %w", entry.ID, err)
 			}
 
 			if debugRssDump {
-				if err := DumpRSS(entry.GetCommentRSSURL(), commentFeedString, personaName, entry.ID); err != nil {
+				if err := DumpFeed(entry.GetCommentRSSURL(), commentFeed, personaName, entry.ID); err != nil {
 					fmt.Printf("Warning: Failed to dump RSS comment feed: %v\n", err)
 				}
 			}
 		} else {
-			commentFeedString = ReturnFakeCommentRSS(personaName, entry.ID)
-		}
-
-		commentFeed, err := ProcessCommentsRSSFeed(commentFeedString)
-		if err != nil {
-			return nil, fmt.Errorf("could not process rss comment feed: %w", err)
+			commentFeed = ReturnFakeCommentRSS(personaName, entry.ID)
 		}
 
 		enrichedEntries[i].Comments = commentFeed.Entries
 	}
 
 	return enrichedEntries, nil
-}
-
-// getCommentRSS fetches the RSS feed for comments on a specific entry
-func getCommentRSS(entry Entry) (string, error) {
-	resp, err := http.Get(entry.GetCommentRSSURL())
-	if err != nil {
-		return "", fmt.Errorf("could not get from reddit rss: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("could not load response body: %w", err)
-	}
-
-	return string(body), nil
 }
 
 // FindEntryByID finds an RSS entry with the given ID
@@ -105,9 +78,11 @@ func FindEntryByID(id string, entries []Entry) *Entry {
 	return nil
 }
 
-// DumpRSS saves the raw RSS content to disk for debugging purposes
-func DumpRSS(feedURL, content, personaName, itemName string) error {
+// DumpFeed saves the raw RSS content to disk for debugging purposes
+func DumpFeed(feedURL string, content Feedlike, personaName, itemName string) error {
 	fmt.Printf("Dumping RSS for %s\n", feedURL)
+
+	feedString := content.FeedString()
 
 	// Create a safe filename from the itemName
 	filename := itemName + ".rss"
@@ -120,7 +95,7 @@ func DumpRSS(feedURL, content, personaName, itemName string) error {
 
 	// Write the content to file
 	path := filepath.Join(dir, filename)
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(feedString), 0644); err != nil {
 		return fmt.Errorf("failed to write RSS content: %w", err)
 	}
 

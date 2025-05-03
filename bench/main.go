@@ -10,9 +10,12 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/bakkerme/ai-news-processor/internal/common"
+	"github.com/bakkerme/ai-news-processor/internal/bench"
+	"github.com/bakkerme/ai-news-processor/internal/customerrors"
 	"github.com/bakkerme/ai-news-processor/internal/llm"
+	"github.com/bakkerme/ai-news-processor/internal/models"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
+	"github.com/bakkerme/ai-news-processor/internal/persona"
 	"github.com/bakkerme/ai-news-processor/internal/specification"
 )
 
@@ -67,9 +70,9 @@ type EvaluationResult struct {
 // Generate the JSON schema for EvaluationResult
 var EvaluationResultSchema = llm.GenerateSchema[EvaluationResult]()
 
-// QueryForBenchmarkEvaluation queries the LLM for a benchmark evaluation using the EvaluationResult schema
-func QueryForBenchmarkEvaluation(llmClient openai.OpenAIClient, systemPrompt string, userPrompts []string, results chan common.ErrorString) {
-	llmClient.Query(
+// ChatCompletionForBenchmarkEvaluation queries the LLM for a benchmark evaluation using the EvaluationResult schema
+func ChatCompletionForBenchmarkEvaluation(llmClient openai.OpenAIClient, systemPrompt string, userPrompts []string, results chan customerrors.ErrorString) {
+	llmClient.ChatCompletion(
 		systemPrompt,
 		userPrompts,
 		EvaluationResultSchema,
@@ -123,13 +126,13 @@ func main() {
 	personaPath := "../personas/" // default to Docker path
 
 	// Load all personas and find the matching one
-	personas, err := common.LoadPersonas(personaPath)
+	personas, err := persona.LoadPersonas(personaPath)
 	if err != nil {
 		log.Printf("Error loading personas: %v\n", err)
 		os.Exit(1)
 	}
 
-	var selectedPersona *common.Persona
+	var selectedPersona *persona.Persona
 	for i, p := range personas {
 		if p.Name == benchmarkData.Persona {
 			selectedPersona = &personas[i]
@@ -207,9 +210,9 @@ func main() {
 			formatSummary(result))
 
 		// Call LLM for evaluation
-		log.Printf("Querying LLM for evaluation of entry ID: %s...\n", result.ID)
-		resultChan := make(chan common.ErrorString, 1)
-		QueryForBenchmarkEvaluation(llmClient, fullPrompt, []string{evaluationInput}, resultChan)
+		log.Printf("ChatCompletioning LLM for evaluation of entry ID: %s...\n", result.ID)
+		resultChan := make(chan customerrors.ErrorString, 1)
+		ChatCompletionForBenchmarkEvaluation(llmClient, fullPrompt, []string{evaluationInput}, resultChan)
 		evalResponse := <-resultChan
 		if evalResponse.Err != nil {
 			log.Printf("Error evaluating entry %s: %v\n", result.ID, evalResponse.Err)
@@ -281,22 +284,22 @@ func main() {
 	outputResults(results, benchmarkData.Results, selectedPersona)
 }
 
-func loadBenchmarkData(filename string) (*common.BenchmarkData, error) {
+func loadBenchmarkData(filename string) (*bench.BenchmarkData, error) {
 	data, err := os.ReadFile(filename)
 	if err != nil {
-		return nil, fmt.Errorf("error reading benchmark file: %w", err)
+		return nil, fmt.Errorf("failed to read benchmark data: %w", err)
 	}
 
-	var benchmarkData common.BenchmarkData
+	var benchmarkData bench.BenchmarkData
 	err = json.Unmarshal(data, &benchmarkData)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing benchmark data: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal benchmark data: %w", err)
 	}
 
 	return &benchmarkData, nil
 }
 
-func formatSummary(item common.Item) string {
+func formatSummary(item models.Item) string {
 	var summary strings.Builder
 	summary.WriteString(fmt.Sprintf("Title: %s\n", item.Title))
 	summary.WriteString(fmt.Sprintf("ID: %s\n", item.ID))
@@ -307,7 +310,7 @@ func formatSummary(item common.Item) string {
 	return summary.String()
 }
 
-func outputResults(results BenchmarkResults, items []common.Item, persona *common.Persona) {
+func outputResults(results BenchmarkResults, items []models.Item, p *persona.Persona) {
 	// Build a map from ID to Title
 	titleMap := make(map[string]string)
 	for _, item := range items {
@@ -315,7 +318,7 @@ func outputResults(results BenchmarkResults, items []common.Item, persona *commo
 	}
 
 	// Print summary
-	fmt.Printf("\nBenchmark Results for Persona: %s\n", persona.Name)
+	fmt.Printf("\nBenchmark Results for Persona: %s\n", p.Name)
 	fmt.Printf("Total Items Evaluated: %d\n", results.TotalItems)
 	fmt.Printf("Relevance Accuracy: %.2f%%\n", results.RelevanceAccuracy*100)
 	fmt.Printf("Quality Score: %.2f%%\n", results.QualityScore)
@@ -350,7 +353,7 @@ func outputResults(results BenchmarkResults, items []common.Item, persona *commo
 	}
 
 	// Create filename with persona name
-	personaUsed := strings.ToLower(strings.ReplaceAll(persona.Name, " ", "_"))
+	personaUsed := strings.ToLower(strings.ReplaceAll(p.Name, " ", "_"))
 	filename := fmt.Sprintf("./results/benchmark_results_%s_%s.json", personaUsed, time.Now().Format("2006-01-02_15-04-05"))
 
 	err = os.WriteFile(filename, resultsJson, 0644)

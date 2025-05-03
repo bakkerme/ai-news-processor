@@ -5,10 +5,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/bakkerme/ai-news-processor/internal/common"
+	"github.com/bakkerme/ai-news-processor/internal/models"
 )
 
-func GetMockLLMResponse() []common.Item {
+func GetMockLLMResponse() []models.Item {
 	// Assuming localllama.rss is located in the same directory as this file
 	jsonData, err := os.ReadFile("./llmresponse.json")
 	if err != nil {
@@ -16,7 +16,7 @@ func GetMockLLMResponse() []common.Item {
 	}
 
 	// Unmarshal the JSON string into an Item struct
-	var items []common.Item
+	var items []models.Item
 	if err := json.Unmarshal([]byte(jsonData), &items); err != nil {
 		log.Fatalf("Error unmarshalling JSON: %v", err)
 	}
@@ -24,10 +24,10 @@ func GetMockLLMResponse() []common.Item {
 	return items
 }
 
-func GetMockSummaryResponse() *common.SummaryResponse {
-	return &common.SummaryResponse{
+func GetMockSummaryResponse() *models.SummaryResponse {
+	return &models.SummaryResponse{
 		OverallSummary: "Today has been a significant day in the LocalLLaMA community with major developments in model optimization, tooling, and infrastructure. The community continues to push boundaries in local LLM deployment and practical applications.",
-		KeyDevelopments: []common.KeyDevelopment{
+		KeyDevelopments: []models.KeyDevelopment{
 			{
 				Text:   "A user achieved 5000 tokens per second processing speed using 2x3090 GPUs with Qwen2.5-7B model, demonstrating significant improvements in local model inference speed through careful optimization of batch sizes and quantization.",
 				ItemID: "t3_1k0tkca",

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"text/template"
 
-	"github.com/bakkerme/ai-news-processor/internal/common"
+	"github.com/bakkerme/ai-news-processor/internal/persona"
 )
 
 const basePromptTemplate = `You are {{.PersonaIdentity}}
@@ -64,26 +64,26 @@ Focus on technical accuracy while maintaining an engaging, analytical style. Avo
 Respond only with JSON. Do not include ` + "```json" + ` or anything other than json`
 
 // ComposePrompt generates a system prompt for the given persona using the base template
-func ComposePrompt(persona common.Persona) (string, error) {
+func ComposePrompt(p persona.Persona) (string, error) {
 	tmpl, err := template.New("base").Parse(basePromptTemplate)
 	if err != nil {
 		return "", err
 	}
 	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, persona)
+	err = tmpl.Execute(&buf, p)
 	if err != nil {
 		return "", err
 	}
 	return buf.String(), nil
 }
 
-func ComposeSummaryPrompt(persona common.Persona) (string, error) {
+func ComposeSummaryPrompt(p persona.Persona) (string, error) {
 	tmpl, err := template.New("summary").Parse(summaryPromptTemplate)
 	if err != nil {
 		return "", err
 	}
 	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, persona)
+	err = tmpl.Execute(&buf, p)
 	if err != nil {
 		return "", err
 	}

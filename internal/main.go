@@ -6,9 +6,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/bakkerme/ai-news-processor/internal/common"
+	"github.com/bakkerme/ai-news-processor/internal/bench"
 	"github.com/bakkerme/ai-news-processor/internal/email"
 	"github.com/bakkerme/ai-news-processor/internal/llm"
+	"github.com/bakkerme/ai-news-processor/internal/models"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
 	"github.com/bakkerme/ai-news-processor/internal/persona"
 	"github.com/bakkerme/ai-news-processor/internal/prompts"
@@ -53,12 +54,15 @@ func main() {
 		panic(err)
 	}
 
+	// Create an instance of DefaultFeedProvider
+	feedProvider := rss.NewFeedProvider()
+
 	// Process each persona
 	for _, persona := range selectedPersonas {
 		fmt.Printf("Processing persona: %s\n", persona.Name)
 
-		// 1. Fetch and process RSS feed
-		entries, err := rss.FetchAndProcessFeed(persona.FeedURL, s.DebugMockRss, persona.Name, s.DebugRssDump)
+		// 1. Fetch and process RSS feed using FeedProvider
+		entries, err := rss.FetchAndProcessFeed(feedProvider, persona.FeedURL, s.DebugMockRss, persona.Name, s.DebugRssDump)
 		if err != nil {
 			panic(fmt.Errorf("failed to process RSS feed for persona %s: %w", persona.Name, err))
 		}
@@ -69,14 +73,14 @@ func main() {
 		}
 
 		// 2. Enrich entries with comments
-		entries, err = rss.FetchAndEnrichWithComments(entries, s.DebugMockRss, s.DebugRssDump, persona.Name)
+		entries, err = rss.FetchAndEnrichWithComments(feedProvider, entries, s.DebugMockRss, s.DebugRssDump, persona.Name)
 		if err != nil {
 			panic(fmt.Errorf("failed to enrich entries with comments for persona %s: %w", persona.Name, err))
 		}
 
 		// Store all raw inputs for benchmarking
 		var benchmarkInputs []string
-		var items []common.Item
+		var items []models.Item
 
 		// 3. Process entries with LLM
 		if !s.DebugMockLLM {
@@ -100,7 +104,7 @@ func main() {
 
 		// Output benchmark data if requested
 		if s.DebugOutputBenchmark {
-			benchData := &common.BenchmarkData{
+			benchData := &bench.BenchmarkData{
 				RawInput: benchmarkInputs,
 				Results:  items,
 				Persona:  persona.Name,
@@ -124,7 +128,7 @@ func main() {
 		}
 
 		// 7. Generate summary for relevant items
-		var summaryResponse *common.SummaryResponse
+		var summaryResponse *models.SummaryResponse
 		if !s.DebugMockLLM {
 			summaryResponse, err = summary.Generate(openaiClient, relevantEntries, persona)
 			if err != nil {
@@ -148,7 +152,7 @@ func main() {
 }
 
 // outputBenchmarkData writes benchmark data to a file
-func outputBenchmarkData(data *common.BenchmarkData) {
+func outputBenchmarkData(data *bench.BenchmarkData) {
 	filename := "../bench/results/benchmark.json"
 
 	// Ensure the directory exists
@@ -165,7 +169,7 @@ func outputBenchmarkData(data *common.BenchmarkData) {
 	}
 	defer file.Close()
 
-	jsonData, err := common.SerializeBenchmarkData(data)
+	jsonData, err := bench.SerializeBenchmarkData(data)
 	if err != nil {
 		fmt.Printf("Error serializing benchmark data: %v\n", err)
 		return

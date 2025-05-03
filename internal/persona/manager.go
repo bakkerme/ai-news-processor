@@ -2,13 +2,11 @@ package persona
 
 import (
 	"fmt"
-
-	"github.com/bakkerme/ai-news-processor/internal/common"
 )
 
 // LoadAndSelect loads personas from a given path and selects based on criteria
-func LoadAndSelect(path string, personaName string) ([]common.Persona, error) {
-	personas, err := common.LoadPersonas(path)
+func LoadAndSelect(path string, personaName string) ([]Persona, error) {
+	personas, err := LoadPersonas(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load personas: %w", err)
 	}
@@ -22,7 +20,7 @@ func LoadAndSelect(path string, personaName string) ([]common.Persona, error) {
 	}
 
 	// Filter for specific persona
-	selectedPersonas := []common.Persona{}
+	selectedPersonas := []Persona{}
 	for _, p := range personas {
 		if p.Name == personaName {
 			selectedPersonas = append(selectedPersonas, p)

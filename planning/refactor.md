@@ -87,6 +87,7 @@ This document analyzes the dependencies between modules to help plan refactoring
 1. **Reduce Common Module Coupling**:
    - Split `common` into more specific packages to reduce interdependencies
    - Move domain-specific types into their respective modules
+COMPLETE
 
 User Notes: I agree with this assessment, common is currently a dumping ground for random types.
 
