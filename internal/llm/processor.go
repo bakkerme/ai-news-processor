@@ -151,33 +151,35 @@ func ProcessEntries(client openai.OpenAIClient, systemPrompt string, entries []r
 		batchStrings := make([]string, len(batch))
 		var batchImageURLs []string // Collect image URLs from the batch
 
-		for j, entry := range batch {
-			batchStrings[j] = entry.String(false)
+		if multiMode {
+			for j, entry := range batch {
+				batchStrings[j] = entry.String(false)
 
-			// Extract image URLs from entries
-			if len(entry.ImageURLs) > 0 {
-				// Add up to 3 images per entry to avoid overwhelming the model
-				maxImages := min(3, len(entry.ImageURLs))
-				for k := 0; k < maxImages; k++ {
-					// Get the URL, ensure it has a scheme
-					imgURL := ensureValidImageURL(entry.ImageURLs[k].String())
+				// Extract image URLs from entries
+				if len(entry.ImageURLs) > 0 {
+					// Add up to 3 images per entry to avoid overwhelming the model
+					maxImages := min(3, len(entry.ImageURLs))
+					for k := 0; k < maxImages; k++ {
+						// Get the URL, ensure it has a scheme
+						imgURL := ensureValidImageURL(entry.ImageURLs[k].String())
 
-					fmt.Println("Adding image", imgURL)
+						fmt.Println("Adding image", imgURL)
 
-					// Fetch and convert to base64
+						// Fetch and convert to base64
+						dataURI := fetchImageAsBase64(imgURL)
+						if dataURI != "" {
+							batchImageURLs = append(batchImageURLs, dataURI)
+						}
+					}
+				}
+
+				// Also check for MediaThumbnail if no other images were found
+				if len(entry.ImageURLs) == 0 && entry.MediaThumbnail.URL != "" {
+					imgURL := ensureValidImageURL(entry.MediaThumbnail.URL)
 					dataURI := fetchImageAsBase64(imgURL)
 					if dataURI != "" {
 						batchImageURLs = append(batchImageURLs, dataURI)
 					}
-				}
-			}
-
-			// Also check for MediaThumbnail if no other images were found
-			if len(entry.ImageURLs) == 0 && entry.MediaThumbnail.URL != "" {
-				imgURL := ensureValidImageURL(entry.MediaThumbnail.URL)
-				dataURI := fetchImageAsBase64(imgURL)
-				if dataURI != "" {
-					batchImageURLs = append(batchImageURLs, dataURI)
 				}
 			}
 		}
