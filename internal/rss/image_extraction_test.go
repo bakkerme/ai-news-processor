@@ -55,6 +55,52 @@ func TestExtractImageURLs(t *testing.T) {
 				"https://i.redd.it/someimage",
 			},
 		},
+		{
+			name:    "Duplicate image URLs are deduplicated",
+			entryID: "test_duplicate_urls",
+			entryContent: `<div>
+				<img src="https://example.com/image.jpg" />
+				<span><a href="https://example.com/image.jpg">[link]</a></span>
+				<a href="https://example.com/image.jpg">Same image</a>
+			</div>`,
+			expectedImages: []string{
+				"https://example.com/image.jpg",
+			},
+		},
+		{
+			name:           "Empty content",
+			entryID:        "test_empty_content",
+			entryContent:   "",
+			expectedImages: []string{},
+		},
+		{
+			name:           "No images in content",
+			entryID:        "test_no_images",
+			entryContent:   `<div><p>This is a text-only post with no images.</p></div>`,
+			expectedImages: []string{},
+		},
+		{
+			name:         "Image in anchor tag",
+			entryID:      "test_anchor_tag",
+			entryContent: `<div><a href="https://example.com/image.png">Click to see image</a></div>`,
+			expectedImages: []string{
+				"https://example.com/image.png",
+			},
+		},
+		{
+			name:    "URLs with different protocols",
+			entryID: "test_protocols",
+			entryContent: `<div>
+				<img src="http://example.com/image1.jpg" />
+				<img src="https://example.com/image2.jpg" />
+				<img src="data:image/jpeg;base64,xyz" />
+			</div>`,
+			expectedImages: []string{
+				"http://example.com/image1.jpg",
+				"https://example.com/image2.jpg",
+				// data: URLs should be excluded as they're not external URLs
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -124,43 +170,129 @@ func TestContainsExcludedTerms(t *testing.T) {
 		})
 	}
 }
-
-func TestExtractLinkURLsFromContent(t *testing.T) {
-	content := `<div>
-		<span><a href="https://i.redd.it/image1.jpg">[link]</a></span>
-		<span><a href="https://i.imgur.com/image2.png">[link]</a></span>
-		Some other content
-		<span><a href="https://example.com/notlink">Not a link</a></span>
-	</div>`
-
-	expected := []string{
-		"https://i.redd.it/image1.jpg",
-		"https://i.imgur.com/image2.png",
+func TestURLDeduplication(t *testing.T) {
+	// Test the deduplication mechanism in ExtractImageURLs
+	entry := Entry{
+		ID: "deduplication_test",
+		Content: `<div>
+			<img src="https://example.com/image.jpg" />
+			<img src="https://example.com/image.jpg" /> <!-- Same URL repeated -->
+			<a href="https://example.com/image.jpg">Same URL in link</a>
+			<img src="https://example.com/another-image.png" />
+		</div>`,
 	}
 
-	result := extractLinkURLsFromContent(content)
-	assert.ElementsMatch(t, expected, result)
+	err := entry.ExtractImageURLs()
+	assert.NoError(t, err)
+
+	// Should only have 2 distinct URLs despite having 3 image references
+	assert.Len(t, entry.ImageURLs, 2)
+
+	// Convert to strings for easier comparison
+	urlStrings := make([]string, 0, len(entry.ImageURLs))
+	for _, u := range entry.ImageURLs {
+		urlStrings = append(urlStrings, u.String())
+	}
+
+	// Verify the expected URLs are present
+	assert.Contains(t, urlStrings, "https://example.com/image.jpg")
+	assert.Contains(t, urlStrings, "https://example.com/another-image.png")
 }
 
-func TestDeduplicateURLs(t *testing.T) {
-	// Create duplicate URLs
-	url1, _ := url.Parse("https://example.com/image1.jpg")
-	url2, _ := url.Parse("https://example.com/image2.jpg")
-	url3, _ := url.Parse("https://example.com/image1.jpg") // Duplicate of url1
-
-	urls := []url.URL{*url1, *url2, *url3}
-
-	deduplicated := deduplicateURLs(urls)
-
-	// Should only have 2 unique URLs
-	assert.Len(t, deduplicated, 2)
-
-	// Convert back to strings for easier comparison
-	var deduplicatedStrings []string
-	for _, u := range deduplicated {
-		deduplicatedStrings = append(deduplicatedStrings, u.String())
+func TestAddImageURLIfValid(t *testing.T) {
+	tests := []struct {
+		name           string
+		url            string
+		expectedValid  bool
+		expectedURLStr string
+	}{
+		{
+			name:           "Valid image URL",
+			url:            "https://example.com/image.jpg",
+			expectedValid:  true,
+			expectedURLStr: "https://example.com/image.jpg",
+		},
+		{
+			name:          "URL with excluded term",
+			url:           "https://example.com/thumbnail.jpg",
+			expectedValid: false,
+		},
+		{
+			name:          "Non-image URL",
+			url:           "https://example.com/document.pdf",
+			expectedValid: false,
+		},
+		{
+			name:           "Image URL on known image host",
+			url:            "https://i.imgur.com/abc123",
+			expectedValid:  true,
+			expectedURLStr: "https://i.imgur.com/abc123",
+		},
 	}
 
-	assert.Contains(t, deduplicatedStrings, "https://example.com/image1.jpg")
-	assert.Contains(t, deduplicatedStrings, "https://example.com/image2.jpg")
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// Create a map to store URLs
+			urlMap := make(map[string]url.URL)
+
+			// Call the function under test
+			addImageURLIfValid(tc.url, urlMap)
+
+			// Check if the URL was added as expected
+			if tc.expectedValid {
+				assert.Len(t, urlMap, 1)
+
+				// Parse the expected URL for comparison
+				expectedURL, err := url.Parse(tc.expectedURLStr)
+				assert.NoError(t, err)
+
+				// Check if the map contains our URL
+				_, exists := urlMap[expectedURL.String()]
+				assert.True(t, exists)
+			} else {
+				assert.Empty(t, urlMap)
+			}
+		})
+	}
+}
+
+func TestEnsureValidImageURL(t *testing.T) {
+	tests := []struct {
+		name     string
+		urlStr   string
+		expected string
+	}{
+		{
+			name:     "Already valid URL with HTTPS",
+			urlStr:   "https://example.com/image.jpg",
+			expected: "https://example.com/image.jpg",
+		},
+		{
+			name:     "Already valid URL with HTTP",
+			urlStr:   "http://example.com/image.jpg",
+			expected: "http://example.com/image.jpg",
+		},
+		{
+			name:     "URL without scheme",
+			urlStr:   "example.com/image.jpg",
+			expected: "https://example.com/image.jpg",
+		},
+		{
+			name:     "URL with just domain",
+			urlStr:   "i.imgur.com",
+			expected: "https://i.imgur.com",
+		},
+		{
+			name:     "URL with subdomain but no scheme",
+			urlStr:   "imgs.example.com/path/to/image.png",
+			expected: "https://imgs.example.com/path/to/image.png",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result := ensureValidImageURL(tc.urlStr)
+			assert.Equal(t, tc.expected, result)
+		})
+	}
 }

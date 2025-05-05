@@ -11,7 +11,7 @@ type Item struct {
 	ID             string `json:"ID" jsonschema_description:"Post ID" jsonschema:"required"`
 	Summary        string `json:"Summary" jsonschema_description:"Provide a summary of the post content" jsonschema:"required"`
 	CommentSummary string `json:"CommentSummary" jsonschema_description:"Provide a summary and semtiment of the comments" jsonschema:"required"`
-	Link           string `json:"Link" jsonschema_description:"A link to the post" jsonschema:"required"`
+	Link           string `json:"Link" jsonschema_description:"A link to the post"`
 	Relevance      string `json:"Relevance" jsonschema_description:"Why is this relevant?" jsonschema:"required"`
 	IsRelevant     bool   `json:"IsRelevant" jsonschema_description:"Should this be included?" jsonschema:"required"`
 }
@@ -38,6 +38,7 @@ func (s *SummaryResponse) UnmarshalJSON(data []byte) error {
 	}{
 		Alias: (*Alias)(s),
 	}
+
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}

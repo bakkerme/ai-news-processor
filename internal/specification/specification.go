@@ -12,7 +12,9 @@ type Specification struct {
 	LlmApiKey    string `split_words:"true"`
 	LlmModel     string `split_words:"true"`
 	LlmBatchSize int    `split_words:"true"`
-	LlmMultiMode bool   `split_words:"true"`
+
+	LlmImageEnabled bool   `split_words:"true" default:"false"`
+	LlmImageModel   string `split_words:"true"`
 
 	EmailTo       string `split_words:"true"`
 	EmailFrom     string `split_words:"true"`
@@ -71,6 +73,11 @@ func (s *Specification) Validate() error {
 		}
 		if s.LlmBatchSize < 1 {
 			s.LlmBatchSize = 1 // Set default batch size to 1 if not specified or invalid
+		}
+
+		// Multi-modal validation
+		if s.LlmImageEnabled && s.LlmImageModel == "" {
+			return fmt.Errorf("LLM image model is required when image processing is enabled")
 		}
 	}
 

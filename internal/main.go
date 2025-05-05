@@ -34,6 +34,16 @@ func main() {
 	// Initialize the OpenAI client
 	openaiClient := openai.New(s.LlmUrl, s.LlmApiKey, s.LlmModel)
 
+	// Initialize the image client if image processing is enabled
+	var imageClient openai.OpenAIClient
+	if s.LlmImageEnabled {
+		imageClient = openai.New(s.LlmUrl, s.LlmApiKey, s.LlmImageModel)
+		fmt.Println("Image processing enabled with model:", s.LlmImageModel)
+	} else {
+		// Use the main client as a fallback
+		imageClient = openaiClient
+	}
+
 	// Initialize email service
 	emailService, err := email.NewService(s)
 	if err != nil {
@@ -91,18 +101,18 @@ func main() {
 		entries = qualityfilter.Filter(entries, s.QualityFilterThreshold)
 
 		// Store all raw inputs for benchmarking
-		var benchmarkInputs []string
+		var benchmarkLLMInputs []string
 		var items []models.Item
 
 		// 4. Process entries with LLM
 		if !s.DebugMockLLM {
 			fmt.Println("Sending to LLM")
-			systemPrompt, err := prompts.ComposePrompt(persona)
+			systemPrompt, err := prompts.ComposePrompt(persona, "")
 			if err != nil {
 				panic(fmt.Errorf("could not compose prompt for persona %s: %w", persona.Name, err))
 			}
 
-			items, benchmarkInputs, err = llm.ProcessEntries(openaiClient, systemPrompt, entries, s.LlmBatchSize, s.LlmMultiMode, s.DebugOutputBenchmark)
+			items, benchmarkLLMInputs, err = llm.ProcessEntries(openaiClient, imageClient, systemPrompt, entries, s.LlmBatchSize, s.LlmImageEnabled, persona, s.DebugOutputBenchmark)
 			if err != nil {
 				panic(fmt.Errorf("could not process entries with LLM: %w", err))
 			}
@@ -117,7 +127,7 @@ func main() {
 		// Output benchmark data if requested
 		if s.DebugOutputBenchmark {
 			benchData := &bench.BenchmarkData{
-				RawInput: benchmarkInputs,
+				RawInput: benchmarkLLMInputs,
 				Results:  items,
 				Persona:  persona.Name,
 			}

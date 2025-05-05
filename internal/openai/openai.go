@@ -11,7 +11,15 @@ import (
 	"github.com/bakkerme/ai-news-processor/internal/http/retry"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
+	"github.com/openai/openai-go/packages/param"
 )
+
+// SchemaParameters contains the schema-related parameters for chat completion
+type SchemaParameters struct {
+	Schema      interface{}
+	Name        string
+	Description string
+}
 
 // OpenAIClient defines the interface for interacting with an OpenAI-compatible API
 type OpenAIClient interface {
@@ -19,17 +27,13 @@ type OpenAIClient interface {
 	// systemPrompt: The system prompt to use
 	// userPrompts: A list of user messages to send
 	// imageURLs: Optional list of image URLs to include in the prompt
-	// schema: Optional JSON schema for response formatting (can be nil)
-	// schemaName: Name for the schema when provided
-	// schemaDescription: Description for the schema when provided
+	// schemaParams: Optional schema parameters for response formatting (can be nil)
 	// returns: Channel that will receive the response or error
 	ChatCompletion(
 		systemPrompt string,
 		userPrompts []string,
 		imageURLs []string,
-		schema interface{},
-		schemaName string,
-		schemaDescription string,
+		schemaParams *SchemaParameters,
 		results chan customerrors.ErrorString,
 	)
 
@@ -85,9 +89,7 @@ func (c *Client) ChatCompletion(
 	systemPrompt string,
 	userPrompts []string,
 	imageURLs []string,
-	schema interface{},
-	schemaName string,
-	schemaDescription string,
+	schemaParams *SchemaParameters,
 	results chan customerrors.ErrorString,
 ) {
 	// Prepare messages array
@@ -132,15 +134,16 @@ func (c *Client) ChatCompletion(
 	}
 
 	params := openai.ChatCompletionNewParams{
-		Model:    c.model,
-		Messages: messages,
+		Model:       c.model,
+		Messages:    messages,
+		Temperature: param.NewOpt(0.0),
 	}
 
-	if schema != nil {
+	if schemaParams != nil {
 		schemaParam := openai.ResponseFormatJSONSchemaJSONSchemaParam{
-			Name:        schemaName,
-			Description: openai.String(schemaDescription),
-			Schema:      schema,
+			Name:        schemaParams.Name,
+			Description: openai.String(schemaParams.Description),
+			Schema:      schemaParams.Schema,
 			Strict:      openai.Bool(true),
 		}
 		params.ResponseFormat = openai.ChatCompletionNewParamsResponseFormatUnion{
@@ -189,6 +192,21 @@ func (c *Client) ChatCompletion(
 
 // PreprocessJSON extracts JSON content from the API response
 func (c *Client) PreprocessJSON(response string) string {
+	// Remove think tags and their contents
+	thinkStart := "<think>"
+	thinkEnd := "</think>"
+	for {
+		startIdx := strings.Index(response, thinkStart)
+		if startIdx == -1 {
+			break
+		}
+		endIdx := strings.Index(response, thinkEnd)
+		if endIdx == -1 {
+			break
+		}
+		response = response[:startIdx] + response[endIdx+len(thinkEnd):]
+	}
+
 	// Find the start and end markers
 	startMarker := "```json"
 	endMarker := "```"

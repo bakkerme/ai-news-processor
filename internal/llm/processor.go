@@ -11,11 +11,19 @@ import (
 
 	"github.com/bakkerme/ai-news-processor/internal/customerrors"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
+	"github.com/bakkerme/ai-news-processor/internal/persona"
+	"github.com/bakkerme/ai-news-processor/internal/prompts"
 	"github.com/bakkerme/ai-news-processor/internal/rss"
 	"github.com/invopop/jsonschema"
 
 	"github.com/bakkerme/ai-news-processor/internal/models"
 )
+
+// imageResult holds both the result and the index of the entry it belongs to
+type imageResult struct {
+	result   customerrors.ErrorString
+	entryIdx int
+}
 
 // Generate the JSON schema at initialization time
 var ItemResponseSchema = GenerateSchema[[]models.Item]()
@@ -36,13 +44,15 @@ func GenerateSchema[T any]() interface{} {
 
 // ChatCompletionForEntrySummary sends a ChatCompletion to get summaries for RSS entries
 func ChatCompletionForEntrySummary(client openai.OpenAIClient, systemPrompt string, userPrompts []string, imageURLs []string, results chan customerrors.ErrorString) {
+	// Schema parameters commented for future reference:
+	// Schema: ItemResponseSchema
+	// Name: "post_item"
+	// Description: "an object representing a post"
 	client.ChatCompletion(
 		systemPrompt,
 		userPrompts,
 		imageURLs,
-		ItemResponseSchema,
-		"post_item",
-		"an object representing a post",
+		nil, // Schema parameters currently disabled
 		results,
 	)
 }
@@ -50,15 +60,31 @@ func ChatCompletionForEntrySummary(client openai.OpenAIClient, systemPrompt stri
 // ChatCompletionForFeedSummary sends a ChatCompletion to get a summary for an entire feed
 func ChatCompletionForFeedSummary(client openai.OpenAIClient, systemPrompt string, userPrompts []string, results chan customerrors.ErrorString) {
 	// Feed summaries don't include images directly
+	// Schema parameters commented for future reference:
+	// Schema: SummaryResponseSchema
+	// Name: "summary"
+	// Description: "a summary of multiple AI news items"
 	client.ChatCompletion(
 		systemPrompt,
 		userPrompts,
 		[]string{}, // No images for feed summaries
-		SummaryResponseSchema,
-		"summary",
-		"a summary of multiple AI news items",
+		nil,        // Schema parameters currently disabled
 		results,
 	)
+}
+
+// ChatCompletionImageSummary sends a ChatCompletion to get descriptions for images
+func ChatCompletionImageSummary(client openai.OpenAIClient, systemPrompt string, imageURLs []string, results chan customerrors.ErrorString) {
+	// Empty userPrompt as the image is the content
+	// No schema parameters needed for image analysis
+	client.ChatCompletion(
+		systemPrompt,
+		[]string{}, // No additional text prompt, just let the model analyze the images
+		imageURLs,
+		nil, // Schema parameters not needed for image analysis
+		results,
+	)
+	close(results)
 }
 
 // ParseSummaryResponse parses a JSON string into a SummaryResponse
@@ -127,18 +153,75 @@ func fetchImageAsBase64(imageURL string) string {
 	return dataURI
 }
 
-// ensureValidImageURL ensures a URL has a scheme (http:// or https://)
-func ensureValidImageURL(imgURL string) string {
-	if !strings.HasPrefix(imgURL, "http://") && !strings.HasPrefix(imgURL, "https://") {
-		return "https://" + imgURL
-	}
-	return imgURL
-}
-
 // ProcessEntries takes RSS entries, processes them through an LLM in batches, and returns processed items
-func ProcessEntries(client openai.OpenAIClient, systemPrompt string, entries []rss.Entry, batchSize int, multiMode bool, debugOutputBenchmark bool) ([]models.Item, []string, error) {
+func ProcessEntries(client openai.OpenAIClient, imageClient openai.OpenAIClient, systemPrompt string, entries []rss.Entry, batchSize int, imageEnabled bool, persona persona.Persona, debugOutputBenchmark bool) ([]models.Item, []string, error) {
 	var items []models.Item
 	var benchmarkInputs []string
+
+	// Process images first if image processing is enabled
+	if imageEnabled {
+		completionChannel := make(chan imageResult, len(entries))
+		entriesWithImageDescriptionCount := 0
+
+		for i := range entries {
+			// Get the URL, ensure it has a scheme
+			entry := entries[i]
+			if len(entry.ImageURLs) == 0 {
+				continue
+			}
+
+			imgURL := entry.ImageURLs[0].String()
+
+			// Fetch and convert to base64
+			fmt.Printf("Processing image %s\n", imgURL)
+			dataURI := fetchImageAsBase64(imgURL)
+
+			// Create the image prompt
+			imagePrompt, err := prompts.ComposeImagePrompt(persona, entry.Title)
+			if err != nil {
+				fmt.Printf("Error creating image prompt: %v\n", err)
+				continue
+			}
+
+			// Create a closure to capture the current index
+			entryIndex := i
+			go func(idx int) {
+				resultChan := make(chan customerrors.ErrorString, 1)
+				ChatCompletionImageSummary(imageClient, imagePrompt, []string{dataURI}, resultChan)
+				// Wait for the result from the channel
+				result, ok := <-resultChan
+				if !ok {
+					// Channel was closed without a result
+					completionChannel <- imageResult{
+						result: customerrors.ErrorString{
+							Err:   fmt.Errorf("image processing channel closed without result"),
+							Value: "",
+						},
+						entryIdx: idx,
+					}
+					return
+				}
+				completionChannel <- imageResult{result: result, entryIdx: idx}
+			}(entryIndex)
+
+			entriesWithImageDescriptionCount++
+		}
+
+		fmt.Printf("Waiting for %d image descriptions\n", entriesWithImageDescriptionCount)
+		// Process results and assign them to the correct entries
+		for i := 0; i < entriesWithImageDescriptionCount; i++ {
+			result := <-completionChannel
+			if result.result.Err != nil {
+				fmt.Printf("Error processing images for entry %d: %v\n", result.entryIdx, result.result.Err)
+			} else {
+				fmt.Printf("Got result for entry %d: %s\n", result.entryIdx, result.result.Value)
+				// Store the image description in the correct entry
+				entries[result.entryIdx].ImageDescription = result.result.Value
+				fmt.Printf("Image processing successful for entry %d\n", result.entryIdx)
+			}
+		}
+		close(completionChannel)
+	}
 
 	completionChannel := make(chan customerrors.ErrorString, len(entries))
 	batchCounter := 0
@@ -146,46 +229,11 @@ func ProcessEntries(client openai.OpenAIClient, systemPrompt string, entries []r
 	// Process entries in batches
 	for i := 0; i < len(entries); i += batchSize {
 		batch := entries[i:min(i+batchSize, len(entries))]
-		fmt.Printf("Sending batch %d with %d items\n", i/batchSize, len(batch))
+		fmt.Printf("Sending item %d\n", i)
 
 		batchStrings := make([]string, len(batch))
-		var batchImageURLs []string // Collect image URLs from the batch
-
-		if multiMode {
-			for j, entry := range batch {
-				batchStrings[j] = entry.String(false)
-
-				// Extract image URLs from entries
-				if len(entry.ImageURLs) > 0 {
-					// Add up to 3 images per entry to avoid overwhelming the model
-					maxImages := min(3, len(entry.ImageURLs))
-					for k := 0; k < maxImages; k++ {
-						// Get the URL, ensure it has a scheme
-						imgURL := ensureValidImageURL(entry.ImageURLs[k].String())
-
-						fmt.Println("Adding image", imgURL)
-
-						// Fetch and convert to base64
-						dataURI := fetchImageAsBase64(imgURL)
-						if dataURI != "" {
-							batchImageURLs = append(batchImageURLs, dataURI)
-						}
-					}
-				}
-
-				// Also check for MediaThumbnail if no other images were found
-				if len(entry.ImageURLs) == 0 && entry.MediaThumbnail.URL != "" {
-					imgURL := ensureValidImageURL(entry.MediaThumbnail.URL)
-					dataURI := fetchImageAsBase64(imgURL)
-					if dataURI != "" {
-						batchImageURLs = append(batchImageURLs, dataURI)
-					}
-				}
-			}
-		} else {
-			for j, entry := range batch {
-				batchStrings[j] = entry.String(false)
-			}
+		for j, entry := range batch {
+			batchStrings[j] = entry.String(false)
 		}
 
 		// Store inputs for benchmarking
@@ -193,29 +241,29 @@ func ProcessEntries(client openai.OpenAIClient, systemPrompt string, entries []r
 			benchmarkInputs = append(benchmarkInputs, batchStrings...)
 		}
 
-		go ChatCompletionForEntrySummary(client, systemPrompt, batchStrings, batchImageURLs, completionChannel)
+		go ChatCompletionForEntrySummary(client, systemPrompt, batchStrings, nil, completionChannel)
 		batchCounter++
 	}
 
 	// Process results from all batches
 	for i := 0; i < batchCounter; i++ {
-		fmt.Printf("Waiting for batch %d\n", i)
+		fmt.Printf("Waiting for item %d\n", i)
 		result := <-completionChannel
 		if result.Err != nil {
 			return nil, benchmarkInputs, fmt.Errorf("could not process value from LLM for batch %d: %s", i, result.Err)
 		}
 
-		fmt.Println(result.Value)
-
 		processedValue := client.PreprocessJSON(result.Value)
 
-		batchItems, err := llmResponseToItems(processedValue)
+		fmt.Println(processedValue)
+
+		item, err := llmResponseToItems(processedValue)
 		if err != nil {
-			return nil, benchmarkInputs, fmt.Errorf("could not convert llm output to json. %s: %w", result.Value, err)
+			return nil, benchmarkInputs, fmt.Errorf("could not convert llm output to json. %s: %w", processedValue, err)
 		}
 
-		fmt.Printf("Processed batch %d, found %d items\n", i, len(batchItems))
-		items = append(items, batchItems...)
+		fmt.Printf("Processed item %d\n", i)
+		items = append(items, item)
 	}
 
 	return items, benchmarkInputs, nil
@@ -256,11 +304,11 @@ func FilterRelevantItems(items []models.Item) []models.Item {
 }
 
 // llmResponseToItems converts a JSON LLM response to a slice of Items
-func llmResponseToItems(jsonStr string) ([]models.Item, error) {
-	var items []models.Item
+func llmResponseToItems(jsonStr string) (models.Item, error) {
+	var items models.Item
 	err := json.Unmarshal([]byte(jsonStr), &items)
 	if err != nil {
-		return nil, err
+		return models.Item{}, fmt.Errorf("could not unmarshal llm response to items: %w", err)
 	}
 	return items, nil
 }

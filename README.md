@@ -20,6 +20,8 @@ The following environment variables are used to configure the AI News Processor:
 | `ANP_LLM_API_KEY`             | The API key for authenticating with the LLM. |                    |
 | `ANP_LLM_MODEL`               | The language model to use for analysis.      |                    | 
 | `ANP_LLM_MULTI_MODE`          | If true, images are included as part of summarisation prompt. Requires a multi-modal model. | false |
+| `ANP_LLM_IMAGE_ENABLED`       | If true, enables separate image processing with a dedicated model. | false |
+| `ANP_LLM_IMAGE_MODEL`         | The dedicated model to use for image processing. Only used when ANP_LLM_IMAGE_ENABLED is true. |  |
 | `ANP_EMAIL_TO`                | Email address to send email to.      |                    |
 | `ANP_EMAIL_FROM`              | Email address to send email from.    |                    |
 | `ANP_EMAIL_HOST`              | SMTP server host for emails.                 |                    |

@@ -72,12 +72,17 @@ var EvaluationResultSchema = llm.GenerateSchema[EvaluationResult]()
 
 // ChatCompletionForBenchmarkEvaluation queries the LLM for a benchmark evaluation using the EvaluationResult schema
 func ChatCompletionForBenchmarkEvaluation(llmClient openai.OpenAIClient, systemPrompt string, userPrompts []string, results chan customerrors.ErrorString) {
+	schemaParams := &openai.SchemaParameters{
+		Schema:      EvaluationResultSchema,
+		Name:        "benchmark_evaluation",
+		Description: "an object representing a benchmark evaluation result (quality and relevance)",
+	}
+
 	llmClient.ChatCompletion(
 		systemPrompt,
 		userPrompts,
-		EvaluationResultSchema,
-		"benchmark_evaluation",
-		"an object representing a benchmark evaluation result (quality and relevance)",
+		[]string{},
+		schemaParams,
 		results,
 	)
 }
@@ -103,6 +108,7 @@ func main() {
 	log.Println("Configuration loaded.")
 
 	model := "qwen2.5-72b-instruct"
+	// model := "qwen3-32b-mlx"
 
 	// Initialize OpenAI client using values from the specification
 	log.Println("Initializing OpenAI client...")

@@ -4,7 +4,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"net/url"
-	"regexp"
 	"strings"
 	"time"
 
@@ -37,14 +36,15 @@ func (cf *CommentFeed) FeedString() string {
 
 // Entry and EntryComments are used throughout the codebase for RSS feeds
 type Entry struct {
-	Title          string    `xml:"title"`
-	Link           Link      `xml:"link"`
-	ID             string    `xml:"id"`
-	Published      time.Time `xml:"published"`
-	Content        string    `xml:"content"`
-	Comments       []EntryComments
-	ImageURLs      []url.URL      // New field to store extracted image URLs
-	MediaThumbnail MediaThumbnail `xml:"http://search.yahoo.com/mrss/ thumbnail"` // Field to store thumbnail information from media namespace
+	Title            string    `xml:"title"`
+	Link             Link      `xml:"link"`
+	ID               string    `xml:"id"`
+	Published        time.Time `xml:"published"`
+	Content          string    `xml:"content"`
+	Comments         []EntryComments
+	ImageURLs        []url.URL      // New field to store extracted image URLs
+	MediaThumbnail   MediaThumbnail `xml:"http://search.yahoo.com/mrss/ thumbnail"` // Field to store thumbnail information from media namespace
+	ImageDescription string         // Field to store image descriptions from dedicated image processing
 }
 
 type EntryComments struct {
@@ -62,10 +62,11 @@ type MediaThumbnail struct {
 
 func (e *Entry) String(disableTruncation bool) string {
 	var s strings.Builder
-	s.WriteString(fmt.Sprintf("Title: %s\nID: %s\nSummary: %s\n",
+	s.WriteString(fmt.Sprintf("Title: %s\nID: %s\nSummary: %s\nImageDescription: %s\n",
 		strings.Trim(e.Title, " "),
 		e.ID,
 		cleanContent(e.Content, 1200, disableTruncation),
+		e.ImageDescription,
 	))
 
 	for _, comment := range e.Comments {
@@ -107,73 +108,65 @@ func (e *Entry) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 func (e *Entry) ExtractImageURLs() error {
 	// Reset the ImageURLs slice
 	e.ImageURLs = nil
+	urlMap := make(map[string]url.URL) // Use a map to automatically deduplicate
 
-	// Check for image links in the "link" span elements that appear at the end of Reddit posts
-	// These often look like: <span><a href="https://i.redd.it/image.jpeg">[link]</a></span>
-	linkURLs := extractLinkURLsFromContent(e.Content)
-	for _, linkURL := range linkURLs {
-		if isLikelyImageURL(linkURL) && !containsExcludedTerms(linkURL) {
-			u, parseErr := url.Parse(linkURL)
-			if parseErr == nil {
-				e.ImageURLs = append(e.ImageURLs, *u)
-			}
-		}
-	}
-
-	// Parse the content HTML for regular <img> tags
+	// Parse the content HTML for regular <img> tags and <a> tags with image links
 	doc, err := html.Parse(strings.NewReader(e.Content))
 	if err != nil {
 		return fmt.Errorf("failed to parse HTML content: %w", err)
 	}
 
-	var extract func(*html.Node)
-	extract = func(n *html.Node) {
+	// Traverse the DOM to find image URLs
+	extractURLsFromNode(doc, urlMap)
+
+	// Convert map to slice
+	e.ImageURLs = make([]url.URL, 0, len(urlMap))
+	for _, u := range urlMap {
+		e.ImageURLs = append(e.ImageURLs, u)
+	}
+
+	return nil
+}
+
+// extractURLsFromNode recursively traverses HTML nodes to extract image URLs
+func extractURLsFromNode(n *html.Node, urlMap map[string]url.URL) {
+	if n.Type == html.ElementNode {
 		// Check for <img> tags
-		if n.Type == html.ElementNode && n.Data == "img" {
+		if n.Data == "img" {
 			for _, a := range n.Attr {
 				if a.Key == "src" {
-					imgURL := a.Val
-					// Use more relaxed validation for img tags since these are definitely images
-					if !containsExcludedTerms(imgURL) {
-						u, parseErr := url.Parse(imgURL)
-						if parseErr == nil {
-							e.ImageURLs = append(e.ImageURLs, *u)
-						}
-					}
+					addImageURLIfValid(a.Val, urlMap)
 					break
 				}
 			}
 		}
 
 		// Check for <a> tags with image links
-		if n.Type == html.ElementNode && n.Data == "a" {
+		if n.Data == "a" {
 			for _, a := range n.Attr {
 				if a.Key == "href" {
-					linkURL := a.Val
-					// Check if the link directly points to an image
-					if isLikelyImageURL(linkURL) && !containsExcludedTerms(linkURL) {
-						u, parseErr := url.Parse(linkURL)
-						if parseErr == nil {
-							e.ImageURLs = append(e.ImageURLs, *u)
-						}
-					}
+					addImageURLIfValid(a.Val, urlMap)
 					break
 				}
 			}
 		}
-
-		// Continue traversing the DOM
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			extract(c)
-		}
 	}
 
-	extract(doc)
+	// Continue traversing the DOM
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		extractURLsFromNode(c, urlMap)
+	}
+}
 
-	// Deduplicate image URLs
-	e.ImageURLs = deduplicateURLs(e.ImageURLs)
-
-	return nil
+// addImageURLIfValid adds a URL to the map if it's a valid image URL
+func addImageURLIfValid(urlStr string, urlMap map[string]url.URL) {
+	if (isLikelyImageURL(urlStr) || hasImageExtension(urlStr)) && !containsExcludedTerms(urlStr) {
+		validURL := ensureValidImageURL(urlStr)
+		u, err := url.Parse(validURL)
+		if err == nil {
+			urlMap[u.String()] = *u
+		}
+	}
 }
 
 // isLikelyImageURL checks if a URL is likely an image based on extension or known image hosting patterns
@@ -210,33 +203,4 @@ func hasImageExtension(urlStr string) bool {
 func containsExcludedTerms(urlStr string) bool {
 	lowerURL := strings.ToLower(urlStr)
 	return strings.Contains(lowerURL, "thumb") || strings.Contains(lowerURL, "preview")
-}
-
-// extractLinkURLsFromContent looks for URLs in [link] elements common in Reddit feeds
-func extractLinkURLsFromContent(content string) []string {
-	// Simple regex to find links in patterns like <span><a href="URL">[link]</a></span>
-	re := regexp.MustCompile(`<span>\s*<a href="([^"]+)">\s*\[link\]\s*</a>\s*</span>`)
-	matches := re.FindAllStringSubmatch(content, -1)
-
-	var urls []string
-	for _, match := range matches {
-		if len(match) >= 2 {
-			urls = append(urls, match[1])
-		}
-	}
-	return urls
-}
-
-// deduplicateURLs removes duplicate URLs from a slice
-func deduplicateURLs(urls []url.URL) []url.URL {
-	urlMap := make(map[string]url.URL)
-	for _, u := range urls {
-		urlMap[u.String()] = u
-	}
-
-	deduplicated := make([]url.URL, 0, len(urlMap))
-	for _, u := range urlMap {
-		deduplicated = append(deduplicated, u)
-	}
-	return deduplicated
 }
