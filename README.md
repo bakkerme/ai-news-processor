@@ -19,7 +19,7 @@ The following environment variables are used to configure the AI News Processor:
 | `ANP_LLM_URL`                 | The URL of the LLM (Language Model) service. Must be OpenAI-compatible. |                    |
 | `ANP_LLM_API_KEY`             | The API key for authenticating with the LLM. |                    |
 | `ANP_LLM_MODEL`               | The language model to use for analysis.      |                    | 
-| `ANP_LLM_MULTI_MODE | If true, images are included as part of summarisation prompt. Requires a multi-modal model. | false |
+| `ANP_LLM_MULTI_MODE`          | If true, images are included as part of summarisation prompt. Requires a multi-modal model. | false |
 | `ANP_EMAIL_TO`                | Email address to send email to.      |                    |
 | `ANP_EMAIL_FROM`              | Email address to send email from.    |                    |
 | `ANP_EMAIL_HOST`              | SMTP server host for emails.                 |                    |
@@ -28,6 +28,7 @@ The following environment variables are used to configure the AI News Processor:
 | `ANP_EMAIL_PASSWORD`          | Password for the email account.              |                    |
 | `ANP_CRON_SCHEDULE`           | Cron schedule for running the processor.     | `0 0 * * *` (Midnight) |
 | `ANP_PERSONAS_PATH`           | Directory containing persona YAML files.     | `/app/personas/`   |
+| `ANP_QUALITY_FILTER_THRESHOLD`| Minimum number of comments required for a post to be included. | `10` |
 
 ### Debug Configuration
 

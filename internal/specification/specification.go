@@ -28,6 +28,8 @@ type Specification struct {
 	DebugMaxEntries      int  `split_words:"true"`
 	DebugRssDump         bool `split_words:"true"`
 
+	QualityFilterThreshold int `split_words:"true" default:"10"`
+
 	PersonasPath string `split_words:"true"`
 }
 

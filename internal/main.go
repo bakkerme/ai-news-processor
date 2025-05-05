@@ -88,7 +88,7 @@ func main() {
 		}
 
 		// 3. Filter entries with quality filter
-		entries = qualityfilter.Filter(entries)
+		entries = qualityfilter.Filter(entries, s.QualityFilterThreshold)
 
 		// Store all raw inputs for benchmarking
 		var benchmarkInputs []string
