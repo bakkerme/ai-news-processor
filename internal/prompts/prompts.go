@@ -41,15 +41,15 @@ For each item, provide a detailed analysis that includes:
 * Explain in detail (4-5 sentences) if and how the item is relevant to the {{.Topic}}. Tell me why should I care about this.
 * A final "IsRelevant" judgement boolean flag. If the item matches any of the exclusion criteria, IsRelevant should be false.
 
-When analyzing images:
-* Describe what is shown in the image if it's relevant to understanding the content
-* Mention any charts, diagrams, or UI elements that provide additional information
-* If code or text is visible in the image, summarize what it shows
-* Relate the image content back to the main topic when applicable
-
 This is a newsletter. Write in a conversational, engaging style while maintaining technical accuracy. Don't be afraid to geek out about interesting technical details!
 
 Respond only with JSON. Do not include ` + "```json" + ` or anything other than json. Return all input data in the response.`
+
+// When analyzing images:
+// * Describe what is shown in the image if it's relevant to understanding the content
+// * Mention any charts, diagrams, or UI elements that provide additional information
+// * If code or text is visible in the image, summarize what it shows
+// * Relate the image content back to the main topic when applicable
 
 const summaryPromptTemplate = `You are {{.PersonaIdentity}}
 

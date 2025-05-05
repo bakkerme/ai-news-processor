@@ -13,6 +13,7 @@ import (
 	"github.com/bakkerme/ai-news-processor/internal/openai"
 	"github.com/bakkerme/ai-news-processor/internal/persona"
 	"github.com/bakkerme/ai-news-processor/internal/prompts"
+	"github.com/bakkerme/ai-news-processor/internal/qualityfilter"
 	"github.com/bakkerme/ai-news-processor/internal/rss"
 	"github.com/bakkerme/ai-news-processor/internal/specification"
 	"github.com/bakkerme/ai-news-processor/internal/summary"
@@ -86,11 +87,14 @@ func main() {
 			panic(fmt.Errorf("failed to enrich entries with comments for persona %s: %w", persona.Name, err))
 		}
 
+		// 3. Filter entries with quality filter
+		entries = qualityfilter.Filter(entries)
+
 		// Store all raw inputs for benchmarking
 		var benchmarkInputs []string
 		var items []models.Item
 
-		// 3. Process entries with LLM
+		// 4. Process entries with LLM
 		if !s.DebugMockLLM {
 			fmt.Println("Sending to LLM")
 			systemPrompt, err := prompts.ComposePrompt(persona)
@@ -107,7 +111,7 @@ func main() {
 			items = GetMockLLMResponse()
 		}
 
-		// 4. Enrich items with links from RSS entries
+		// 5. Enrich items with links from RSS entries
 		items = llm.EnrichItems(items, entries)
 
 		// Output benchmark data if requested
@@ -120,13 +124,13 @@ func main() {
 			outputBenchmarkData(benchData)
 		}
 
-		// 5. Filter for relevant items
+		// 6. Filter for relevant items
 		relevantItems := llm.FilterRelevantItems(items)
 		if len(relevantItems) == 0 {
 			panic("no items to render as an email")
 		}
 
-		// 6. Get relevant entries for summary
+		// 7. Get relevant entries for summary
 		relevantEntries := make([]rss.Entry, 0, len(relevantItems))
 		for _, item := range relevantItems {
 			entry := rss.FindEntryByID(item.ID, entries)
@@ -135,7 +139,7 @@ func main() {
 			}
 		}
 
-		// 7. Generate summary for relevant items
+		// 9. Generate summary for relevant items
 		var summaryResponse *models.SummaryResponse
 		if !s.DebugMockLLM {
 			summaryResponse, err = summary.Generate(openaiClient, relevantEntries, persona)
@@ -147,7 +151,7 @@ func main() {
 			summaryResponse = GetMockSummaryResponse()
 		}
 
-		// 8. Render and send email
+		// 10. Render and send email
 		if !s.DebugSkipEmail {
 			err = emailService.RenderAndSend(relevantItems, summaryResponse)
 			if err != nil {
