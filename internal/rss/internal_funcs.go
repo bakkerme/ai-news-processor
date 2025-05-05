@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -22,8 +24,8 @@ var DefaultRSSRetryConfig = retry.RetryConfig{
 	MaxTotalTimeout: 1 * time.Minute,
 }
 
-// FetchRSS retrieves RSS content from a URL
-func FetchRSS(url string) (string, error) {
+// fetchRSS retrieves RSS content from a URL
+func fetchRSS(url string) (string, error) {
 	resp, err := fetchWithRetry(url, DefaultRSSRetryConfig)
 	if err != nil {
 		return "", fmt.Errorf("could not fetch RSS: %w", err)
@@ -38,7 +40,7 @@ func FetchRSS(url string) (string, error) {
 	return string(body), nil
 }
 
-func ProcessRSSFeed(input string, feed *Feed) error {
+func processRSSFeed(input string, feed *Feed) error {
 	feed.RawRSS = input // Store the raw RSS data
 	if err := xml.Unmarshal([]byte(input), feed); err != nil {
 		return err
@@ -47,39 +49,13 @@ func ProcessRSSFeed(input string, feed *Feed) error {
 	return nil
 }
 
-func ProcessCommentsRSSFeed(input string, commentFeed *CommentFeed) error {
+func processCommentsRSSFeed(input string, commentFeed *CommentFeed) error {
 	commentFeed.RawRSS = input // Store the raw RSS data
 	if err := xml.Unmarshal([]byte(input), commentFeed); err != nil {
 		return err
 	}
 
 	return nil
-}
-
-// GetFeeds retrieves RSS feeds from the provided URLs
-func GetFeeds(urls []string) ([]*Feed, error) {
-	var feeds []*Feed
-	for _, url := range urls {
-		rssString, err := FetchRSS(url)
-		if err != nil {
-			return nil, fmt.Errorf("could not fetch RSS from %s: %w", url, err)
-		}
-
-		feed := &Feed{}
-		err = ProcessRSSFeed(rssString, feed)
-		if err != nil {
-			return nil, fmt.Errorf("could not process RSS feed from %s: %w", url, err)
-		}
-
-		feeds = append(feeds, feed)
-	}
-	return feeds, nil
-}
-
-// GetMockFeeds returns mock RSS feeds for testing
-func GetMockFeeds(personaName string) []*Feed {
-	feed := ReturnFakeRSS(personaName)
-	return []*Feed{feed}
 }
 
 func cleanContent(s string, maxLen int, disableTruncation bool) string {
@@ -159,4 +135,28 @@ func fetchWithRetry(url string, config retry.RetryConfig) (*http.Response, error
 	}
 
 	return resp, nil
+}
+
+// dumpFeed saves the raw RSS content to disk for debugging purposes
+func dumpFeed(feedURL string, content Feedlike, personaName, itemName string) error {
+	fmt.Printf("Dumping RSS for %s\n", feedURL)
+
+	feedString := content.FeedString()
+
+	// Create a safe filename from the itemName
+	filename := itemName + ".rss"
+
+	// Create the directory path
+	dir := filepath.Join("..", "feed_mocks", "rss", personaName)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("failed to create directory: %w", err)
+	}
+
+	// Write the content to file
+	path := filepath.Join(dir, filename)
+	if err := os.WriteFile(path, []byte(feedString), 0644); err != nil {
+		return fmt.Errorf("failed to write RSS content: %w", err)
+	}
+
+	return nil
 }

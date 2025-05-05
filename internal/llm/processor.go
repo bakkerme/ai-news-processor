@@ -1,8 +1,13 @@
 package llm
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"strings"
+	"time"
 
 	"github.com/bakkerme/ai-news-processor/internal/customerrors"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
@@ -30,10 +35,11 @@ func GenerateSchema[T any]() interface{} {
 }
 
 // ChatCompletionForEntrySummary sends a ChatCompletion to get summaries for RSS entries
-func ChatCompletionForEntrySummary(client openai.OpenAIClient, systemPrompt string, userPrompts []string, results chan customerrors.ErrorString) {
+func ChatCompletionForEntrySummary(client openai.OpenAIClient, systemPrompt string, userPrompts []string, imageURLs []string, results chan customerrors.ErrorString) {
 	client.ChatCompletion(
 		systemPrompt,
 		userPrompts,
+		imageURLs,
 		ItemResponseSchema,
 		"post_item",
 		"an object representing a post",
@@ -43,9 +49,11 @@ func ChatCompletionForEntrySummary(client openai.OpenAIClient, systemPrompt stri
 
 // ChatCompletionForFeedSummary sends a ChatCompletion to get a summary for an entire feed
 func ChatCompletionForFeedSummary(client openai.OpenAIClient, systemPrompt string, userPrompts []string, results chan customerrors.ErrorString) {
+	// Feed summaries don't include images directly
 	client.ChatCompletion(
 		systemPrompt,
 		userPrompts,
+		[]string{}, // No images for feed summaries
 		SummaryResponseSchema,
 		"summary",
 		"a summary of multiple AI news items",
@@ -64,8 +72,71 @@ func ParseSummaryResponse(jsonStr string) (*models.SummaryResponse, error) {
 	return &summary, nil
 }
 
+// fetchImageAsBase64 fetches an image from a URL and returns it as a base64-encoded data URI
+// Returns an empty string if any errors occur
+func fetchImageAsBase64(imageURL string) string {
+	// Set a timeout for the HTTP client
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	// Make the HTTP request
+	resp, err := client.Get(imageURL)
+	if err != nil {
+		fmt.Printf("Error fetching image %s: %v\n", imageURL, err)
+		return ""
+	}
+	defer resp.Body.Close()
+
+	// Check if response status is OK
+	if resp.StatusCode != http.StatusOK {
+		fmt.Printf("Error fetching image %s: status code %d\n", imageURL, resp.StatusCode)
+		return ""
+	}
+
+	// Read the image data
+	imageData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("Error reading image data %s: %v\n", imageURL, err)
+		return ""
+	}
+
+	// Determine content type
+	contentType := resp.Header.Get("Content-Type")
+	if contentType == "" {
+		// Try to guess from URL extension
+		if strings.HasSuffix(strings.ToLower(imageURL), ".jpg") || strings.HasSuffix(strings.ToLower(imageURL), ".jpeg") {
+			contentType = "image/jpeg"
+		} else if strings.HasSuffix(strings.ToLower(imageURL), ".png") {
+			contentType = "image/png"
+		} else if strings.HasSuffix(strings.ToLower(imageURL), ".gif") {
+			contentType = "image/gif"
+		} else if strings.HasSuffix(strings.ToLower(imageURL), ".webp") {
+			contentType = "image/webp"
+		} else {
+			contentType = "image/jpeg" // Default assumption
+		}
+	}
+
+	// Encode the image data as base64
+	base64Encoded := base64.StdEncoding.EncodeToString(imageData)
+
+	// Create the data URI
+	dataURI := fmt.Sprintf("data:%s;base64,%s", contentType, base64Encoded)
+
+	return dataURI
+}
+
+// ensureValidImageURL ensures a URL has a scheme (http:// or https://)
+func ensureValidImageURL(imgURL string) string {
+	if !strings.HasPrefix(imgURL, "http://") && !strings.HasPrefix(imgURL, "https://") {
+		return "https://" + imgURL
+	}
+	return imgURL
+}
+
 // ProcessEntries takes RSS entries, processes them through an LLM in batches, and returns processed items
-func ProcessEntries(client openai.OpenAIClient, systemPrompt string, entries []rss.Entry, batchSize int, debugOutputBenchmark bool) ([]models.Item, []string, error) {
+func ProcessEntries(client openai.OpenAIClient, systemPrompt string, entries []rss.Entry, batchSize int, multiMode bool, debugOutputBenchmark bool) ([]models.Item, []string, error) {
 	var items []models.Item
 	var benchmarkInputs []string
 
@@ -78,8 +149,37 @@ func ProcessEntries(client openai.OpenAIClient, systemPrompt string, entries []r
 		fmt.Printf("Sending batch %d with %d items\n", i/batchSize, len(batch))
 
 		batchStrings := make([]string, len(batch))
+		var batchImageURLs []string // Collect image URLs from the batch
+
 		for j, entry := range batch {
 			batchStrings[j] = entry.String(false)
+
+			// Extract image URLs from entries
+			if len(entry.ImageURLs) > 0 {
+				// Add up to 3 images per entry to avoid overwhelming the model
+				maxImages := min(3, len(entry.ImageURLs))
+				for k := 0; k < maxImages; k++ {
+					// Get the URL, ensure it has a scheme
+					imgURL := ensureValidImageURL(entry.ImageURLs[k].String())
+
+					fmt.Println("Adding image", imgURL)
+
+					// Fetch and convert to base64
+					dataURI := fetchImageAsBase64(imgURL)
+					if dataURI != "" {
+						batchImageURLs = append(batchImageURLs, dataURI)
+					}
+				}
+			}
+
+			// Also check for MediaThumbnail if no other images were found
+			if len(entry.ImageURLs) == 0 && entry.MediaThumbnail.URL != "" {
+				imgURL := ensureValidImageURL(entry.MediaThumbnail.URL)
+				dataURI := fetchImageAsBase64(imgURL)
+				if dataURI != "" {
+					batchImageURLs = append(batchImageURLs, dataURI)
+				}
+			}
 		}
 
 		// Store inputs for benchmarking
@@ -87,7 +187,7 @@ func ProcessEntries(client openai.OpenAIClient, systemPrompt string, entries []r
 			benchmarkInputs = append(benchmarkInputs, batchStrings...)
 		}
 
-		go ChatCompletionForEntrySummary(client, systemPrompt, batchStrings, completionChannel)
+		go ChatCompletionForEntrySummary(client, systemPrompt, batchStrings, batchImageURLs, completionChannel)
 		batchCounter++
 	}
 

@@ -18,6 +18,7 @@ type OpenAIClient interface {
 	// ChatCompletion performs a general-purpose chat completion request
 	// systemPrompt: The system prompt to use
 	// userPrompts: A list of user messages to send
+	// imageURLs: Optional list of image URLs to include in the prompt
 	// schema: Optional JSON schema for response formatting (can be nil)
 	// schemaName: Name for the schema when provided
 	// schemaDescription: Description for the schema when provided
@@ -25,6 +26,7 @@ type OpenAIClient interface {
 	ChatCompletion(
 		systemPrompt string,
 		userPrompts []string,
+		imageURLs []string,
 		schema interface{},
 		schemaName string,
 		schemaDescription string,
@@ -78,21 +80,60 @@ func isModelLoadingError(err error) bool {
 		strings.Contains(errStr, "Model does not exist")
 }
 
-// ChatCompletion sends a request to the OpenAI API with the given prompts and schema
+// ChatCompletion sends a request to the OpenAI API with the given prompts, optional images, and schema
 func (c *Client) ChatCompletion(
 	systemPrompt string,
 	userPrompts []string,
+	imageURLs []string,
 	schema interface{},
 	schemaName string,
 	schemaDescription string,
 	results chan customerrors.ErrorString,
 ) {
+	// Prepare messages array
+	messages := []openai.ChatCompletionMessageParamUnion{
+		openai.SystemMessage(systemPrompt),
+	}
+
+	// If we have image URLs, create a message with multi-modal content
+	if len(imageURLs) > 0 {
+		// Build image content parts
+		contentParts := []openai.ChatCompletionContentPartUnionParam{}
+
+		// First, add a text part if we have userPrompts
+		if len(userPrompts) > 0 {
+			textPart := openai.TextContentPart(userPrompts[0]) // First prompt as the text part
+			contentParts = append(contentParts, textPart)
+		}
+
+		// Then add all the image parts
+		for _, imgURL := range imageURLs {
+			if imgURL != "" { // Basic validation
+				imageParam := openai.ChatCompletionContentPartImageImageURLParam{
+					URL: imgURL,
+					// Optional: Detail: openai.String("auto"), // Can be "low", "high", or "auto"
+				}
+				imagePart := openai.ImageContentPart(imageParam)
+				contentParts = append(contentParts, imagePart)
+			}
+		}
+
+		// Create a user message with the multi-modal content parts
+		messages = append(messages, openai.UserMessage(contentParts))
+
+		// If there are additional prompts (beyond the first one), add them separately
+		if len(userPrompts) > 1 {
+			// Join the remaining prompts and add as a separate message
+			messages = append(messages, openai.UserMessage(strings.Join(userPrompts[1:], "\n")))
+		}
+	} else {
+		// No images, just add text prompts as usual
+		messages = append(messages, openai.UserMessage(strings.Join(userPrompts, "\n")))
+	}
+
 	params := openai.ChatCompletionNewParams{
-		Model: c.model,
-		Messages: []openai.ChatCompletionMessageParamUnion{
-			openai.SystemMessage(systemPrompt),
-			openai.UserMessage(strings.Join(userPrompts, "\n")),
-		},
+		Model:    c.model,
+		Messages: messages,
 	}
 
 	if schema != nil {

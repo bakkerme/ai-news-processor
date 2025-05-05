@@ -32,14 +32,22 @@ For each item, provide a detailed analysis that includes:
 * A comprehensive summary (4-5 sentences) that 
   - Provides in detail the content of the item
   - Mentions specific performance metrics or benchmarks if applicable
+  - Analyzes any images included in the post (if present)
+  - Describes visual elements that provide additional context to the news item
 * A detailed comment analysis that:
   - Captures the community sentiment
   - Highlights interesting discussions
   - Notes any concerns or criticisms
-* Expalain in detail (4-5 sentences) if and how the item is relevant to to the {{.Topic}}. Tell me why should I care about this.
+* Explain in detail (4-5 sentences) if and how the item is relevant to the {{.Topic}}. Tell me why should I care about this.
 * A final "IsRelevant" judgement boolean flag. If the item matches any of the exclusion criteria, IsRelevant should be false.
 
-This is a newlsetter. Write in a conversational, engaging style while maintaining technical accuracy. Don't be afraid to geek out about interesting technical details!
+When analyzing images:
+* Describe what is shown in the image if it's relevant to understanding the content
+* Mention any charts, diagrams, or UI elements that provide additional information
+* If code or text is visible in the image, summarize what it shows
+* Relate the image content back to the main topic when applicable
+
+This is a newsletter. Write in a conversational, engaging style while maintaining technical accuracy. Don't be afraid to geek out about interesting technical details!
 
 Respond only with JSON. Do not include ` + "```json" + ` or anything other than json. Return all input data in the response.`
 

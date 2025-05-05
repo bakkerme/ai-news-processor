@@ -12,6 +12,7 @@ type Specification struct {
 	LlmApiKey    string `split_words:"true"`
 	LlmModel     string `split_words:"true"`
 	LlmBatchSize int    `split_words:"true"`
+	LlmMultiMode bool   `split_words:"true"`
 
 	EmailTo       string `split_words:"true"`
 	EmailFrom     string `split_words:"true"`

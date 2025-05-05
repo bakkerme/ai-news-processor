@@ -12,12 +12,6 @@ type FeedProvider interface {
 
 	// FetchComments retrieves and processes comments for a specific entry
 	FetchComments(ctx context.Context, entry Entry) (*CommentFeed, error)
-
-	// GetMockFeed returns a mock feed for testing purposes
-	GetMockFeed(ctx context.Context, personaName string) (*Feed, error)
-
-	// GetMockComments returns mock comments for testing purposes
-	GetMockComments(ctx context.Context, personaName string, entryID string) (*CommentFeed, error)
 }
 
 // DefaultFeedProvider implements the FeedProvider interface using the standard RSS functions
@@ -32,13 +26,13 @@ func NewFeedProvider() *DefaultFeedProvider {
 
 // FetchFeed implements FeedProvider.FetchFeed
 func (p *DefaultFeedProvider) FetchFeed(ctx context.Context, url string) (*Feed, error) {
-	rssString, err := FetchRSS(url)
+	rssString, err := fetchRSS(url)
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch RSS from %s: %w", url, err)
 	}
 
 	feed := &Feed{}
-	err = ProcessRSSFeed(rssString, feed)
+	err = processRSSFeed(rssString, feed)
 	if err != nil {
 		return nil, fmt.Errorf("could not process RSS feed from %s: %w", url, err)
 	}
@@ -49,30 +43,16 @@ func (p *DefaultFeedProvider) FetchFeed(ctx context.Context, url string) (*Feed,
 // FetchComments implements FeedProvider.FetchComments
 func (p *DefaultFeedProvider) FetchComments(ctx context.Context, entry Entry) (*CommentFeed, error) {
 	commentURL := entry.GetCommentRSSURL()
-	commentFeedString, err := FetchRSS(commentURL)
+	commentFeedString, err := fetchRSS(commentURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load comment feed for entry %s: %w", entry.ID, err)
 	}
 
 	commentFeed := &CommentFeed{}
-	err = ProcessCommentsRSSFeed(commentFeedString, commentFeed)
+	err = processCommentsRSSFeed(commentFeedString, commentFeed)
 	if err != nil {
 		return nil, fmt.Errorf("could not process comment feed: %w", err)
 	}
-
-	return commentFeed, nil
-}
-
-// GetMockFeed implements FeedProvider.GetMockFeed
-func (p *DefaultFeedProvider) GetMockFeed(ctx context.Context, personaName string) (*Feed, error) {
-	feed := ReturnFakeRSS(personaName)
-
-	return feed, nil
-}
-
-// GetMockComments implements FeedProvider.GetMockComments
-func (p *DefaultFeedProvider) GetMockComments(ctx context.Context, personaName string, entryID string) (*CommentFeed, error) {
-	commentFeed := ReturnFakeCommentRSS(personaName, entryID)
 
 	return commentFeed, nil
 }

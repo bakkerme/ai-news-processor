@@ -54,15 +54,23 @@ func main() {
 		panic(err)
 	}
 
-	// Create an instance of DefaultFeedProvider
-	feedProvider := rss.NewFeedProvider()
+	// Create appropriate feed provider based on debug settings
+	var feedProvider rss.FeedProvider
+	if s.DebugMockRss {
+		fmt.Println("Using mock feed provider")
+		// Use the persona name from the first selected persona for mock data
+		// Each persona will still use its own mock data in processing
+		feedProvider = rss.NewMockFeedProvider(selectedPersonas[0].Name)
+	} else {
+		feedProvider = rss.NewFeedProvider()
+	}
 
 	// Process each persona
 	for _, persona := range selectedPersonas {
 		fmt.Printf("Processing persona: %s\n", persona.Name)
 
 		// 1. Fetch and process RSS feed using FeedProvider
-		entries, err := rss.FetchAndProcessFeed(feedProvider, persona.FeedURL, s.DebugMockRss, persona.Name, s.DebugRssDump)
+		entries, err := rss.FetchAndProcessFeed(feedProvider, persona.FeedURL, s.DebugRssDump, persona.Name)
 		if err != nil {
 			panic(fmt.Errorf("failed to process RSS feed for persona %s: %w", persona.Name, err))
 		}
@@ -73,7 +81,7 @@ func main() {
 		}
 
 		// 2. Enrich entries with comments
-		entries, err = rss.FetchAndEnrichWithComments(feedProvider, entries, s.DebugMockRss, s.DebugRssDump, persona.Name)
+		entries, err = rss.FetchAndEnrichWithComments(feedProvider, entries, s.DebugRssDump, persona.Name)
 		if err != nil {
 			panic(fmt.Errorf("failed to enrich entries with comments for persona %s: %w", persona.Name, err))
 		}
@@ -90,7 +98,7 @@ func main() {
 				panic(fmt.Errorf("could not compose prompt for persona %s: %w", persona.Name, err))
 			}
 
-			items, benchmarkInputs, err = llm.ProcessEntries(openaiClient, systemPrompt, entries, s.LlmBatchSize, s.DebugOutputBenchmark)
+			items, benchmarkInputs, err = llm.ProcessEntries(openaiClient, systemPrompt, entries, s.LlmBatchSize, s.LlmMultiMode, s.DebugOutputBenchmark)
 			if err != nil {
 				panic(fmt.Errorf("could not process entries with LLM: %w", err))
 			}
