@@ -182,6 +182,10 @@ func ProcessEntries(client openai.OpenAIClient, systemPrompt string, entries []r
 					}
 				}
 			}
+		} else {
+			for j, entry := range batch {
+				batchStrings[j] = entry.String(false)
+			}
 		}
 
 		// Store inputs for benchmarking
