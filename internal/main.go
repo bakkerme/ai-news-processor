@@ -83,7 +83,8 @@ func main() {
 		// 1. Fetch and process RSS feed using FeedProvider
 		entries, err := rss.FetchAndProcessFeed(feedProvider, persona.FeedURL, s.DebugRssDump, persona.Name)
 		if err != nil {
-			panic(fmt.Errorf("failed to process RSS feed for persona %s: %w", persona.Name, err))
+			fmt.Printf("Failed to process RSS feed for persona %s: %v\n", persona.Name, err)
+			continue
 		}
 
 		// Limit entries if DebugMaxEntries is set
@@ -94,7 +95,8 @@ func main() {
 		// 2. Enrich entries with comments
 		entries, err = rss.FetchAndEnrichWithComments(feedProvider, entries, s.DebugRssDump, persona.Name)
 		if err != nil {
-			panic(fmt.Errorf("failed to enrich entries with comments for persona %s: %w", persona.Name, err))
+			fmt.Printf("Failed to enrich entries with comments for persona %s: %v\n", persona.Name, err)
+			continue
 		}
 
 		// 3. Filter entries with quality filter
@@ -109,12 +111,14 @@ func main() {
 			fmt.Println("Sending to LLM")
 			systemPrompt, err := prompts.ComposePrompt(persona, "")
 			if err != nil {
-				panic(fmt.Errorf("could not compose prompt for persona %s: %w", persona.Name, err))
+				fmt.Printf("Could not compose prompt for persona %s: %v\n", persona.Name, err)
+				continue
 			}
 
 			items, benchmarkLLMInputs, err = llm.ProcessEntries(openaiClient, imageClient, systemPrompt, entries, s.LlmBatchSize, s.LlmImageEnabled, persona, s.DebugOutputBenchmark)
 			if err != nil {
-				panic(fmt.Errorf("could not process entries with LLM: %w", err))
+				fmt.Printf("Could not process entries with LLM for persona %s: %v\n", persona.Name, err)
+				continue
 			}
 		} else {
 			fmt.Println("Loading fake LLM response")
@@ -137,7 +141,8 @@ func main() {
 		// 6. Filter for relevant items
 		relevantItems := llm.FilterRelevantItems(items)
 		if len(relevantItems) == 0 {
-			panic("no items to render as an email")
+			fmt.Println("no items to render as an email")
+			continue
 		}
 
 		// 7. Get relevant entries for summary
@@ -165,7 +170,8 @@ func main() {
 		if !s.DebugSkipEmail {
 			err = emailService.RenderAndSend(relevantItems, summaryResponse)
 			if err != nil {
-				panic(fmt.Errorf("could not send email: %w", err))
+				fmt.Printf("Could not send email for persona %s: %v\n", persona.Name, err)
+				continue
 			}
 		} else {
 			fmt.Println("Skipping email")
