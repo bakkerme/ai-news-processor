@@ -2,6 +2,9 @@ name: Build and Push Docker Image
 
 on:
   workflow_dispatch:  # This enables manual triggering
+  push:
+    branches:
+      - main
 
 env:
   REGISTRY: ghcr.io
