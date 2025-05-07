@@ -19,7 +19,7 @@ func Generate(client openai.OpenAIClient, entries []rss.Entry, p persona.Persona
 	// Create input for summary
 	summaryInputs := make([]string, len(entries))
 	for i, entry := range entries {
-		summaryInputs[i] = entry.String(false)
+		summaryInputs[i] = entry.String(true)
 	}
 
 	summaryChannel := make(chan customerrors.ErrorString, 1)

@@ -65,7 +65,7 @@ func (e *Entry) String(disableTruncation bool) string {
 	s.WriteString(fmt.Sprintf("Title: %s\nID: %s\nSummary: %s\nImageDescription: %s\n",
 		strings.Trim(e.Title, " "),
 		e.ID,
-		cleanContent(e.Content, 0, true),
+		cleanContent(e.Content, 1200, disableTruncation),
 		e.ImageDescription,
 	))
 

@@ -195,63 +195,15 @@ func (c *Client) ChatCompletion(
 
 // PreprocessYAML extracts YAML content from the API response
 func (c *Client) PreprocessYAML(response string) string {
-	// Remove think tags and their contents
-	thinkStart := "<think>"
-	thinkEnd := "</think>"
-	for {
-		startIdx := strings.Index(response, thinkStart)
-		if startIdx == -1 {
-			break
-		}
-		endIdx := strings.Index(response, thinkEnd)
-		if endIdx == -1 {
-			break
-		}
-		response = response[:startIdx] + response[endIdx+len(thinkEnd):]
-	}
-
-	// Find the start markers with various possible formats
-	startMarkers := []string{"```yaml", "```\nyaml", "```\r\nyaml", "yaml\n", "yaml\r\n"}
-	endMarker := "```"
-
-	// Try each possible start marker format
-	for _, startMarker := range startMarkers {
-		startIdx := strings.Index(response, startMarker)
-		if startIdx != -1 {
-			// Calculate content start position based on the marker
-			contentStart := startIdx + len(startMarker)
-
-			// For the case of just "yaml" followed by newline, we need to handle it differently
-			if startMarker == "yaml\n" || startMarker == "yaml\r\n" {
-				// The start is actually at the beginning of the line with "yaml"
-				lineStart := strings.LastIndex(response[:startIdx], "\n")
-				if lineStart == -1 {
-					lineStart = 0
-				} else {
-					lineStart++ // Move past the newline
-				}
-				startIdx = lineStart
-				// Content starts after the "yaml" line
-				contentStart = startIdx + len(startMarker)
-			}
-
-			endIdx := strings.Index(response[contentStart:], endMarker)
-			if endIdx == -1 {
-				// If no end marker found, return from start marker to end
-				return strings.TrimSpace(response[contentStart:])
-			}
-
-			// Extract the content between markers
-			yamlContent := response[contentStart : contentStart+endIdx]
-			return strings.TrimSpace(yamlContent)
-		}
-	}
-
-	// If no start marker found, return the original string trimmed
-	return strings.TrimSpace(response)
+	return preprocess(response, "yaml")
 }
 
 func (c *Client) PreprocessJSON(response string) string {
+	return preprocess(response, "json")
+}
+
+// preprocess extracts content of the specified format from the API response
+func preprocess(response, format string) string {
 	// Remove think tags and their contents
 	thinkStart := "<think>"
 	thinkEnd := "</think>"
@@ -268,7 +220,7 @@ func (c *Client) PreprocessJSON(response string) string {
 	}
 
 	// Find the start markers with various possible formats
-	startMarkers := []string{"```json", "```\njson", "```\r\njson", "json\n", "json\r\n"}
+	startMarkers := []string{"```" + format, "```\n" + format, "```\r\n" + format}
 	endMarker := "```"
 
 	// Try each possible start marker format
@@ -278,20 +230,6 @@ func (c *Client) PreprocessJSON(response string) string {
 			// Calculate content start position based on the marker
 			contentStart := startIdx + len(startMarker)
 
-			// For the case of just "json" followed by newline, we need to handle it differently
-			if startMarker == "json\n" || startMarker == "json\r\n" {
-				// The start is actually at the beginning of the line with "json"
-				lineStart := strings.LastIndex(response[:startIdx], "\n")
-				if lineStart == -1 {
-					lineStart = 0
-				} else {
-					lineStart++ // Move past the newline
-				}
-				startIdx = lineStart
-				// Content starts after the "json" line
-				contentStart = startIdx + len(startMarker)
-			}
-
 			endIdx := strings.Index(response[contentStart:], endMarker)
 			if endIdx == -1 {
 				// If no end marker found, return from start marker to end
@@ -299,8 +237,28 @@ func (c *Client) PreprocessJSON(response string) string {
 			}
 
 			// Extract the content between markers
-			jsonContent := response[contentStart : contentStart+endIdx]
-			return strings.TrimSpace(jsonContent)
+			content := response[contentStart : contentStart+endIdx]
+			return strings.TrimSpace(content)
+		}
+	}
+
+	// Handle case where just the format name appears on a line (possibly with whitespace)
+	lines := strings.Split(response, "\n")
+	for i, line := range lines {
+		trimmedLine := strings.TrimSpace(line)
+		if trimmedLine == format && i < len(lines)-1 {
+			// Found a line with just the format name, content starts from next line
+			contentStart := strings.Join(lines[i+1:], "\n")
+
+			endIdx := strings.Index(contentStart, endMarker)
+			if endIdx == -1 {
+				// If no end marker found, return everything
+				return strings.TrimSpace(contentStart)
+			}
+
+			// Extract content up to the end marker
+			content := contentStart[:endIdx]
+			return strings.TrimSpace(content)
 		}
 	}
 

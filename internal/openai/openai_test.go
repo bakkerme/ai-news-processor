@@ -61,6 +61,16 @@ func TestPreprocessJSON(t *testing.T) {
 			expected: "{\"key\": \"value\"}",
 		},
 		{
+			name:     "json with indented line",
+			input:    "  json\n{\"key\": \"value\"}\n```",
+			expected: "{\"key\": \"value\"}",
+		},
+		{
+			name:     "json with tabs and spaces",
+			input:    "\t  json  \n{\"key\": \"value\"}\n```",
+			expected: "{\"key\": \"value\"}",
+		},
+		{
 			name:     "empty input",
 			input:    "",
 			expected: "",
@@ -138,6 +148,16 @@ func TestPreprocessYAML(t *testing.T) {
 		{
 			name:     "yaml with carriage return newlines",
 			input:    "```\r\nyaml\r\nkey: value\r\n```",
+			expected: "key: value",
+		},
+		{
+			name:     "yaml with indented line",
+			input:    "  yaml\nkey: value\n```",
+			expected: "key: value",
+		},
+		{
+			name:     "yaml with tabs and spaces",
+			input:    "\t  yaml  \nkey: value\n```",
 			expected: "key: value",
 		},
 		{

@@ -233,7 +233,7 @@ func ProcessEntries(client openai.OpenAIClient, imageClient openai.OpenAIClient,
 
 		batchStrings := make([]string, len(batch))
 		for j, entry := range batch {
-			batchStrings[j] = entry.String(false)
+			batchStrings[j] = entry.String(true)
 		}
 
 		// Store inputs for benchmarking
