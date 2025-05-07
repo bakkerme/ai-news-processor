@@ -3,7 +3,7 @@
 This tool enables quantitative evaluation of AI-generated news summaries by measuring both summary quality and relevance against defined personas. It automates end-to-end benchmarking to support continuous improvement.
 
 ## Design Principles
-- **High-Capacity Evaluation Model**: We leverage `qwen2.5-72b-instruct`, a large language model with extensive reasoning and comprehension capabilities, to provide objective and nuanced assessments of summary quality and relevance.
+- **High-Capacity Evaluation Model**: We leverage large language models with extensive reasoning and comprehension capabilities, such as `qwen2.5-72b-instruct`, to provide objective and nuanced assessments of summary quality and relevance.
 - **Decoupled Evaluation**: By using a separate LLM for evaluation distinct from the generation model, we mitigate generation-specific biases and ensure that assessment results reflect general content quality.
 
 ## How to Run a Benchmark
@@ -21,6 +21,8 @@ This tool enables quantitative evaluation of AI-generated news summaries by meas
    cd bench
    go run .
    ```
+   
+   The default model used is `qwen2.5-72b-instruct`. You can modify the `model` variable in the benchmark code to use other compatible models.
 
 3. **Review results**:
    Console logs trace each loading and evaluation stage. The final JSON file in `bench/results/` includes detailed item evaluations and aggregate metrics.
@@ -50,6 +52,26 @@ The LLM assigns one of the following ratings, which are then converted to a nume
 - Good (75): Meets most criteria, minor issues.
 - Fair (50): Some important criteria are missing or weak.
 - Poor (0): Fails to meet most criteria.
+
+## API Parameter Format
+
+The benchmark evaluator uses the updated OpenAI client parameter format with structured schema parameters:
+
+```go
+schemaParams := &openai.SchemaParameters{
+    Schema:      EvaluationResultSchema,
+    Name:        "benchmark_evaluation",
+    Description: "an object representing a benchmark evaluation result (quality and relevance)",
+}
+
+llmClient.ChatCompletion(
+    systemPrompt,
+    userPrompts,
+    []string{},     // No image URLs in benchmark evaluation
+    schemaParams,
+    results,
+)
+```
 
 ## Input JSON Schema (`bench/results/benchmark.json`)
 ```json

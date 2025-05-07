@@ -2,13 +2,14 @@
 
 AI News Processor is a tool designed to process posts from the `/r/localllama` subreddit, their comments, filter out unworthy posts and email you a summary. You will need to provide an LLM accessible via an OpenAI-compatible API and SMTP details for an email service.
 
-The prompt was built and tested with Qwen2.5 7B Instruct Q8 and Qwen2.5 32B Instruct Q4. 
+The prompt was built and tested with Qwen2.5 7B Instruct Q8, Qwen2.5 32B Instruct Q4, and Qwen3 models. 
 
 ## Repository Overview
 - **Directory Structure**:
   - `internal/`: Go service
   - `build/`: Used as part of the Docker container for production.
   - `bench/`: LLM output benchmarking.
+  - `docs/`: Project documentation, including [CI workflows](docs/ci.md).
  
 ## Configuration
 
@@ -30,7 +31,6 @@ The following environment variables are used to configure the AI News Processor:
 | `ANP_CRON_SCHEDULE`           | Cron schedule for running the processor.     | `0 0 * * *` (Midnight) |
 | `ANP_PERSONAS_PATH`           | Directory containing persona YAML files.     | `/app/personas/`   |
 | `ANP_QUALITY_FILTER_THRESHOLD`| Minimum number of comments required for a post to be included. | `10` |
-| `ANP_DEBUG_SKIP_CRON`         | If true, skips cron setup and runs main directly. | `false` |
 
 ### Debug Configuration
 
@@ -43,6 +43,7 @@ The following environment variables are used for debugging purposes, The Mock RS
 | `ANP_DEBUG_SKIP_EMAIL`           | Skip sending email notifications during processing.       | `false`       |
 | `ANP_DEBUG_OUTPUT_BENCHMARK`     | Output benchmark data for LLM performance benchmarking.   | `false`       |
 | `ANP_DEBUG_MAX_ENTRIES`          | Limit the number of entries processed (0 = no limit).     | `0`           |
+| `ANP_DEBUG_SKIP_CRON`            | If true, skips cron setup and runs main directly.         | `false`       |
 
 ## Personas System
 

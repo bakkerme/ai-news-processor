@@ -1,12 +1,13 @@
 # Feature: RSS Module
 
 ## Overview
-The RSS module handles the fetching, parsing, and enrichment of RSS feed data and comments. It supports both live HTTP retrieval and mock feeds for testing, along with utilities for cleaning and truncating content.
+The RSS module handles the fetching, parsing, and enrichment of RSS feed data and comments. It supports both live HTTP retrieval and mock feeds for testing, along with utilities for cleaning and truncating content. The module also includes image extraction capabilities to support multi-model and image-specific processing.
 
 ## Features
 - Parse RSS and comment feed XML into Go structs
 - Fetch feed content over HTTP
 - Enrich entries with comments from separate RSS feeds
+- Extract image URLs from feed content
 - Dump raw RSS content to disk for debugging
 - Clean HTML tags and entities, with optional truncation
 - Mock feed retrieval for running tests without network dependencies
@@ -17,6 +18,7 @@ The RSS module handles the fetching, parsing, and enrichment of RSS feed data an
 internal/rss/
   ├─ rss.go         # Core types and parsing logic
   ├─ processor.go   # High-level feed fetching, processing, and enrichment
+  ├─ internal_funcs.go # Image extraction and internal helper functions
   └─ mocks.go       # Mock data retrieval for testing
 ```
 
@@ -36,7 +38,7 @@ internal/rss/
 - `GetMockFeeds(personaName string) []*Feed`: Load mock RSS feed data for a specific persona.
 - `FetchRSS(url string) (string, error)`: HTTP GET request to retrieve RSS XML as a string.
 - `cleanContent(s string, maxLen int, disableTruncation bool) string`: Strip HTML tags, replace HTML entities, and truncate content.
-- `(e *Entry) String(disableTruncation bool) string`: Format an entry and its comments as text, with optional truncation.
+- `(e *Entry) String(disableTruncation bool) string`: Format an entry and its comments as text, with optional truncation control.
 - `(e *Entry) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error`: Custom XML unmarshalling for parsing the `published` timestamp.
 
 ### processor.go
@@ -45,6 +47,11 @@ internal/rss/
 - `getCommentRSS(entry Entry) (string, error)`: Internal helper to fetch the comment RSS for an entry.
 - `FindEntryByID(id string, entries []Entry) *Entry`: Locate an `Entry` by its ID in a slice.
 - `DumpRSS(feedURL, content, personaName, itemName string) error`: Save raw RSS XML content to disk under `feed_mocks/` for debugging.
+
+### internal_funcs.go
+- `ExtractImageURLsFromContent(content string) []string`: Extracts image URLs from HTML content.
+- `IsValidImageExtension(url string) bool`: Checks if a URL points to a supported image format.
+- `ExtractImages(entry *Entry) []string`: Extracts all image URLs from an entry and its comments.
 
 ### mocks.go
 - `ReturnFakeRSS(personaName string) string`: Read a mock RSS file for a persona from disk.
