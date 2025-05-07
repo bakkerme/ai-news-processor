@@ -1,3 +1,4 @@
 bench/benchmark.json
 .env
 .envdebug
+.env.benchmark

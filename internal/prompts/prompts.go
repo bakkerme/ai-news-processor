@@ -30,33 +30,34 @@ The following image description was generated from the post:
 
 If an item matches any of the exclusion criteria, set the IsRelevant field to false.
 
-For each item, provide a detailed analysis that includes:
+For each item, provide a newsletter-style explanation that includes:
 * "ID"
 * "Title"
-* "Summmary"
-  * A comprehensive summary (4-5 sentences) that 
-    * Provides in detail the content of the item
-    * Mentions specific performance metrics or benchmarks if applicable
-    * Takes into account the image description if it is present
-* "CommentSummary"
-  * A detailed comment analysis that:
+* "Overview"
+	* 1 - 2 paragraphs, extracting key points of interest from the post, image description, factoring in relevant, factual information from the comments
+	* Extrapolate on the details of these key points of interest
+	* Provide highly detailed technical analysis, if applicable
+	* If this development matters, explain why
+* "CommentOverview"
+  * 1 - 2 paragraphs that
     * Captures the community sentiment
     * Highlights interesting discussions
     * Notes any concerns or criticisms
-* "IsRelevant" A final judgement boolean flag. If the item matches any of the exclusion criteria, IsRelevant should be false.
+* "IsRelevant"
+  * A final judgement boolean flag. If the item matches any of the exclusion criteria, IsRelevant should be false.
 
-This is a newsletter. Write in a conversational, engaging style while maintaining technical accuracy. Don't be afraid to geek out about interesting technical details!
+Write in a conversational, engaging style while maintaining technical accuracy. Don't be afraid to geek out about interesting technical details!
 
-Respond only with JSON. Put JSON in ` + "```json" + ` tags.`
+Do not start with 'This post...' or 'This item...'.
 
-// * Relevance
-//   * Explain in detail (4-5 sentences) if and how the item is relevant to the {{.Topic}}. Tell me why should I care about this.
-
-// When analyzing images:
-// * Describe what is shown in the image if it's relevant to understanding the content
-// * Mention any charts, diagrams, or UI elements that provide additional information
-// * If code or text is visible in the image, summarize what it shows
-// * Relate the image content back to the main topic when applicable
+Respond only with valid YAML. Put YAML in ` + "```yaml" + ` tags.
+Use the following YAML structure. Do not use mapping values like | to format the YAML. Quote all strings.
+id: "t3_1keo3te"
+title: ""
+overview: ""
+comment_overview: ""
+is_relevant: true
+`
 
 const summaryPromptTemplate = `You are {{.PersonaIdentity}}
 
@@ -74,13 +75,13 @@ For the provided set of news items, generate a structured analysis that includes
 * EmergingTrends
   * List of 3-5 emerging trends visible across multiple items
 * TechnicalHighlight
-  * The single most technically significant development, with explanation (write this as plain text, not JSON)
+  * The single most technically significant development, with explanation (write this as plain text, not YAML)
 
 The response format for KeyDevelopments should be an array of objects, each with a Text and an ItemID field, where ItemID matches the ID of a post in the input.
 
 Focus on technical accuracy while maintaining an engaging, analytical style. Avoid generic statements and focus on specific, concrete developments and their implications. This is a newsletter.
 
-Respond only with JSON. Put JSON in ` + "```json" + ` tags.`
+Respond only with valid YAML. Put YAML in ` + "```yaml" + ` tags.`
 
 const imagePromptTemplate = `You are {{.PersonaIdentity}}
 

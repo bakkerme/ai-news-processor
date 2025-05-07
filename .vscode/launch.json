@@ -24,7 +24,8 @@
             "program": "./bench",
             "envFile": [
                 "${workspaceFolder}/.env",
-                "${workspaceFolder}/.envdebug"
+                "${workspaceFolder}/.envdebug",
+                "${workspaceFolder}/.env.benchmark"
             ],
             "cwd": "${workspaceFolder}/bench",
         }

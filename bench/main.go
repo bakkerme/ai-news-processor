@@ -19,7 +19,7 @@ import (
 	"github.com/bakkerme/ai-news-processor/internal/specification"
 )
 
-const evaluationPrompt = `You are an expert in evaluating AI-generated content. Your task is to evaluate the quality of the following news summary, focusing purely on how well it summarizes and analyzes the content.
+const evaluationPrompt = `You are an expert in evaluating AI-generated content. Your task is to evaluate the quality of the following post summary, focusing purely on how well it summarizes and analyzes the content.
 
 The persona is {{.PersonaIdentity}}
 
@@ -31,17 +31,17 @@ The summary should be marked as irrelevant if it matches:
 {{range .ExclusionCriteria}}* {{.}}
 {{end}}
 
-For each summary, evaluate:
+For each summary, evaluate how well it summarizes the post, focusing on the following criteria:
 
 1. Summary Quality (choose one):
-   - Excellent: Comprehensive summary with exceptional technical depth, clear analysis, and insightful commentary
-   - Good: Clear summary with solid technical details and meaningful analysis
-   - Fair: Basic summary with some technical details but lacks depth or clarity
+   - Excellent: Comprehensive summary that captures all key details and provides a clear, well-structured overview
+   - Good: Clear summary with some details but lacks depth or clarity
+   - Fair: Basic summary with some details but lacks depth or clarity
    - Poor: Incomplete or unclear summary lacking essential details
 
 2. Evaluation Criteria:
    - Comprehensiveness: Does it capture all key details?
-   - Technical Accuracy: Are technical concepts and specifications explained correctly?
+   - Technical Accuracy: If technical details are provided, are they accurate?
    - Clarity: Is the information presented in a clear, well-structured manner?
    - Comment Integration: Are community discussions and feedback well-analyzed?
 
@@ -107,8 +107,7 @@ func main() {
 	}
 	log.Println("Configuration loaded.")
 
-	model := "qwen2.5-72b-instruct"
-	// model := "qwen3-32b-mlx"
+	model := spec.LlmModel
 
 	// Initialize OpenAI client using values from the specification
 	log.Println("Initializing OpenAI client...")

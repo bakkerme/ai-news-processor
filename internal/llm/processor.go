@@ -2,7 +2,6 @@ package llm
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,6 +14,7 @@ import (
 	"github.com/bakkerme/ai-news-processor/internal/prompts"
 	"github.com/bakkerme/ai-news-processor/internal/rss"
 	"github.com/invopop/jsonschema"
+	"gopkg.in/yaml.v3"
 
 	"github.com/bakkerme/ai-news-processor/internal/models"
 )
@@ -87,10 +87,10 @@ func ChatCompletionImageSummary(client openai.OpenAIClient, systemPrompt string,
 	close(results)
 }
 
-// ParseSummaryResponse parses a JSON string into a SummaryResponse
-func ParseSummaryResponse(jsonStr string) (*models.SummaryResponse, error) {
+// ParseSummaryResponse parses a YAML string into a SummaryResponse
+func ParseSummaryResponse(yamlStr string) (*models.SummaryResponse, error) {
 	var summary models.SummaryResponse
-	err := json.Unmarshal([]byte(jsonStr), &summary)
+	err := yaml.Unmarshal([]byte(yamlStr), &summary)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse summary response: %w", err)
 	}
@@ -253,13 +253,13 @@ func ProcessEntries(client openai.OpenAIClient, imageClient openai.OpenAIClient,
 			return nil, benchmarkInputs, fmt.Errorf("could not process value from LLM for batch %d: %s", i, result.Err)
 		}
 
-		processedValue := client.PreprocessJSON(result.Value)
+		processedValue := client.PreprocessYAML(result.Value)
 
 		fmt.Println(processedValue)
 
 		item, err := llmResponseToItems(processedValue)
 		if err != nil {
-			return nil, benchmarkInputs, fmt.Errorf("could not convert llm output to json. %s: %w", processedValue, err)
+			return nil, benchmarkInputs, fmt.Errorf("could not convert llm output to yaml. %s: %w", processedValue, err)
 		}
 
 		fmt.Printf("Processed item %d\n", i)
@@ -303,10 +303,10 @@ func FilterRelevantItems(items []models.Item) []models.Item {
 	return relevantItems
 }
 
-// llmResponseToItems converts a JSON LLM response to a slice of Items
-func llmResponseToItems(jsonStr string) (models.Item, error) {
+// llmResponseToItems converts a YAML LLM response to a slice of Items
+func llmResponseToItems(yamlStr string) (models.Item, error) {
 	var items models.Item
-	err := json.Unmarshal([]byte(jsonStr), &items)
+	err := yaml.Unmarshal([]byte(yamlStr), &items)
 	if err != nil {
 		return models.Item{}, fmt.Errorf("could not unmarshal llm response to items: %w", err)
 	}
