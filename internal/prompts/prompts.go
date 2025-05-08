@@ -50,13 +50,15 @@ Write in a conversational, engaging style while maintaining technical accuracy. 
 
 Do not start with 'This post...' or 'This item...'.
 
-Respond only with valid YAML. Put YAML in ` + "```yaml" + ` tags.
-Use the following YAML structure. Do not use mapping values like | to format the YAML. Quote all strings.
-id: "t3_1keo3te"
-title: ""
-overview: ""
-comment_overview: ""
-is_relevant: true
+Respond only with valid JSON. Put JSON in ` + "```json" + ` tags.
+Use the following JSON structure:
+{
+  "id": "t3_1keo3te",
+  "title": "",
+  "overview": "",
+  "comment_overview": "",
+  "is_relevant": true
+}
 `
 
 const summaryPromptTemplate = `You are {{.PersonaIdentity}}
@@ -75,13 +77,13 @@ For the provided set of news items, generate a structured analysis that includes
 * EmergingTrends
   * List of 3-5 emerging trends visible across multiple items
 * TechnicalHighlight
-  * The single most technically significant development, with explanation (write this as plain text, not YAML)
+  * The single most technically significant development, with explanation (write this as plain text, not JSON)
 
 The response format for KeyDevelopments should be an array of objects, each with a Text and an ItemID field, where ItemID matches the ID of a post in the input.
 
 Focus on technical accuracy while maintaining an engaging, analytical style. Avoid generic statements and focus on specific, concrete developments and their implications. This is a newsletter.
 
-Respond only with valid YAML. Put YAML in ` + "```yaml" + ` tags.`
+Respond only with valid JSON. Put JSON in ` + "```json" + ` tags.`
 
 const imagePromptTemplate = `You are {{.PersonaIdentity}}
 

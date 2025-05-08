@@ -35,7 +35,7 @@ func Generate(client openai.OpenAIClient, entries []rss.Entry, p persona.Persona
 		return nil, fmt.Errorf("could not generate summary: %w", summaryResult.Err)
 	}
 
-	processedSummary := client.PreprocessYAML(summaryResult.Value)
+	processedSummary := client.PreprocessJSON(summaryResult.Value)
 	summary, err := llm.ParseSummaryResponse(processedSummary)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse summary response: %w", err)
