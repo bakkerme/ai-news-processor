@@ -115,7 +115,7 @@ func main() {
 				continue
 			}
 
-			items, benchmarkLLMInputs, err = llm.ProcessEntries(openaiClient, imageClient, systemPrompt, entries, s.LlmBatchSize, s.LlmImageEnabled, persona, s.DebugOutputBenchmark)
+			items, benchmarkLLMInputs, err = llm.ProcessEntries(openaiClient, imageClient, systemPrompt, entries, s.LlmImageEnabled, persona, s.DebugOutputBenchmark)
 			if err != nil {
 				fmt.Printf("Could not process entries with LLM for persona %s: %v\n", persona.Name, err)
 				continue

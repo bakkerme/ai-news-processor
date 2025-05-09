@@ -25,6 +25,26 @@ type imageResult struct {
 	entryIdx int
 }
 
+// EntryProcessConfig holds the configuration for processing entries
+type EntryProcessConfig struct {
+	// Maximum number of retry attempts for failed entry processing
+	MaxRetries int
+	// Initial backoff duration between retries
+	InitialBackoff time.Duration
+	// Maximum backoff duration between retries
+	MaxBackoff time.Duration
+	// Backoff multiplier for each retry attempt
+	BackoffFactor float64
+}
+
+// DefaultEntryProcessConfig provides default values for entry processing
+var DefaultEntryProcessConfig = EntryProcessConfig{
+	MaxRetries:     3,
+	InitialBackoff: 2 * time.Second,
+	MaxBackoff:     30 * time.Second,
+	BackoffFactor:  2.0,
+}
+
 // Generate the JSON schema at initialization time
 var ItemResponseSchema = GenerateSchema[[]models.Item]()
 var SummaryResponseSchema = GenerateSchema[models.SummaryResponse]()
@@ -74,7 +94,9 @@ func ChatCompletionForFeedSummary(client openai.OpenAIClient, systemPrompt strin
 }
 
 // ChatCompletionImageSummary sends a ChatCompletion to get descriptions for images
-func ChatCompletionImageSummary(client openai.OpenAIClient, systemPrompt string, imageURLs []string, results chan customerrors.ErrorString) {
+func ChatCompletionImageSummary(client openai.OpenAIClient, systemPrompt string, imageURLs []string) (string, error) {
+	results := make(chan customerrors.ErrorString, 1)
+
 	// Empty userPrompt as the image is the content
 	// No schema parameters needed for image analysis
 	client.ChatCompletion(
@@ -84,7 +106,15 @@ func ChatCompletionImageSummary(client openai.OpenAIClient, systemPrompt string,
 		nil, // Schema parameters not needed for image analysis
 		results,
 	)
+
+	result := <-results
 	close(results)
+
+	if result.Err != nil {
+		return "", result.Err
+	}
+
+	return result.Value, nil
 }
 
 // ParseSummaryResponse parses a JSON string into a SummaryResponse
@@ -152,117 +182,145 @@ func fetchImageAsBase64(imageURL string) string {
 	return dataURI
 }
 
-// ProcessEntries takes RSS entries, processes them through an LLM in batches, and returns processed items
-func ProcessEntries(client openai.OpenAIClient, imageClient openai.OpenAIClient, systemPrompt string, entries []rss.Entry, batchSize int, imageEnabled bool, persona persona.Persona, debugOutputBenchmark bool) ([]models.Item, []string, error) {
-	var items []models.Item
-	var benchmarkInputs []string
+// processEntryWithRetry processes a single entry with retry support
+func processEntryWithRetry(client openai.OpenAIClient, systemPrompt string, entry rss.Entry, config EntryProcessConfig) (models.Item, error) {
+	entryString := entry.String(true)
+	var lastErr error
 
-	// Process images first if image processing is enabled
-	if imageEnabled {
-		completionChannel := make(chan imageResult, len(entries))
-		entriesWithImageDescriptionCount := 0
-
-		for i := range entries {
-			// Get the URL, ensure it has a scheme
-			entry := entries[i]
-			if len(entry.ImageURLs) == 0 {
-				continue
-			}
-
-			imgURL := entry.ImageURLs[0].String()
-
-			// Fetch and convert to base64
-			fmt.Printf("Processing image %s\n", imgURL)
-			dataURI := fetchImageAsBase64(imgURL)
-
-			// Create the image prompt
-			imagePrompt, err := prompts.ComposeImagePrompt(persona, entry.Title)
-			if err != nil {
-				fmt.Printf("Error creating image prompt: %v\n", err)
-				continue
-			}
-
-			// Create a closure to capture the current index
-			entryIndex := i
-			go func(idx int) {
-				resultChan := make(chan customerrors.ErrorString, 1)
-				ChatCompletionImageSummary(imageClient, imagePrompt, []string{dataURI}, resultChan)
-				// Wait for the result from the channel
-				result, ok := <-resultChan
-				if !ok {
-					// Channel was closed without a result
-					completionChannel <- imageResult{
-						result: customerrors.ErrorString{
-							Err:   fmt.Errorf("image processing channel closed without result"),
-							Value: "",
-						},
-						entryIdx: idx,
-					}
-					return
-				}
-				completionChannel <- imageResult{result: result, entryIdx: idx}
-			}(entryIndex)
-
-			entriesWithImageDescriptionCount++
-		}
-
-		fmt.Printf("Waiting for %d image descriptions\n", entriesWithImageDescriptionCount)
-		// Process results and assign them to the correct entries
-		for i := 0; i < entriesWithImageDescriptionCount; i++ {
-			result := <-completionChannel
-			if result.result.Err != nil {
-				fmt.Printf("Error processing images for entry %d: %v\n", result.entryIdx, result.result.Err)
-			} else {
-				fmt.Printf("Got result for entry %d: %s\n", result.entryIdx, result.result.Value)
-				// Store the image description in the correct entry
-				entries[result.entryIdx].ImageDescription = result.result.Value
-				fmt.Printf("Image processing successful for entry %d\n", result.entryIdx)
+	// Retry logic with exponential backoff
+	backoff := config.InitialBackoff
+	for attempt := 0; attempt < config.MaxRetries; attempt++ {
+		if attempt > 0 {
+			fmt.Printf("Retrying entry (attempt %d/%d) after error: %v\n", attempt+1, config.MaxRetries, lastErr)
+			time.Sleep(backoff)
+			backoff = time.Duration(float64(backoff) * config.BackoffFactor)
+			if backoff > config.MaxBackoff {
+				backoff = config.MaxBackoff
 			}
 		}
-		close(completionChannel)
-	}
 
-	completionChannel := make(chan customerrors.ErrorString, len(entries))
-	batchCounter := 0
+		// Process the entry
+		results := make(chan customerrors.ErrorString, 1)
+		ChatCompletionForEntrySummary(client, systemPrompt, []string{entryString}, nil, results)
+		result := <-results
+		close(results)
 
-	// Process entries in batches
-	for i := 0; i < len(entries); i += batchSize {
-		batch := entries[i:min(i+batchSize, len(entries))]
-		fmt.Printf("Sending item %d\n", i)
-
-		batchStrings := make([]string, len(batch))
-		for j, entry := range batch {
-			batchStrings[j] = entry.String(true)
-		}
-
-		// Store inputs for benchmarking
-		if debugOutputBenchmark {
-			benchmarkInputs = append(benchmarkInputs, batchStrings...)
-		}
-
-		go ChatCompletionForEntrySummary(client, systemPrompt, batchStrings, nil, completionChannel)
-		batchCounter++
-	}
-
-	// Process results from all batches
-	for i := 0; i < batchCounter; i++ {
-		fmt.Printf("Waiting for item %d\n", i)
-		result := <-completionChannel
 		if result.Err != nil {
-			return nil, benchmarkInputs, fmt.Errorf("could not process value from LLM for batch %d: %s", i, result.Err)
+			lastErr = fmt.Errorf("could not process value from LLM: %w", result.Err)
+			continue // Try again
 		}
 
 		processedValue := client.PreprocessJSON(result.Value)
 
-		fmt.Println(processedValue)
-
 		item, err := llmResponseToItems(processedValue)
 		if err != nil {
-			return nil, benchmarkInputs, fmt.Errorf("could not convert llm output to json. %s: %w", processedValue, err)
+			lastErr = fmt.Errorf("could not convert llm output to json. %s: %w", processedValue, err)
+			continue // Try again
 		}
 
-		fmt.Printf("Processed item %d\n", i)
+		return item, nil // Success!
+	}
+
+	// If we're here, we've exhausted all retry attempts
+	return models.Item{}, fmt.Errorf("failed to process entry after %d attempts: %w", config.MaxRetries, lastErr)
+}
+
+// processImageWithRetry processes an image with retry support
+func processImageWithRetry(imageClient openai.OpenAIClient, entry rss.Entry, imagePrompt string, config EntryProcessConfig) (string, error) {
+	if len(entry.ImageURLs) == 0 {
+		return "", nil // No image to process
+	}
+
+	imgURL := entry.ImageURLs[0].String()
+	dataURI := fetchImageAsBase64(imgURL)
+	if dataURI == "" {
+		return "", fmt.Errorf("could not fetch image from URL: %s", imgURL)
+	}
+
+	var lastErr error
+
+	// Retry logic with exponential backoff
+	backoff := config.InitialBackoff
+	for attempt := 0; attempt < config.MaxRetries; attempt++ {
+		if attempt > 0 {
+			fmt.Printf("Retrying image processing (attempt %d/%d) after error: %v\n", attempt+1, config.MaxRetries, lastErr)
+			time.Sleep(backoff)
+			backoff = time.Duration(float64(backoff) * config.BackoffFactor)
+			if backoff > config.MaxBackoff {
+				backoff = config.MaxBackoff
+			}
+		}
+
+		// Process the image
+		imageDescription, err := ChatCompletionImageSummary(imageClient, imagePrompt, []string{dataURI})
+		if err != nil {
+			lastErr = err
+			continue // Try again
+		}
+
+		return imageDescription, nil // Success!
+	}
+
+	// If we're here, we've exhausted all retry attempts
+	return "", fmt.Errorf("failed to process image after %d attempts: %w", config.MaxRetries, lastErr)
+}
+
+// ProcessEntries takes RSS entries, processes them through an LLM, and returns processed items
+func ProcessEntries(client openai.OpenAIClient, imageClient openai.OpenAIClient, systemPrompt string, entries []rss.Entry, imageEnabled bool, persona persona.Persona, debugOutputBenchmark bool) ([]models.Item, []string, error) {
+	var items []models.Item
+	var benchmarkInputs []string
+	var processingErrors []error
+
+	// Use default configuration
+	config := DefaultEntryProcessConfig
+
+	// Process entries sequentially with retry support
+	for i, entry := range entries {
+		fmt.Printf("Processing entry %d\n", i)
+
+		// Store the entry string for benchmarking if needed
+		if debugOutputBenchmark {
+			benchmarkInputs = append(benchmarkInputs, entry.String(true))
+		}
+
+		// Process images first if image processing is enabled
+		if imageEnabled && len(entry.ImageURLs) > 0 {
+			// Create the image prompt
+			imagePrompt, err := prompts.ComposeImagePrompt(persona, entry.Title)
+			if err != nil {
+				fmt.Printf("Error creating image prompt: %v\n", err)
+			} else {
+				fmt.Printf("Processing image for entry %d\n", i)
+				imageDescription, err := processImageWithRetry(imageClient, entry, imagePrompt, config)
+				if err != nil {
+					fmt.Printf("Error processing image for entry %d: %v\n", i, err)
+				} else {
+					entry.ImageDescription = imageDescription
+					fmt.Printf("Image processing successful for entry %d\n", i)
+				}
+			}
+		}
+
+		// Process the entry text
+		item, err := processEntryWithRetry(client, systemPrompt, entry, config)
+		if err != nil {
+			fmt.Printf("Error processing entry %d: %v\n", i, err)
+			processingErrors = append(processingErrors, fmt.Errorf("entry %d: %w", i, err))
+			continue
+		}
+
+		fmt.Printf("Processed item %d successfully\n", i)
 		items = append(items, item)
+	}
+
+	// If all entries failed, return an error
+	if len(items) == 0 && len(processingErrors) > 0 {
+		return nil, benchmarkInputs, fmt.Errorf("all entries failed processing: %v", processingErrors[0])
+	}
+
+	// If some entries failed but we have some successes, just log the errors
+	if len(processingErrors) > 0 {
+		fmt.Printf("Warning: %d entries failed processing\n", len(processingErrors))
 	}
 
 	return items, benchmarkInputs, nil

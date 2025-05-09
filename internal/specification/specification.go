@@ -8,10 +8,9 @@ import (
 )
 
 type Specification struct {
-	LlmUrl       string `split_words:"true"`
-	LlmApiKey    string `split_words:"true"`
-	LlmModel     string `split_words:"true"`
-	LlmBatchSize int    `split_words:"true"`
+	LlmUrl    string `split_words:"true"`
+	LlmApiKey string `split_words:"true"`
+	LlmModel  string `split_words:"true"`
 
 	LlmImageEnabled bool   `split_words:"true" default:"false"`
 	LlmImageModel   string `split_words:"true"`
@@ -70,9 +69,6 @@ func (s *Specification) Validate() error {
 		// }
 		if s.LlmModel == "" {
 			return fmt.Errorf("LLM model is required when not in mock mode")
-		}
-		if s.LlmBatchSize < 1 {
-			s.LlmBatchSize = 1 // Set default batch size to 1 if not specified or invalid
 		}
 
 		// Multi-modal validation
