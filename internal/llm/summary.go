@@ -1,10 +1,9 @@
-package summary
+package llm
 
 import (
 	"fmt"
 
 	"github.com/bakkerme/ai-news-processor/internal/customerrors"
-	"github.com/bakkerme/ai-news-processor/internal/llm"
 	"github.com/bakkerme/ai-news-processor/internal/models"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
 	"github.com/bakkerme/ai-news-processor/internal/persona"
@@ -12,8 +11,8 @@ import (
 	"github.com/bakkerme/ai-news-processor/internal/rss"
 )
 
-// Generate creates a summary for a set of relevant RSS entries
-func Generate(client openai.OpenAIClient, entries []rss.Entry, p persona.Persona) (*models.SummaryResponse, error) {
+// GenerateSummary creates a summary for a set of relevant RSS entries
+func GenerateSummary(client openai.OpenAIClient, entries []rss.Entry, p persona.Persona) (*models.SummaryResponse, error) {
 	fmt.Println("Generating summary of relevant items")
 
 	// Create input for summary
@@ -28,7 +27,7 @@ func Generate(client openai.OpenAIClient, entries []rss.Entry, p persona.Persona
 		return nil, fmt.Errorf("could not compose summary prompt for persona %s: %w", p.Name, err)
 	}
 
-	go llm.ChatCompletionForFeedSummary(client, summaryPrompt, summaryInputs, summaryChannel)
+	go chatCompletionForFeedSummary(client, summaryPrompt, summaryInputs, summaryChannel)
 
 	summaryResult := <-summaryChannel
 	if summaryResult.Err != nil {
@@ -36,7 +35,7 @@ func Generate(client openai.OpenAIClient, entries []rss.Entry, p persona.Persona
 	}
 
 	processedSummary := client.PreprocessJSON(summaryResult.Value)
-	summary, err := llm.ParseSummaryResponse(processedSummary)
+	summary, err := models.UnmarshalSummaryResponseJSON([]byte(processedSummary))
 	if err != nil {
 		return nil, fmt.Errorf("could not parse summary response: %w", err)
 	}

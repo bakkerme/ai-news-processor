@@ -16,7 +16,6 @@ import (
 	"github.com/bakkerme/ai-news-processor/internal/qualityfilter"
 	"github.com/bakkerme/ai-news-processor/internal/rss"
 	"github.com/bakkerme/ai-news-processor/internal/specification"
-	"github.com/bakkerme/ai-news-processor/internal/summary"
 )
 
 func main() {
@@ -157,7 +156,7 @@ func main() {
 		// 9. Generate summary for relevant items
 		var summaryResponse *models.SummaryResponse
 		if !s.DebugMockLLM {
-			summaryResponse, err = summary.Generate(openaiClient, relevantEntries, persona)
+			summaryResponse, err = llm.GenerateSummary(openaiClient, relevantEntries, persona)
 			if err != nil {
 				panic(fmt.Errorf("could not generate summary: %w", err))
 			}
