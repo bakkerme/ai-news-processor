@@ -1,8 +1,8 @@
 # AI News Processor
 
-AI News Processor is a tool designed to process posts from the `/r/localllama` subreddit, their comments, filter out unworthy posts and email you a summary. You will need to provide an LLM accessible via an OpenAI-compatible API and SMTP details for an email service.
+AI News Processor is a tool designed to summarise posts from any subreddit (mainly tested with `/r/localllama`), attached images and links and the comments, filter out unworthy posts and email you a summary. You will need to provide an LLM accessible via an OpenAI-compatible API and SMTP details for an email service.
 
-The prompt was built and tested with Qwen2.5 7B Instruct Q8, Qwen2.5 32B Instruct Q4, and Qwen3 models. 
+The prompt was built and optimised for Qwen3 30B MoE for text summarisation, and Gemma 3 27B Instruct IT QAT for image summarisation.
 
 ## Repository Overview
 - **Directory Structure**:
@@ -19,8 +19,9 @@ The following environment variables are used to configure the AI News Processor:
 |-------------------------------|----------------------------------------------|--------------------|
 | `ANP_LLM_URL`                 | The URL of the LLM (Language Model) service. Must be OpenAI-compatible. |                    |
 | `ANP_LLM_API_KEY`             | The API key for authenticating with the LLM. |                    |
-| `ANP_LLM_MODEL`               | The language model to use for analysis.      |                    | 
-| `ANP_LLM_IMAGE_ENABLED`       | If true, enables separate image processing with a dedicated model. | false |
+| `ANP_LLM_MODEL`               | The language model to use for analysis.      |                    |
+| `ANP_LLM_URL_SUMMARY_ENABLED` | If true, enables summarizing content from external URLs found in feed items. | `true`             |
+| `ANP_LLM_IMAGE_ENABLED`       | If true, enables separate image processing with a dedicated model. | false              |
 | `ANP_LLM_IMAGE_MODEL`         | The dedicated model to use for image processing. Only used when ANP_LLM_IMAGE_ENABLED is true. |  |
 | `ANP_EMAIL_TO`                | Email address to send email to.      |                    |
 | `ANP_EMAIL_FROM`              | Email address to send email from.    |                    |
