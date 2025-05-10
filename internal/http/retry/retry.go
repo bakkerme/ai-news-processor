@@ -120,8 +120,8 @@ func RetryWithBackoff[T any](
 				finalErr = fmt.Errorf("exceeded maximum total timeout of %v: last error: %w",
 					config.MaxTotalTimeout, lastErr)
 			}
-			// Return the result from the last attempt before timeout, even if it was an error state,
-			// as it might contain partial data or a specific error response.
+			// Return the result from the last attempt before timeout. This result might be from an error state
+			// or represent partial data, depending on the function `fn`.
 			return lastResult, finalErr
 		}
 

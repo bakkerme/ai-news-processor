@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/bakkerme/ai-news-processor/internal/http/retry"
@@ -19,6 +20,7 @@ type HTTPError struct {
 	StatusCode int
 	Status     string
 	Response   *http.Response // Keep a reference to the original response
+	RetryAfter *time.Duration // Added to store parsed Retry-After header
 }
 
 func (e *HTTPError) Error() string {
@@ -85,11 +87,41 @@ func (hf *HTTPFetcher) Fetch(ctx context.Context, url string) (*http.Response, e
 			// Wrap the response in a custom error to pass it to shouldRetryHTTP
 			// The original response is returned along with the error,
 			// so if this is the last attempt, the caller can still inspect it.
-			return resp, &HTTPError{
+			httpError := &HTTPError{
 				StatusCode: resp.StatusCode,
 				Status:     resp.Status,
 				Response:   resp,
 			}
+
+			// Handle Retry-After header for 429 (Too Many Requests) and 503 (Service Unavailable)
+			if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode == http.StatusServiceUnavailable {
+				headerVal := resp.Header.Get("Retry-After")
+				if headerVal != "" {
+					var parsedDuration *time.Duration
+
+					// Try parsing as delay-seconds
+					if seconds, errConv := strconv.Atoi(headerVal); errConv == nil {
+						if seconds >= 0 { // Non-negative seconds
+							dur := time.Duration(seconds) * time.Second
+							parsedDuration = &dur
+						}
+						// else: negative seconds, invalid, parsedDuration remains nil
+					} else {
+						// Try parsing as HTTP-date
+						if date, errParseTime := http.ParseTime(headerVal); errParseTime == nil {
+							// Calculate duration until the specified date
+							dur := time.Until(date) // time.Until handles past dates by returning non-positive duration
+							if dur < 0 {            // If date is in the past, treat as immediate retry (or very soon)
+								dur = 0
+							}
+							parsedDuration = &dur
+						}
+						// else: not seconds and not a valid HTTP-date, parsedDuration remains nil
+					}
+					httpError.RetryAfter = parsedDuration
+				}
+			}
+			return resp, httpError
 		}
 
 		// Success
