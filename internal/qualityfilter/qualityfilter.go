@@ -8,7 +8,7 @@ import (
 func Filter(entries []rss.Entry, threshold int) []rss.Entry {
 	filtered := make([]rss.Entry, 0)
 	for _, entry := range entries {
-		if len(entry.Comments) > threshold {
+		if len(entry.Comments) >= threshold {
 			filtered = append(filtered, entry)
 		}
 	}

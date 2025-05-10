@@ -114,7 +114,20 @@ func main() {
 				continue
 			}
 
-			items, benchmarkLLMInputs, err = llm.ProcessEntries(openaiClient, imageClient, systemPrompt, entries, s.LlmImageEnabled, persona, s.DebugOutputBenchmark)
+			// Create the LLM processor with the configured clients
+			processorConfig := llm.EntryProcessConfig{
+				InitialBackoff:       llm.DefaultEntryProcessConfig.InitialBackoff,
+				BackoffFactor:        llm.DefaultEntryProcessConfig.BackoffFactor,
+				MaxRetries:           llm.DefaultEntryProcessConfig.MaxRetries,
+				MaxBackoff:           llm.DefaultEntryProcessConfig.MaxBackoff,
+				ImageEnabled:         s.LlmImageEnabled,
+				URLSummaryEnabled:    s.LlmUrlSummaryEnabled,
+				DebugOutputBenchmark: s.DebugOutputBenchmark,
+			}
+			processor := llm.NewProcessor(openaiClient, imageClient, processorConfig)
+
+			// Process the entries using the processor
+			items, benchmarkLLMInputs, err = processor.ProcessEntries(systemPrompt, entries, persona)
 			if err != nil {
 				fmt.Printf("Could not process entries with LLM for persona %s: %v\n", persona.Name, err)
 				continue

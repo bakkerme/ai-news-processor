@@ -12,8 +12,9 @@ type Specification struct {
 	LlmApiKey string `split_words:"true"`
 	LlmModel  string `split_words:"true"`
 
-	LlmImageEnabled bool   `split_words:"true" default:"false"`
-	LlmImageModel   string `split_words:"true"`
+	LlmImageEnabled      bool   `split_words:"true" default:"false"`
+	LlmImageModel        string `split_words:"true"`
+	LlmUrlSummaryEnabled bool   `split_words:"true" default:"true"`
 
 	EmailTo       string `split_words:"true"`
 	EmailFrom     string `split_words:"true"`

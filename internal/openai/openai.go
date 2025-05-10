@@ -139,7 +139,7 @@ func (c *Client) ChatCompletion(
 	params := openai.ChatCompletionNewParams{
 		Model:       c.model,
 		Messages:    messages,
-		Temperature: param.NewOpt(0.0),
+		Temperature: param.NewOpt(0.5),
 	}
 
 	if schemaParams != nil {

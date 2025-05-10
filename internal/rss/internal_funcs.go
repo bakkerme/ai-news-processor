@@ -17,7 +17,7 @@ import (
 
 // DefaultRSSRetryConfig provides default retry settings for RSS fetching
 var DefaultRSSRetryConfig = retry.RetryConfig{
-	MaxRetries:      3,
+	MaxRetries:      5,
 	InitialBackoff:  1 * time.Second,
 	MaxBackoff:      30 * time.Second,
 	BackoffFactor:   2.0,

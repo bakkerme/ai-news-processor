@@ -1,33 +1,11 @@
 package llm
 
 import (
-	"time"
-
 	"github.com/bakkerme/ai-news-processor/internal/customerrors"
 	"github.com/bakkerme/ai-news-processor/internal/models"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
 	"github.com/invopop/jsonschema"
 )
-
-// EntryProcessConfig holds the configuration for processing entries
-type EntryProcessConfig struct {
-	// Maximum number of retry attempts for failed entry processing
-	MaxRetries int
-	// Initial backoff duration between retries
-	InitialBackoff time.Duration
-	// Maximum backoff duration between retries
-	MaxBackoff time.Duration
-	// Backoff multiplier for each retry attempt
-	BackoffFactor float64
-}
-
-// DefaultEntryProcessConfig provides default values for entry processing
-var DefaultEntryProcessConfig = EntryProcessConfig{
-	MaxRetries:     3,
-	InitialBackoff: 2 * time.Second,
-	MaxBackoff:     30 * time.Second,
-	BackoffFactor:  2.0,
-}
 
 // Generate the JSON schema at initialization time
 var ItemResponseSchema = GenerateSchema[[]models.Item]()
@@ -88,6 +66,29 @@ func chatCompletionImageSummary(client openai.OpenAIClient, systemPrompt string,
 		[]string{}, // No additional text prompt, just let the model analyze the images
 		imageURLs,
 		nil, // Schema parameters not needed for image analysis
+		results,
+	)
+
+	result := <-results
+	close(results)
+
+	if result.Err != nil {
+		return "", result.Err
+	}
+
+	return result.Value, nil
+}
+
+// chatCompletionForWebSummary handles the LLM call for web summarization
+func (p *Processor) chatCompletionForWebSummary(systemPrompt string, userPrompt string) (string, error) {
+	results := make(chan customerrors.ErrorString, 1)
+
+	// Start the OpenAI call in a goroutine
+	p.client.ChatCompletion(
+		systemPrompt,
+		[]string{userPrompt},
+		[]string{},
+		nil,
 		results,
 	)
 

@@ -101,54 +101,79 @@ func RetryWithBackoff[T any](
 ) (T, error) {
 	var zero T
 	var lastErr error
+	var lastResult T // Added to store the result of the last attempt
 	currentBackoff := config.InitialBackoff
 	startTime := time.Now()
 
 	for attempt := 0; attempt <= config.MaxRetries; attempt++ {
 		// Check context cancellation
 		if ctx.Err() != nil {
+			// If context is cancelled, lastResult might not be meaningful or could be from a stale attempt.
+			// Return zero T as the operation was definitively interrupted.
 			return zero, ctx.Err()
 		}
 
 		// Check total timeout if set
 		if config.MaxTotalTimeout > 0 && time.Since(startTime) > config.MaxTotalTimeout {
-			if lastErr != nil {
-				return zero, fmt.Errorf("exceeded maximum total timeout of %v: %w",
+			finalErr := fmt.Errorf("exceeded maximum total timeout of %v", config.MaxTotalTimeout)
+			if lastErr != nil { // If there was a previous error within the timeout window
+				finalErr = fmt.Errorf("exceeded maximum total timeout of %v: last error: %w",
 					config.MaxTotalTimeout, lastErr)
 			}
-			return zero, fmt.Errorf("exceeded maximum total timeout of %v",
-				config.MaxTotalTimeout)
+			// Return the result from the last attempt before timeout, even if it was an error state,
+			// as it might contain partial data or a specific error response.
+			return lastResult, finalErr
 		}
 
 		// Execute the retryable function
 		result, err := fn(ctx)
+		lastResult = result // Store the result from this attempt
+
 		if err == nil {
-			return result, nil
+			return result, nil // Success
 		}
 
-		lastErr = err
-		if !shouldRetry(err) || attempt == config.MaxRetries {
+		lastErr = err // Store the error from this attempt
+
+		if !shouldRetry(err) { // If error is not retryable, break immediately and return this error and its result
+			return lastResult, lastErr
+		}
+
+		if attempt == config.MaxRetries { // If it was the last attempt and error was retryable, break to return max retries error
 			break
 		}
 
 		// Wait before next attempt
-		timer := time.NewTimer(currentBackoff)
+		// Adjust backoff calculation if Retry-After header was respected
+		waitDuration := currentBackoff
+		var httpResp *http.Response
+		// Attempt to extract http.Response if lastResult is one (for Retry-After)
+		// The `any` cast is necessary because T is generic.
+		if lr, ok := any(lastResult).(*http.Response); ok {
+			httpResp = lr
+		}
+		// No need to check lastErr for fetcher.HTTPError, rely on lastResult being the response if available.
+
+		if httpResp != nil && httpResp.StatusCode == http.StatusTooManyRequests {
+			if retryAfter := GetRetryAfterDuration(httpResp); retryAfter > 0 {
+				waitDuration = retryAfter
+			}
+		}
+
+		timer := time.NewTimer(waitDuration)
 		select {
 		case <-ctx.Done():
 			timer.Stop()
-			return zero, ctx.Err()
+			return zero, ctx.Err() // Context cancelled during wait
 		case <-timer.C:
 		}
 
-		// Calculate next backoff
-		nextBackoff := time.Duration(float64(currentBackoff) * config.BackoffFactor)
-		if nextBackoff > config.MaxBackoff {
-			nextBackoff = config.MaxBackoff
-		}
-		currentBackoff = nextBackoff
+		// Always calculate the next exponential backoff for the next attempt's baseline
+		currentBackoff = min(time.Duration(float64(currentBackoff)*config.BackoffFactor), config.MaxBackoff)
 	}
 
-	return zero, fmt.Errorf("max retries exceeded: %w", lastErr)
+	// If loop finished due to max retries (lastErr was retryable)
+	return lastResult, fmt.Errorf("max retries exceeded: %w", lastErr)
 }
 
 // IsRateLimitError checks if the error is a rate limit error

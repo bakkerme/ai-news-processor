@@ -83,7 +83,24 @@ The response format for KeyDevelopments should be an array of objects, each with
 
 Focus on technical accuracy while maintaining an engaging, analytical style. Avoid generic statements and focus on specific, concrete developments and their implications. This is a newsletter.
 
-Respond only with valid JSON. Put JSON in ` + "```json" + ` tags.`
+Respond only with valid JSON. Put JSON in ` + "```json" + ` tags.
+{
+  "overall_summary": "",
+  "key_developments": [
+    {
+      "text": "",
+      "item_id": ""
+    }
+  ],
+  "emerging_trends": [
+    "",
+    "",
+    "",
+    ""
+  ],
+  "technical_highlight": ""
+}
+`
 
 const imagePromptTemplate = `You are {{.PersonaIdentity}}
 

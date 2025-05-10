@@ -36,15 +36,16 @@ func (cf *CommentFeed) FeedString() string {
 
 // Entry and EntryComments are used throughout the codebase for RSS feeds
 type Entry struct {
-	Title            string    `xml:"title"`
-	Link             Link      `xml:"link"`
-	ID               string    `xml:"id"`
-	Published        time.Time `xml:"published"`
-	Content          string    `xml:"content"`
-	Comments         []EntryComments
-	ImageURLs        []url.URL      // New field to store extracted image URLs
-	MediaThumbnail   MediaThumbnail `xml:"http://search.yahoo.com/mrss/ thumbnail"` // Field to store thumbnail information from media namespace
-	ImageDescription string         // Field to store image descriptions from dedicated image processing
+	Title                string    `xml:"title"`
+	Link                 Link      `xml:"link"`
+	ID                   string    `xml:"id"`
+	Published            time.Time `xml:"published"`
+	Content              string    `xml:"content"`
+	Comments             []EntryComments
+	ImageURLs            []url.URL         // New field to store extracted image URLs
+	MediaThumbnail       MediaThumbnail    `xml:"http://search.yahoo.com/mrss/ thumbnail"` // Field to store thumbnail information from media namespace
+	ImageDescription     string            // Field to store image descriptions from dedicated image processing
+	ExternalURLSummaries map[string]string // New field to store summaries of external URLs found in content
 }
 
 type EntryComments struct {
@@ -68,6 +69,13 @@ func (e *Entry) String(disableTruncation bool) string {
 		cleanContent(e.Content, 1200, disableTruncation),
 		e.ImageDescription,
 	))
+
+	if len(e.ExternalURLSummaries) > 0 {
+		s.WriteString("\nExternal URL Summaries:\n")
+		for url, summary := range e.ExternalURLSummaries {
+			s.WriteString(fmt.Sprintf("- %s: %s\n", url, summary))
+		}
+	}
 
 	for _, comment := range e.Comments {
 		s.WriteString(fmt.Sprintf("Comment: %s\n", cleanContent(comment.Content, 600, disableTruncation)))
