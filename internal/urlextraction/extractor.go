@@ -99,6 +99,11 @@ func (re *RedditExtractor) isRedditDomain(urlStr string) (bool, error) {
 		return false, fmt.Errorf("failed to parse URL: %w", err)
 	}
 
+	// Handle mailto schemes explicitly: they are not Reddit domains and don't have a host.
+	if u.Scheme == "mailto" {
+		return false, nil
+	}
+
 	// url.Parse can successfully parse strings that are not valid absolute URLs
 	// (e.g., "not-a-url" becomes u.Path = "not-a-url", u.Host = "").
 	// We consider a URL valid for domain checking only if it has a scheme and a host.
@@ -110,6 +115,23 @@ func (re *RedditExtractor) isRedditDomain(urlStr string) (bool, error) {
 	return strings.Contains(host, "reddit") || strings.Contains(host, "redd.it"), nil
 }
 
+// filterNonHTTPProtocols filters a slice of URL strings, returning only those with http or https schemes.
+// Malformed URLs or those that cannot be parsed are also filtered out.
+func filterNonHTTPProtocols(urls []string) []string {
+	var httpURLs []string
+	for _, urlStr := range urls {
+		parsedURL, err := url.Parse(urlStr)
+		if err != nil {
+			// Skip unparseable URLs
+			continue
+		}
+		if parsedURL.Scheme == "http" || parsedURL.Scheme == "https" {
+			httpURLs = append(httpURLs, urlStr)
+		}
+	}
+	return httpURLs
+}
+
 // ExtractURLsFromEntry processes a single RSS entry and extracts external URLs
 // from its Content field. It filters out URLs belonging to reddit.com or redd.it.
 func (re *RedditExtractor) ExtractURLsFromEntry(entry rss.Entry) ([]string, error) {
@@ -118,8 +140,11 @@ func (re *RedditExtractor) ExtractURLsFromEntry(entry rss.Entry) ([]string, erro
 		return nil, fmt.Errorf("error extracting all URLs from entry ID %s: %w", entry.ID, err)
 	}
 
+	// Filter out non-HTTP/HTTPS URLs first
+	httpURLs := filterNonHTTPProtocols(allURLs)
+
 	var externalURLs []string
-	for _, u := range allURLs {
+	for _, u := range httpURLs { // Iterate over httpURLs instead of allURLs
 		isReddit, err := re.isRedditDomain(u)
 		if err != nil {
 			// Log or handle URL parsing errors for individual URLs if needed

@@ -1,8 +1,6 @@
 package urlextraction
 
 import (
-	"reflect"
-	"sort"
 	"testing"
 
 	"github.com/bakkerme/ai-news-processor/internal/rss"
@@ -13,17 +11,17 @@ func compareUnorderedStringSlices(a, b []string) bool {
 	if len(a) != len(b) {
 		return false
 	}
-	// Create copies to avoid modifying originals
-	aCopy := make([]string, len(a))
-	bCopy := make([]string, len(b))
-	copy(aCopy, a)
-	copy(bCopy, b)
-
-	// Sort both slices
-	sort.Strings(aCopy)
-	sort.Strings(bCopy)
-
-	return reflect.DeepEqual(aCopy, bCopy)
+	aMap := make(map[string]int)
+	for _, s := range a {
+		aMap[s]++
+	}
+	for _, s := range b {
+		if count, ok := aMap[s]; !ok || count == 0 {
+			return false
+		}
+		aMap[s]--
+	}
+	return true
 }
 
 // Helper function to compare string slice maps regardless of slice order
@@ -334,6 +332,59 @@ func TestRedditExtractor_ExtractURLsFromEntries(t *testing.T) {
 			}
 			if !compareStringSliceMaps(got, tt.want) {
 				t.Errorf("RedditExtractor.ExtractURLsFromEntries() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFilterNonHTTPProtocols(t *testing.T) {
+	tests := []struct {
+		name      string
+		inputURLs []string
+		wantURLs  []string
+	}{
+		{
+			name:      "empty slice",
+			inputURLs: []string{},
+			wantURLs:  []string{},
+		},
+		{
+			name:      "only http/https",
+			inputURLs: []string{"http://example.com", "https://another.org/path"},
+			wantURLs:  []string{"http://example.com", "https://another.org/path"},
+		},
+		{
+			name:      "only non-http/https",
+			inputURLs: []string{"mailto:test@example.com", "ftp://ftp.example.com", "irc://irc.example.com/channel"},
+			wantURLs:  []string{},
+		},
+		{
+			name:      "mixed protocols",
+			inputURLs: []string{"http://example.com", "mailto:test@example.com", "https://another.org/path", "ftp://ftp.example.com"},
+			wantURLs:  []string{"http://example.com", "https://another.org/path"},
+		},
+		{
+			name:      "with relative paths and fragments (should be filtered out as they don't have http/https schemes)",
+			inputURLs: []string{"/just/a/path", "#fragment", "http://example.com/path#frag", "https://another.com"},
+			wantURLs:  []string{"http://example.com/path#frag", "https://another.com"},
+		},
+		{
+			name:      "invalid and unparseable URLs",
+			inputURLs: []string{"http://valid.com", "://invalid-url", "http://[::1]:namedport", "another valid https://url.com"},
+			wantURLs:  []string{"http://valid.com"}, // "another valid https://url.com" is not a valid URL, url.Parse will make its scheme ""
+		},
+		{
+			name:      "schemes with mixed case",
+			inputURLs: []string{"HTTP://example.com", "Https://another.org/path", "FTP://ftp.example.com"},
+			wantURLs:  []string{"HTTP://example.com", "Https://another.org/path"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotURLs := filterNonHTTPProtocols(tt.inputURLs)
+			if !compareUnorderedStringSlices(gotURLs, tt.wantURLs) {
+				t.Errorf("filterNonHTTPProtocols() got = %v, want %v", gotURLs, tt.wantURLs)
 			}
 		})
 	}
