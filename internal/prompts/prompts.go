@@ -2,6 +2,7 @@ package prompts
 
 import (
 	"bytes"
+	"errors"
 	"text/template"
 
 	"github.com/bakkerme/ai-news-processor/internal/persona"
@@ -141,6 +142,10 @@ func ComposePrompt(p persona.Persona, imageDescription string) (string, error) {
 }
 
 func ComposeSummaryPrompt(p persona.Persona) (string, error) {
+	if p.PersonaIdentity == "" {
+		return "", errors.New("persona identity is empty")
+	}
+
 	tmpl, err := template.New("summary").Parse(summaryPromptTemplate)
 	if err != nil {
 		return "", err
