@@ -35,15 +35,15 @@ func NewService(config *specification.Specification) (*Service, error) {
 }
 
 // RenderAndSend handles rendering and sending an email with the specified items and summary
-func (s *Service) RenderAndSend(items []models.Item, summary *models.SummaryResponse) error {
-	email, err := RenderEmail(items, summary)
+func (s *Service) RenderAndSend(items []models.Item, summary *models.SummaryResponse, personaName string) error {
+	email, err := RenderEmail(items, summary, personaName)
 	if err != nil {
 		return fmt.Errorf("could not render email: %w", err)
 	}
 
 	if !s.config.DebugSkipEmail {
 		fmt.Printf("Sending email to %s\n", s.config.EmailTo)
-		return s.emailer.Send(s.config.EmailTo, "AI News", email)
+		return s.emailer.Send(s.config.EmailTo, fmt.Sprintf("%s News", personaName), email)
 	}
 
 	// If in debug mode, write to disk instead

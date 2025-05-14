@@ -20,7 +20,7 @@ feed_url: "https://reddit.com/r/localllama.rss"
 topic: "AI Technology and Large Language Models"
 persona_identity: "You are an AI researcher..."
 base_prompt_task: "Analyze each post for technical depth."
-summary_prompt_task: "Summarize the key developments overall."
+summary_prompt_task: "Provide an overall summary of the relevant news items."
 focus_areas:
   - "New LLM releases"
   - "Model infrastructure news"

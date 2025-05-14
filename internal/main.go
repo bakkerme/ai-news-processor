@@ -180,7 +180,7 @@ func main() {
 
 		// 10. Render and send email
 		if !s.DebugSkipEmail {
-			err = emailService.RenderAndSend(relevantItems, summaryResponse)
+			err = emailService.RenderAndSend(relevantItems, summaryResponse, persona.Name)
 			if err != nil {
 				fmt.Printf("Could not send email for persona %s: %v\n", persona.Name, err)
 				continue

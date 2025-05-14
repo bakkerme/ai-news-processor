@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI News</title>
+    <title>{{.PersonaName}} News</title>
     <style>
         /* Same CSS as before */
         body {
@@ -152,15 +152,15 @@
 <body>
     <div class="email-container">
         <div class="header">
-            <h1>AI News</h1>
+            <h1>{{.PersonaName}} News</h1>
         </div>
         
         <div class="content">
             {{if .Summary}}
             <div class="summary-section">
-                <div class="summary-title">Today's AI Developments</div>
+                <div class="summary-title">Today's {{.PersonaName}} Developments</div>
                 <div>{{.Summary.OverallSummary}}</div>
-                
+                 
                 <div class="key-developments">
                     <h3>Key Developments</h3>
                     {{range .Summary.KeyDevelopments}}

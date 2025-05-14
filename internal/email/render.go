@@ -14,11 +14,12 @@ import (
 var templateFS embed.FS
 
 type EmailData struct {
-	Summary *models.SummaryResponse
-	Items   []models.Item
+	Summary     *models.SummaryResponse
+	Items       []models.Item
+	PersonaName string
 }
 
-func RenderEmail(items []models.Item, summary *models.SummaryResponse) (string, error) {
+func RenderEmail(items []models.Item, summary *models.SummaryResponse, personaName string) (string, error) {
 	tmplContent, err := templateFS.ReadFile("templates/email_template.tmpl")
 	if err != nil {
 		return "", fmt.Errorf("failed to read template: %w", err)
@@ -31,8 +32,9 @@ func RenderEmail(items []models.Item, summary *models.SummaryResponse) (string, 
 	}
 
 	data := EmailData{
-		Summary: summary,
-		Items:   items,
+		Summary:     summary,
+		Items:       items,
+		PersonaName: personaName,
 	}
 
 	// Execute the template into a buffer
