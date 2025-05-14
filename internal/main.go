@@ -7,7 +7,11 @@ import (
 	"time"
 
 	"github.com/bakkerme/ai-news-processor/internal/bench"
+	"github.com/bakkerme/ai-news-processor/internal/contentextractor"
 	"github.com/bakkerme/ai-news-processor/internal/email"
+	"github.com/bakkerme/ai-news-processor/internal/fetcher"
+	httputil "github.com/bakkerme/ai-news-processor/internal/http"
+	"github.com/bakkerme/ai-news-processor/internal/http/retry"
 	"github.com/bakkerme/ai-news-processor/internal/llm"
 	"github.com/bakkerme/ai-news-processor/internal/models"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
@@ -16,6 +20,7 @@ import (
 	"github.com/bakkerme/ai-news-processor/internal/qualityfilter"
 	"github.com/bakkerme/ai-news-processor/internal/rss"
 	"github.com/bakkerme/ai-news-processor/internal/specification"
+	"github.com/bakkerme/ai-news-processor/internal/urlextraction"
 )
 
 func main() {
@@ -124,7 +129,31 @@ func main() {
 				URLSummaryEnabled:    s.LlmUrlSummaryEnabled,
 				DebugOutputBenchmark: s.DebugOutputBenchmark,
 			}
-			processor := llm.NewProcessor(openaiClient, imageClient, processorConfig)
+
+			// Create retry config from entry process config
+			retryConfig := retry.RetryConfig{
+				InitialBackoff: processorConfig.InitialBackoff,
+				BackoffFactor:  processorConfig.BackoffFactor,
+				MaxRetries:     processorConfig.MaxRetries,
+				MaxBackoff:     processorConfig.MaxBackoff,
+			}
+
+			// Initialize dependencies for the processor
+			urlFetcher := fetcher.NewHTTPFetcher(nil, retryConfig, fetcher.DefaultUserAgent)
+			urlExtractor := urlextraction.NewRedditExtractor()
+			imageFetcher := &httputil.DefaultImageFetcher{}
+			articleExtractor := &contentextractor.DefaultArticleExtractor{}
+
+			// Initialize the processor with the dependencies
+			processor := llm.NewProcessor(
+				openaiClient,
+				imageClient,
+				processorConfig,
+				articleExtractor,
+				urlFetcher,
+				urlExtractor,
+				imageFetcher,
+			)
 
 			// Process the entries using the processor
 			items, benchmarkLLMInputs, err = processor.ProcessEntries(systemPrompt, entries, persona)

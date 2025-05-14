@@ -160,7 +160,7 @@
             <div class="summary-section">
                 <div class="summary-title">Today's {{.PersonaName}} Developments</div>
                 <div>{{.Summary.OverallSummary}}</div>
-                 
+                
                 <div class="key-developments">
                     <h3>Key Developments</h3>
                     {{range .Summary.KeyDevelopments}}
@@ -168,20 +168,6 @@
                             <a href="#item-{{.ItemID}}">{{.Text}}</a>
                         </div>
                     {{end}}
-                </div>
-                
-                <div class="trends-section">
-                    <h3>Emerging Trends</h3>
-                    <ul style="padding-left: 0; list-style: none;">
-                    {{range .Summary.EmergingTrends}}
-                        <li class="key-developments-li">{{.}}</li>
-                    {{end}}
-                    </ul>
-                </div>
-                
-                <div class="technical-highlight">
-                    <h3>Technical Highlight of the Day</h3>
-                    <div>{{.Summary.TechnicalHighlight}}</div>
                 </div>
             </div>
             {{end}}

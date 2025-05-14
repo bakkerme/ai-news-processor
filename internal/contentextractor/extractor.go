@@ -16,20 +16,28 @@ type ArticleData struct {
 	// Future fields: Excerpt, SiteName, Favicon, Language, etc.
 }
 
-// ExtractArticle uses go-readability to extract the main content and metadata from an HTML page.
-// It takes an io.Reader for the HTML body and the original page URL.
-func ExtractArticle(htmlContent io.Reader, pageURL *url.URL) (*ArticleData, error) {
+// ArticleExtractor defines the interface for extracting article data from an HTML source.
+type ArticleExtractor interface {
+	Extract(body io.Reader, sourceURL *url.URL) (*ArticleData, error)
+}
+
+// DefaultArticleExtractor is the default implementation of ArticleExtractor
+// that uses the go-readability library.
+type DefaultArticleExtractor struct{}
+
+// Extract calls the package-level ExtractArticle function.
+func (d *DefaultArticleExtractor) Extract(body io.Reader, sourceURL *url.URL) (*ArticleData, error) {
 	// Check for nil inputs
-	if htmlContent == nil {
-		return nil, fmt.Errorf("contentextractor: htmlContent cannot be nil")
+	if body == nil {
+		return nil, fmt.Errorf("contentextractor: body cannot be nil")
 	}
-	if pageURL == nil {
-		return nil, fmt.Errorf("contentextractor: pageURL cannot be nil")
+	if sourceURL == nil {
+		return nil, fmt.Errorf("contentextractor: sourceURL cannot be nil")
 	}
 
-	article, err := readability.FromReader(htmlContent, pageURL)
+	article, err := readability.FromReader(body, sourceURL)
 	if err != nil {
-		return nil, fmt.Errorf("contentextractor: failed to extract article using go-readability from %s: %w", pageURL.String(), err)
+		return nil, fmt.Errorf("contentextractor: failed to extract article using go-readability from %s: %w", sourceURL.String(), err)
 	}
 
 	// TODO: Add logic to check if content is substantial enough

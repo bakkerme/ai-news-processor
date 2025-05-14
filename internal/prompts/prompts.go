@@ -75,10 +75,6 @@ For the provided set of news items, generate a structured analysis that includes
   * A comprehensive overall summary that synthesizes the major developments
 * KeyDevelopments
   * A list of key developments, ordered by significance. For each key development, include the ID of the referenced post as an ItemID field, so it can be linked to the original post.
-* EmergingTrends
-  * List of 3-5 emerging trends visible across multiple items
-* TechnicalHighlight
-  * The single most technically significant development, with explanation (write this as plain text, not JSON)
 
 The response format for KeyDevelopments should be an array of objects, each with a Text and an ItemID field, where ItemID matches the ID of a post in the input.
 
@@ -92,14 +88,7 @@ Respond only with valid JSON. Put JSON in ` + "```json" + ` tags.
       "text": "",
       "item_id": ""
     }
-  ],
-  "emerging_trends": [
-    "",
-    "",
-    "",
-    ""
-  ],
-  "technical_highlight": ""
+  ]
 }
 `
 

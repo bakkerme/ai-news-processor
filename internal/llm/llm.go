@@ -23,21 +23,7 @@ import (
 )
 
 // NewProcessor creates a new LLM processor with the given clients and configuration
-func NewProcessor(client openai.OpenAIClient, imageClient openai.OpenAIClient, config EntryProcessConfig) *Processor {
-	// Create retry config for fetcher from entry process config
-	retryConfig := retry.RetryConfig{
-		InitialBackoff: config.InitialBackoff,
-		BackoffFactor:  config.BackoffFactor,
-		MaxRetries:     config.MaxRetries,
-		MaxBackoff:     config.MaxBackoff,
-	}
-
-	// Initialize fetcher with default client and config
-	urlFetcher := fetcher.NewHTTPFetcher(nil, retryConfig, fetcher.DefaultUserAgent)
-
-	// Initialize URL extractor
-	urlExtractor := urlextraction.NewRedditExtractor()
-
+func NewProcessor(client openai.OpenAIClient, imageClient openai.OpenAIClient, config EntryProcessConfig, articleExtractor contentextractor.ArticleExtractor, urlFetcher fetcher.Fetcher, urlExtractor urlextraction.Extractor, imageFetcher httputil.ImageFetcher) *Processor {
 	return &Processor{
 		client:               client,
 		imageClient:          imageClient,
@@ -47,6 +33,8 @@ func NewProcessor(client openai.OpenAIClient, imageClient openai.OpenAIClient, c
 		urlExtractor:         urlExtractor,
 		imageEnabled:         config.ImageEnabled,
 		debugOutputBenchmark: config.DebugOutputBenchmark,
+		imageFetcher:         imageFetcher,
+		articleExtractor:     articleExtractor,
 	}
 }
 
@@ -180,7 +168,7 @@ func (p *Processor) processExternalURLs(entry *rss.Entry, persona persona.Person
 		}
 
 		// 2b. Extract the article text
-		articleData, err := contentextractor.ExtractArticle(resp.Body, parsedURL)
+		articleData, err := p.articleExtractor.Extract(resp.Body, parsedURL)
 		if err != nil {
 			fmt.Printf("warning: Failed to extract article content for %s: %v\n", extractedURLStr, err)
 			continue // Skip to the next URL if extraction fails
@@ -267,9 +255,9 @@ func (p *Processor) processImageWithRetry(entry rss.Entry, imagePrompt string) (
 	}
 
 	imgURL := entry.ImageURLs[0].String()
-	dataURI := httputil.FetchImageAsBase64(imgURL)
-	if dataURI == "" {
-		return "", fmt.Errorf("could not fetch image from URL: %s", imgURL)
+	dataURI, err := p.imageFetcher.FetchAsBase64(imgURL)
+	if err != nil {
+		return "", fmt.Errorf("could not fetch image using imageFetcher from URL %s: %w", imgURL, err)
 	}
 
 	processFn := func() (string, error) {

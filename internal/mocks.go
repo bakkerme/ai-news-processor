@@ -41,12 +41,5 @@ func GetMockSummaryResponse() *models.SummaryResponse {
 				ItemID: "t3_1k0b8wx",
 			},
 		},
-		EmergingTrends: []string{
-			"Increased focus on quantization and optimization techniques for faster inference",
-			"Growing interest in agent-based architectures for local LLM deployment",
-			"Community emphasis on cost-effective hardware solutions for running larger models",
-			"Rising adoption of local vision-language models with improved capabilities",
-		},
-		TechnicalHighlight: "The standout technical achievement is the optimization work done with Qwen2.5-7B, achieving 4500 t/s ingesting and 825 t/s generation with a 5k token context window through careful tuning of batch sizes and quantization parameters.",
 	}
 }

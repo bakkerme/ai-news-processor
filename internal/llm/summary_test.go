@@ -65,9 +65,6 @@ func TestGenerateSummary(t *testing.T) {
 		require.Len(t, summary.KeyDevelopments, 1)
 		assert.Equal(t, "Test Dev", summary.KeyDevelopments[0].Text)
 		assert.Equal(t, "id1", summary.KeyDevelopments[0].ItemID)
-		require.Len(t, summary.EmergingTrends, 1)
-		assert.Equal(t, "Trend 1", summary.EmergingTrends[0])
-		assert.Equal(t, "Highlight", summary.TechnicalHighlight)
 
 		assert.True(t, mockClient.CalledChatCompletion, "ChatCompletion should have been called")
 		assert.True(t, mockClient.CalledPreprocessJSON, "PreprocessJSON should have been called")
@@ -162,8 +159,6 @@ func TestGenerateSummary(t *testing.T) {
 		// Assert that summary fields are empty/zero as "wrongField" is not part of SummaryResponse
 		assert.Empty(t, summary.OverallSummary)
 		assert.Empty(t, summary.KeyDevelopments)
-		assert.Empty(t, summary.EmergingTrends)
-		assert.Empty(t, summary.TechnicalHighlight)
 
 		assert.True(t, mockClient.CalledChatCompletion)
 		assert.True(t, mockClient.CalledPreprocessJSON)
