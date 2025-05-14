@@ -58,8 +58,9 @@ func TestExtractArticle(t *testing.T) {
 				t.Fatalf("Failed to parse URL %s: %v", tt.urlStr, err)
 			}
 
+			extractor := &DefaultArticleExtractor{}
 			// Call the function to test
-			result, err := ExtractArticle(strings.NewReader(string(htmlContent)), testURL)
+			result, err := extractor.Extract(strings.NewReader(string(htmlContent)), testURL)
 
 			// Check error expectation
 			if tt.expectError && err == nil {
@@ -89,7 +90,8 @@ func TestExtractArticleErrors(t *testing.T) {
 	// Test with nil reader
 	t.Run("Nil reader", func(t *testing.T) {
 		testURL, _ := url.Parse("https://example.com")
-		_, err := ExtractArticle(nil, testURL)
+		extractor := &DefaultArticleExtractor{}
+		_, err := extractor.Extract(nil, testURL)
 		if err == nil {
 			t.Error("Expected error with nil reader, got none")
 		}
@@ -97,7 +99,8 @@ func TestExtractArticleErrors(t *testing.T) {
 
 	// Test with nil URL
 	t.Run("Nil URL", func(t *testing.T) {
-		_, err := ExtractArticle(strings.NewReader("<html><body>Test</body></html>"), nil)
+		extractor := &DefaultArticleExtractor{}
+		_, err := extractor.Extract(strings.NewReader("<html><body>Test</body></html>"), nil)
 		if err == nil {
 			t.Error("Expected error with nil URL, got none")
 		}
