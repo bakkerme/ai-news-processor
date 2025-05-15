@@ -366,6 +366,12 @@ func EnrichItems(items []models.Item, entries []rss.Entry) []models.Item {
 		}
 
 		enrichedItems[i].Link = entry.Link.Href
+
+		if len(entry.ImageURLs) > 0 {
+			enrichedItems[i].ThumbnailURL = entry.ImageURLs[0].String()
+		} else if entry.MediaThumbnail.URL != "" {
+			enrichedItems[i].ThumbnailURL = entry.MediaThumbnail.URL
+		}
 	}
 
 	return enrichedItems

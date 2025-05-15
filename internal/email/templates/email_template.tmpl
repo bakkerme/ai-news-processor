@@ -15,6 +15,9 @@
             padding: 20px;
             background-color: #f5f7fa;
         }
+        a {
+            text-decoration: none;
+        }
         .email-container {
             background-color: white;
             border-radius: 5px;
@@ -159,7 +162,6 @@
             {{if .Summary}}
             <div class="summary-section">
                 <div class="summary-title">Today's {{.PersonaName}} Developments</div>
-                <div>{{.Summary.OverallSummary}}</div>
                 
                 <div class="key-developments">
                     <h3>Key Developments</h3>
@@ -175,6 +177,9 @@
             {{range .Items}}
             <a name="item-{{.ID}}"></a>
             <div class="item">
+                {{if .ThumbnailURL}}
+                    <img src="{{.ThumbnailURL}}" alt="Thumbnail" style="width: 100%; height: 200px; object-fit: cover;">
+                {{end}}
                 <div class="item-title">{{.Title}}</div>
                 <div class="item-summary">
                     {{.Summary}}

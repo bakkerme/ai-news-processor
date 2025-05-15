@@ -24,6 +24,7 @@ func TestExtractImageURLs(t *testing.T) {
 				<span><a href="https://i.redd.it/393vjiodz2ve1.jpeg">[link]</a></span> &amp;#32; 
 				<span><a href="https://www.reddit.com/r/LocalLLaMA/comments/1k05wpt/bytedance_releases_liquid_model_family_of/">[comments]</a></span> </td></tr></table>`,
 			expectedImages: []string{
+				"https://preview.redd.it/393vjiodz2ve1.jpeg?width=640&crop=smart&auto=webp&s=afb315c5ae73bc479aead0533e99e06cf2db069a",
 				"https://i.redd.it/393vjiodz2ve1.jpeg",
 			},
 		},
@@ -43,6 +44,7 @@ func TestExtractImageURLs(t *testing.T) {
 				<p><img src="https://example.com/image.jpg" /></p>
 				<span><a href="https://i.imgur.com/py5Tvae.png">[link]</a></span></div>`,
 			expectedImages: []string{
+				"https://preview.redd.it/66ifgifkr5ve1.png?width=2756&format=png&auto=webp&s=77650cfe31229f9bde35da3e569cef3d5caa885f",
 				"https://example.com/image.jpg",
 				"https://i.imgur.com/py5Tvae.png",
 			},
@@ -156,11 +158,12 @@ func TestContainsExcludedTerms(t *testing.T) {
 		expected bool
 	}{
 		{"https://example.com/thumbnail.jpg", true},
-		{"https://example.com/preview-image.png", true},
+		{"https://example.com/preview-image.png", false},
 		{"https://thumbs.example.com/image.jpg", true},
-		{"https://example.com/preview/image.jpg", true},
+		{"https://example.com/preview/image.jpg", false},
 		{"https://example.com/normal-image.jpg", false},
 		{"https://example.com/image.png", false},
+		{"https://external-preview.redd.it/image.jpg", true},
 	}
 
 	for _, tc := range tests {
@@ -170,6 +173,7 @@ func TestContainsExcludedTerms(t *testing.T) {
 		})
 	}
 }
+
 func TestURLDeduplication(t *testing.T) {
 	// Test the deduplication mechanism in ExtractImageURLs
 	entry := Entry{

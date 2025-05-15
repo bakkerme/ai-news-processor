@@ -71,8 +71,6 @@ Your analysis should focus on:
 {{end}}
 
 For the provided set of news items, generate a structured analysis that includes:
-* OverallSummary
-  * A comprehensive overall summary that synthesizes the major developments
 * KeyDevelopments
   * A list of key developments, ordered by significance. For each key development, include the ID of the referenced post as an ItemID field, so it can be linked to the original post.
 
@@ -82,7 +80,6 @@ Focus on technical accuracy while maintaining an engaging, analytical style. Avo
 
 Respond only with valid JSON. Put JSON in ` + "```json" + ` tags.
 {
-  "overall_summary": "",
   "key_developments": [
     {
       "text": "",

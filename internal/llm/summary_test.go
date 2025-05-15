@@ -52,7 +52,7 @@ func TestGenerateSummary(t *testing.T) {
 					assert.Nil(t, schemaParams)
 
 					// Valid JSON for models.SummaryResponse
-					results <- customerrors.ErrorString{Value: `{"overall_summary": "Test Summary", "key_developments": [{"text": "Test Dev", "item_id": "id1"}], "emerging_trends": ["Trend 1"], "technical_highlight": "Highlight"}`, Err: nil}
+					results <- customerrors.ErrorString{Value: `{"key_developments": [{"text": "Test Dev", "item_id": "id1"}], "emerging_trends": ["Trend 1"], "technical_highlight": "Highlight"}`, Err: nil}
 				}()
 			},
 		}
@@ -61,7 +61,6 @@ func TestGenerateSummary(t *testing.T) {
 
 		assert.NoError(t, err)
 		require.NotNil(t, summary)
-		assert.Equal(t, "Test Summary", summary.OverallSummary)
 		require.Len(t, summary.KeyDevelopments, 1)
 		assert.Equal(t, "Test Dev", summary.KeyDevelopments[0].Text)
 		assert.Equal(t, "id1", summary.KeyDevelopments[0].ItemID)
@@ -157,7 +156,6 @@ func TestGenerateSummary(t *testing.T) {
 		require.NotNil(t, summary, "Summary should not be nil even with mismatched schema if no error occurred")
 
 		// Assert that summary fields are empty/zero as "wrongField" is not part of SummaryResponse
-		assert.Empty(t, summary.OverallSummary)
 		assert.Empty(t, summary.KeyDevelopments)
 
 		assert.True(t, mockClient.CalledChatCompletion)

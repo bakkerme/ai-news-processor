@@ -13,6 +13,7 @@ type Item struct {
 	Link           string `json:"link"`
 	Relevance      string `json:"relevance"`
 	IsRelevant     bool   `json:"is_relevant"`
+	ThumbnailURL   string `json:"thumbnail_url"`
 }
 
 // KeyDevelopment represents a key development and its referenced item
@@ -23,7 +24,6 @@ type KeyDevelopment struct {
 
 // SummaryResponse represents an overall summary of multiple relevant AI news items
 type SummaryResponse struct {
-	OverallSummary  string           `json:"overall_summary"`
 	KeyDevelopments []KeyDevelopment `json:"key_developments"`
 }
 

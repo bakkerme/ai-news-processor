@@ -116,7 +116,6 @@ func (e *Entry) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 func (e *Entry) ExtractImageURLs() error {
 	// Reset the ImageURLs slice
 	e.ImageURLs = nil
-	urlMap := make(map[string]url.URL) // Use a map to automatically deduplicate
 
 	// Parse the content HTML for regular <img> tags and <a> tags with image links
 	doc, err := html.Parse(strings.NewReader(e.Content))
@@ -125,12 +124,14 @@ func (e *Entry) ExtractImageURLs() error {
 	}
 
 	// Traverse the DOM to find image URLs
+	urlMap := make(map[string]url.URL) // Use a map to automatically deduplicate
 	extractURLsFromNode(doc, urlMap)
 
 	// Convert map to slice
 	e.ImageURLs = make([]url.URL, 0, len(urlMap))
 	for _, u := range urlMap {
 		e.ImageURLs = append(e.ImageURLs, u)
+		fmt.Printf("Found image URL: %s\n", u.String())
 	}
 
 	return nil
@@ -168,7 +169,7 @@ func extractURLsFromNode(n *html.Node, urlMap map[string]url.URL) {
 
 // addImageURLIfValid adds a URL to the map if it's a valid image URL
 func addImageURLIfValid(urlStr string, urlMap map[string]url.URL) {
-	if (isLikelyImageURL(urlStr) || hasImageExtension(urlStr)) && !containsExcludedTerms(urlStr) {
+	if isLikelyImageURL(urlStr) && !containsExcludedTerms(urlStr) {
 		validURL := ensureValidImageURL(urlStr)
 		u, err := url.Parse(validURL)
 		if err == nil {
@@ -179,21 +180,18 @@ func addImageURLIfValid(urlStr string, urlMap map[string]url.URL) {
 
 // isLikelyImageURL checks if a URL is likely an image based on extension or known image hosting patterns
 func isLikelyImageURL(urlStr string) bool {
-	// If it ends with a common image extension, it's definitely an image
-	if hasImageExtension(urlStr) {
-		return true
-	}
-
 	// Check for common image hosting patterns
 	lowerURL := strings.ToLower(urlStr)
 
 	// i.redd.it, i.imgur.com are dedicated image hosts
 	if strings.Contains(lowerURL, "i.redd.it") ||
+		strings.Contains(lowerURL, "preview.redd.it") ||
 		strings.Contains(lowerURL, "i.imgur.com") {
 		return true
 	}
 
-	return false
+	// Check for common image extensions
+	return hasImageExtension(urlStr)
 }
 
 // hasImageExtension checks if a URL ends with a common image file extension
@@ -210,5 +208,6 @@ func hasImageExtension(urlStr string) bool {
 // containsExcludedTerms checks if a URL contains terms that indicate it's a low-quality image
 func containsExcludedTerms(urlStr string) bool {
 	lowerURL := strings.ToLower(urlStr)
-	return strings.Contains(lowerURL, "thumb") || strings.Contains(lowerURL, "preview")
+	return strings.Contains(lowerURL, "thumb") ||
+		strings.Contains(lowerURL, "external-preview")
 }

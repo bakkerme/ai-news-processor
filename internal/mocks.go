@@ -26,7 +26,6 @@ func GetMockLLMResponse() []models.Item {
 
 func GetMockSummaryResponse() *models.SummaryResponse {
 	return &models.SummaryResponse{
-		OverallSummary: "Today has been a significant day in the LocalLLaMA community with major developments in model optimization, tooling, and infrastructure. The community continues to push boundaries in local LLM deployment and practical applications.",
 		KeyDevelopments: []models.KeyDevelopment{
 			{
 				Text:   "A user achieved 5000 tokens per second processing speed using 2x3090 GPUs with Qwen2.5-7B model, demonstrating significant improvements in local model inference speed through careful optimization of batch sizes and quantization.",
