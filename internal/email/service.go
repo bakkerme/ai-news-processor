@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/bakkerme/ai-news-processor/internal/models"
 	"github.com/bakkerme/ai-news-processor/internal/specification"
+	"github.com/bakkerme/ai-news-processor/models"
 )
 
 // Service handles email rendering and delivery

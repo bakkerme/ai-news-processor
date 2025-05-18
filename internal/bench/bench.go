@@ -11,73 +11,31 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bakkerme/ai-news-processor/internal/models"
-	"github.com/bakkerme/ai-news-processor/internal/persona"
+	"github.com/bakkerme/ai-news-processor/models"
+	// persona import might not be directly needed here anymore if RunData contains the full persona
+	// and OutputRunData's signature changes.
 )
 
-// EntrySummary represents the raw input and results for the entire processing pipeline
-type EntrySummary struct {
-	RawInput       string      `json:"raw_input"`          // The raw input strings sent to the LLM
-	Results        models.Item `json:"results"`            // The processed results from the LLM
-	ProcessingTime int64       `json:"processing_time_ms"` // Time taken to process the entry in milliseconds
-}
+// EntrySummary, ImageSummary, WebContentSummary, and BenchmarkData structs are now defined in internal/models
+// and will be imported as models.EntrySummary, models.ImageSummary, models.WebContentSummary, and models.RunData respectively.
 
-// ImageSummary represents the benchmark data for image processing
-type ImageSummary struct {
-	ImageURL         string `json:"image_url"`          // URL of the image processed
-	ImageDescription string `json:"image_description"`  // The description generated for the image
-	Title            string `json:"title"`              // Title associated with the image
-	EntryID          string `json:"entry_id,omitempty"` // ID of the entry the image belongs to
-	ProcessingTime   int64  `json:"processing_time_ms"` // Time taken to process the image in milliseconds
-}
-
-// WebContentSummary represents the benchmark data for web content processing
-type WebContentSummary struct {
-	URL             string `json:"url"`                // URL of the web content
-	OriginalContent string `json:"original_content"`   // Original content from the URL
-	Summary         string `json:"summary"`            // Summary generated for the web content
-	Title           string `json:"title,omitempty"`    // Title of the web content
-	EntryID         string `json:"entry_id,omitempty"` // ID of the entry the web content belongs to
-	ProcessingTime  int64  `json:"processing_time_ms"` // Time taken to process the web content in milliseconds
-}
-
-// BenchmarkData represents the data collected during benchmarking
-type BenchmarkData struct {
-	EntrySummaries      []EntrySummary      `json:"entrySummaries"`                // Overall input-output pairs for entire pipeline
-	ImageSummaries      []ImageSummary      `json:"imageSummaries,omitempty"`      // Image URL to description benchmarks
-	WebContentSummaries []WebContentSummary `json:"webContentSummaries,omitempty"` // URL to summary benchmarks
-	Persona             persona.Persona     `json:"persona"`                       // The full persona used for this benchmark
-	RunDate             time.Time           `json:"runDate"`                       // The date the benchmark was run, ISO 8601 format (time.RFC3339)
-	OverallModelUsed    string              `json:"overallModelUsed,omitempty"`    // The LLM model used for the benchmark
-	ImageModelUsed      string              `json:"imageModelUsed,omitempty"`      // The LLM model used for the image processing
-	WebContentModelUsed string              `json:"webContentModelUsed,omitempty"` // The LLM model used for the web content processing
-
-	TotalProcessingTime int64 `json:"totalProcessingTime,omitempty"` // Total time taken for processing in milliseconds
-
-	// Performance metrics
-	EntryTotalProcessingTime      int64 `json:"entryTotalProcessingTime,omitempty"`      // Total time taken for entry processing in milliseconds
-	ImageTotalProcessingTime      int64 `json:"imageTotalProcessingTime,omitempty"`      // Total time taken for image processing in milliseconds
-	WebContentTotalProcessingTime int64 `json:"webContentTotalProcessingTime,omitempty"` // Total time taken for web content processing in milliseconds
-
-	SuccessRate float64 `json:"successRate,omitempty"` // Percentage of successful processing attempts
-}
-
-// SerializeBenchmarkData converts benchmark data to JSON byte array
-func SerializeBenchmarkData(data *BenchmarkData) ([]byte, error) {
+// SerializeRunData converts RunData to JSON byte array
+func SerializeRunData(data *models.RunData) ([]byte, error) {
 	jsonData, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal benchmark data: %w", err)
+		return nil, fmt.Errorf("failed to marshal run data: %w", err)
 	}
 	return jsonData, nil
 }
 
-var benchmarkDir = "benchmarkresults"
+var benchmarkDir = "benchmarkresults" // This can remain, as it's about file storage
 
-// OutputBenchmarkData writes benchmark data to a file and submits to audit service
-func OutputBenchmarkData(data *BenchmarkData, auditServiceURL string) error {
+// OutputRunData writes run data to a file and submits to audit service
+// The p *persona.Persona parameter is removed as data.Persona is now the full persona.Persona.
+func OutputRunData(data *models.RunData, auditServiceURL string) error {
 	// Create filename with persona name and timestamp
 	personaName := "unknown"
-	if data.Persona.Name != "" {
+	if data.Persona.Name != "" { // data.Persona is now persona.Persona
 		personaName = data.Persona.Name
 	}
 
@@ -85,13 +43,11 @@ func OutputBenchmarkData(data *BenchmarkData, auditServiceURL string) error {
 	filename := fmt.Sprintf("benchmark_%s_%s.json", personaName, timestamp)
 	benchFilePath := filepath.Join(benchmarkDir, filename)
 
-	// Ensure the directory exists
 	err := os.MkdirAll(benchmarkDir, 0755)
 	if err != nil {
 		return fmt.Errorf("error creating benchmark directory: %w", err)
 	}
 
-	// Create backup of previous benchmark.json if it exists
 	defaultPath := filepath.Join(benchmarkDir, "benchmark.json")
 	if _, err := os.Stat(defaultPath); err == nil {
 		backupDir := filepath.Join(benchmarkDir, "backup")
@@ -101,47 +57,42 @@ func OutputBenchmarkData(data *BenchmarkData, auditServiceURL string) error {
 		}
 
 		backupPath := filepath.Join(backupDir, "benchmark.json")
-		backupData, err := os.ReadFile(defaultPath)
-		if err == nil {
-			err = os.WriteFile(backupPath, backupData, 0644)
-			if err != nil {
-				return fmt.Errorf("error creating backup: %w", err)
+		backupData, errReadFile := os.ReadFile(defaultPath)
+		if errReadFile == nil { // Check error for ReadFile
+			errWrite := os.WriteFile(backupPath, backupData, 0644)
+			if errWrite != nil {
+				return fmt.Errorf("error creating backup: %w", errWrite)
 			}
 		}
 	}
 
-	// Serialize data
-	jsonData, err := SerializeBenchmarkData(data)
+	jsonData, err := SerializeRunData(data)
 	if err != nil {
-		return fmt.Errorf("error serializing benchmark data: %w", err)
+		return fmt.Errorf("error serializing run data: %w", err)
 	}
 
-	// Write to timestamped file
 	err = os.WriteFile(benchFilePath, jsonData, 0644)
 	if err != nil {
 		return fmt.Errorf("error writing to timestamped benchmark file: %w", err)
 	}
 
-	// Also write to default benchmark.json for backward compatibility
 	err = os.WriteFile(defaultPath, jsonData, 0644)
 	if err != nil {
 		return fmt.Errorf("error writing to default benchmark file: %w", err)
 	}
 
-	fmt.Printf("Benchmark data written to %s and %s\n", benchFilePath, defaultPath)
+	fmt.Printf("Run data written to %s and %s\n", benchFilePath, defaultPath)
 
-	// Attempt to submit data to the auditability service
 	err = submitToAuditService(data, auditServiceURL)
 	if err != nil {
-		// Log the error but don't fail the whole process if submission fails
-		fmt.Printf("Warning: Failed to submit benchmark data to audit service: %v\n", err)
+		fmt.Printf("Warning: Failed to submit run data to audit service: %v\n", err)
 	}
 
 	return nil
 }
 
-// submitToAuditService sends the benchmark data to the ai-news-auditability-service.
-func submitToAuditService(data *BenchmarkData, auditServiceURL string) error {
+// submitToAuditService sends the run data to the ai-news-auditability-service.
+func submitToAuditService(data *models.RunData, auditServiceURL string) error {
 	if !strings.HasSuffix(auditServiceURL, "/runs") {
 		if strings.HasSuffix(auditServiceURL, "/") {
 			auditServiceURL += "runs"
@@ -150,13 +101,12 @@ func submitToAuditService(data *BenchmarkData, auditServiceURL string) error {
 		}
 	}
 
-	// BenchmarkData is now directly usable
-	jsonData, err := json.Marshal(data)
+	jsonData, err := json.Marshal(data) // data is already *models.RunData
 	if err != nil {
 		return fmt.Errorf("failed to marshal audit service payload: %w", err)
 	}
 
-	fmt.Printf("jsonData: %s\n", string(jsonData))
+	// fmt.Printf("jsonData: %s\n", string(jsonData)) // Keep for debugging if necessary
 
 	req, err := http.NewRequest("POST", auditServiceURL, bytes.NewBuffer(jsonData))
 	if err != nil {
@@ -174,7 +124,6 @@ func submitToAuditService(data *BenchmarkData, auditServiceURL string) error {
 	if resp.StatusCode != http.StatusCreated {
 		var bodyBytes []byte
 		var readErr error
-		// A more robust way to read the body
 		if resp.Body != nil {
 			bodyBytes, readErr = io.ReadAll(resp.Body)
 		}
@@ -185,70 +134,77 @@ func submitToAuditService(data *BenchmarkData, auditServiceURL string) error {
 		return fmt.Errorf("audit service returned status %s: %s", resp.Status, string(bodyBytes))
 	}
 
-	fmt.Printf("Benchmark data successfully submitted to audit service at %s\n", auditServiceURL)
+	fmt.Printf("Run data successfully submitted to audit service at %s\n", auditServiceURL)
 	return nil
 }
 
-// AddImageSummary adds an image summary to the benchmark data
-func (bd *BenchmarkData) AddImageSummary(summary ImageSummary) {
-	bd.ImageSummaries = append(bd.ImageSummaries, summary)
+// AddImageSummaryToRunData adds an image summary to the run data
+func AddImageSummaryToRunData(rd *models.RunData, summary models.ImageSummary) {
+	rd.ImageSummaries = append(rd.ImageSummaries, summary)
 }
 
-// AddWebContentSummary adds a web content summary to the benchmark data
-func (bd *BenchmarkData) AddWebContentSummary(summary WebContentSummary) {
-	bd.WebContentSummaries = append(bd.WebContentSummaries, summary)
+// AddWebContentSummaryToRunData adds a web content summary to the run data
+func AddWebContentSummaryToRunData(rd *models.RunData, summary models.WebContentSummary) {
+	rd.WebContentSummaries = append(rd.WebContentSummaries, summary)
 }
 
-// AddEntrySummary adds an entry summary to the benchmark data
-func (bd *BenchmarkData) AddEntrySummary(summary EntrySummary) {
-	bd.EntrySummaries = append(bd.EntrySummaries, summary)
+// AddEntrySummaryToRunData adds an entry summary to the run data
+func AddEntrySummaryToRunData(rd *models.RunData, summary models.EntrySummary) {
+	rd.EntrySummaries = append(rd.EntrySummaries, summary)
 }
 
-// LoadBenchmarkData loads the most recent benchmark data for each persona from a file
-func LoadBenchmarkData() ([]BenchmarkData, error) {
+// LoadRunData loads the most recent run data for each persona from a file
+func LoadRunData() ([]models.RunData, error) {
 	// read all benchmark files
-	files, err := os.ReadDir("bench/results")
+	files, err := os.ReadDir(filepath.Join(benchmarkDir)) // Assuming benchmarkDir is relative to where this runs or an absolute path
 	if err != nil {
-		return nil, fmt.Errorf("failed to read benchmark files: %w", err)
+		return nil, fmt.Errorf("failed to read benchmark files from %s: %w", benchmarkDir, err)
 	}
 
-	// find the most recent run file for each persona
-	// format is fmt.Sprintf("benchmark_%s_%s.json", personaName, timestamp)
 	mostRecentRuns := make(map[string]string)
 	for _, file := range files {
 		if file.IsDir() {
 			continue
 		}
-		parts := strings.Split(file.Name(), "_")
-		if len(parts) < 2 {
+		// format is fmt.Sprintf("benchmark_%s_%s.json", personaName, timestamp)
+		// robust parsing:
+		nameParts := strings.SplitN(file.Name(), ".", 2)
+		if len(nameParts) < 2 || nameParts[1] != "json" {
 			continue
 		}
-		personaName := parts[1]
-		timestamp := parts[2]
+		baseNameParts := strings.SplitN(nameParts[0], "_", 3)
+		if len(baseNameParts) < 3 || baseNameParts[0] != "benchmark" {
+			continue
+		}
+		personaName := baseNameParts[1]
+		timestamp := baseNameParts[2]
 
 		if _, exists := mostRecentRuns[personaName]; !exists || timestamp > mostRecentRuns[personaName] {
 			mostRecentRuns[personaName] = timestamp
 		}
 	}
 
-	benchmarkDataList := []BenchmarkData{}
+	runDataList := []models.RunData{} // Changed type
 
-	// load the most recent run for each persona
 	for personaName, timestamp := range mostRecentRuns {
 		filename := fmt.Sprintf("benchmark_%s_%s.json", personaName, timestamp)
-		data, err := os.ReadFile(filepath.Join("bench/results", filename))
+		filePath := filepath.Join(benchmarkDir, filename) // Use benchmarkDir
+		dataBytes, err := os.ReadFile(filePath)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read benchmark data: %w", err)
+			// It's possible a file was deleted between listing and reading, log and continue or handle
+			fmt.Printf("Warning: failed to read run data file %s: %v\n", filePath, err)
+			continue
 		}
 
-		var benchmarkData BenchmarkData
-		err = json.Unmarshal(data, &benchmarkData)
+		var runData models.RunData // Changed type
+		err = json.Unmarshal(dataBytes, &runData)
 		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal benchmark data: %w", err)
+			fmt.Printf("Warning: failed to unmarshal run data from file %s: %v\n", filePath, err)
+			continue
 		}
 
-		benchmarkDataList = append(benchmarkDataList, benchmarkData)
+		runDataList = append(runDataList, runData)
 	}
 
-	return benchmarkDataList, nil
+	return runDataList, nil
 }

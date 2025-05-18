@@ -9,18 +9,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bakkerme/ai-news-processor/internal/bench"
 	"github.com/bakkerme/ai-news-processor/internal/contentextractor"
 	"github.com/bakkerme/ai-news-processor/internal/customerrors"
 	"github.com/bakkerme/ai-news-processor/internal/fetcher"
 	httputil "github.com/bakkerme/ai-news-processor/internal/http"
 	"github.com/bakkerme/ai-news-processor/internal/http/retry"
-	"github.com/bakkerme/ai-news-processor/internal/models"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
 	"github.com/bakkerme/ai-news-processor/internal/persona"
 	"github.com/bakkerme/ai-news-processor/internal/prompts"
 	"github.com/bakkerme/ai-news-processor/internal/rss"
 	"github.com/bakkerme/ai-news-processor/internal/urlextraction"
+	"github.com/bakkerme/ai-news-processor/models"
 )
 
 // Note: Processor and EntryProcessConfig are defined in processor_types.go
@@ -42,14 +41,14 @@ func NewProcessor(client openai.OpenAIClient, imageClient openai.OpenAIClient, c
 }
 
 // ProcessEntries takes RSS entries, processes them through an LLM, and returns processed items
-func (p *Processor) ProcessEntries(systemPrompt string, entries []rss.Entry, persona persona.Persona) ([]models.Item, bench.BenchmarkData, error) {
+func (p *Processor) ProcessEntries(systemPrompt string, entries []rss.Entry, persona persona.Persona) ([]models.Item, models.RunData, error) {
 	var items []models.Item
 	var processingErrors []error
 
-	benchmarkData := bench.BenchmarkData{
-		EntrySummaries:      []bench.EntrySummary{},
-		ImageSummaries:      []bench.ImageSummary{},
-		WebContentSummaries: []bench.WebContentSummary{},
+	benchmarkData := models.RunData{
+		EntrySummaries:      []models.EntrySummary{},
+		ImageSummaries:      []models.ImageSummary{},
+		WebContentSummaries: []models.WebContentSummary{},
 		RunDate:             time.Now(),
 		Persona:             persona,
 	}
@@ -88,14 +87,14 @@ func (p *Processor) ProcessEntries(systemPrompt string, entries []rss.Entry, per
 					fmt.Printf("Image processing successful for entry %d\n", i)
 
 					// Add to benchmark data
-					imgSummary := bench.ImageSummary{
+					imgSummary := models.ImageSummary{
 						ImageURL:         entries[i].ImageURLs[0].String(),
 						ImageDescription: imageDescription,
 						Title:            entries[i].Title,
 						EntryID:          entries[i].ID,
 						ProcessingTime:   imgProcessingTime,
 					}
-					benchmarkData.AddImageSummary(imgSummary)
+					benchmarkData.ImageSummaries = append(benchmarkData.ImageSummaries, imgSummary)
 				}
 			}
 		}
@@ -147,12 +146,12 @@ func (p *Processor) ProcessEntries(systemPrompt string, entries []rss.Entry, per
 		items = append(items, item)
 
 		// Add to benchmark data
-		entrySummary := bench.EntrySummary{
+		entrySummary := models.EntrySummary{
 			RawInput:       entry.String(true),
 			Results:        item,
 			ProcessingTime: entryProcessingTime,
 		}
-		benchmarkData.AddEntrySummary(entrySummary)
+		benchmarkData.EntrySummaries = append(benchmarkData.EntrySummaries, entrySummary)
 	}
 	benchmarkData.EntryTotalProcessingTime = time.Since(overallStartTime).Milliseconds()
 
@@ -178,7 +177,7 @@ func (p *Processor) ProcessEntries(systemPrompt string, entries []rss.Entry, per
 }
 
 // processExternalURLs extracts and processes external URLs from an entry
-func (p *Processor) processExternalURLs(entry *rss.Entry, persona persona.Persona, benchmarkData *bench.BenchmarkData) (map[string]string, error) {
+func (p *Processor) processExternalURLs(entry *rss.Entry, persona persona.Persona, benchmarkData *models.RunData) (map[string]string, error) {
 	// 1. Extract external URLs
 	extractedURLs, err := p.urlExtractor.ExtractURLsFromEntry(*entry)
 	if err != nil {
@@ -247,7 +246,7 @@ func (p *Processor) processExternalURLs(entry *rss.Entry, persona persona.Person
 
 		// Add to benchmark data if benchmarking is enabled
 		if benchmarkData != nil {
-			webSummary := bench.WebContentSummary{
+			webSummary := models.WebContentSummary{
 				URL:             extractedURLStr,
 				OriginalContent: articleData.CleanedText,
 				Summary:         summary,
@@ -255,7 +254,7 @@ func (p *Processor) processExternalURLs(entry *rss.Entry, persona persona.Person
 				EntryID:         entry.ID,
 				ProcessingTime:  webProcessingTime,
 			}
-			benchmarkData.AddWebContentSummary(webSummary)
+			benchmarkData.WebContentSummaries = append(benchmarkData.WebContentSummaries, webSummary)
 		}
 	}
 

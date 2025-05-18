@@ -34,12 +34,12 @@ If an item matches any of the exclusion criteria, set the IsRelevant field to fa
 For each item, provide a newsletter-style explanation that includes:
 * "ID"
 * "Title"
-* "Overview"
+* "Summary"
 	* 1 - 2 paragraphs, extracting key points of interest from the post, image description, factoring in relevant, factual information from the comments
 	* Extrapolate on the details of these key points of interest
 	* Provide highly detailed technical analysis, if applicable
 	* If this development matters, explain why
-* "CommentOverview"
+* "CommentSummary"
   * 1 - 2 paragraphs that
     * Captures the community sentiment
     * Highlights interesting discussions

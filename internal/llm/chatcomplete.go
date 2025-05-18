@@ -2,8 +2,8 @@ package llm
 
 import (
 	"github.com/bakkerme/ai-news-processor/internal/customerrors"
-	"github.com/bakkerme/ai-news-processor/internal/models"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
+	"github.com/bakkerme/ai-news-processor/models"
 	"github.com/invopop/jsonschema"
 )
 

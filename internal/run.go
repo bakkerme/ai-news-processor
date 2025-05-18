@@ -12,7 +12,6 @@ import (
 	httputil "github.com/bakkerme/ai-news-processor/internal/http"
 	"github.com/bakkerme/ai-news-processor/internal/http/retry"
 	"github.com/bakkerme/ai-news-processor/internal/llm"
-	"github.com/bakkerme/ai-news-processor/internal/models"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
 	"github.com/bakkerme/ai-news-processor/internal/persona"
 	"github.com/bakkerme/ai-news-processor/internal/prompts"
@@ -20,6 +19,7 @@ import (
 	"github.com/bakkerme/ai-news-processor/internal/rss"
 	"github.com/bakkerme/ai-news-processor/internal/specification"
 	"github.com/bakkerme/ai-news-processor/internal/urlextraction"
+	"github.com/bakkerme/ai-news-processor/models"
 )
 
 func Run() {
@@ -106,7 +106,7 @@ func Run() {
 		entries = qualityfilter.Filter(entries, s.QualityFilterThreshold)
 
 		// Store all raw inputs for benchmarking
-		var benchmarkData bench.BenchmarkData
+		var benchmarkData models.RunData
 		var items []models.Item
 
 		// 4. Process entries with LLM
@@ -174,7 +174,7 @@ func Run() {
 
 		// Output benchmark data if requested
 		if s.DebugOutputBenchmark {
-			err := bench.OutputBenchmarkData(&benchmarkData, s.AuditServiceUrl)
+			err := bench.OutputRunData(&benchmarkData, s.AuditServiceUrl)
 			if err != nil {
 				fmt.Printf("Error outputting benchmark data for persona %s: %v\n", persona.Name, err)
 				// Decide if this should be a fatal error or just a warning

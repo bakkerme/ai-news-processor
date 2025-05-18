@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	"github.com/bakkerme/ai-news-processor/internal/customerrors"
-	"github.com/bakkerme/ai-news-processor/internal/models"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
 	"github.com/bakkerme/ai-news-processor/internal/persona"
 	"github.com/bakkerme/ai-news-processor/internal/prompts"
 	"github.com/bakkerme/ai-news-processor/internal/rss"
+	"github.com/bakkerme/ai-news-processor/models"
 )
 
 // GenerateSummary creates a summary for a set of relevant RSS entries

@@ -13,10 +13,10 @@ import (
 	"github.com/bakkerme/ai-news-processor/internal/bench"
 	"github.com/bakkerme/ai-news-processor/internal/customerrors"
 	"github.com/bakkerme/ai-news-processor/internal/llm"
-	"github.com/bakkerme/ai-news-processor/internal/models"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
 	"github.com/bakkerme/ai-news-processor/internal/persona"
 	"github.com/bakkerme/ai-news-processor/internal/specification"
+	"github.com/bakkerme/ai-news-processor/models"
 )
 
 const evaluationPrompt = `You are an expert in evaluating AI-generated content. Your task is to evaluate the quality of the following post summary, focusing purely on how well it summarizes and analyzes the content.
@@ -125,7 +125,7 @@ func main() {
 
 	// Load benchmark data from benchmark.json
 	log.Println("Loading benchmark data from benchmark.json...")
-	benchmarkDataList, err := bench.LoadBenchmarkData()
+	benchmarkDataList, err := bench.LoadRunData()
 	if err != nil {
 		log.Printf("Error loading benchmark data: %v\n", err)
 		os.Exit(1)
@@ -274,7 +274,7 @@ func main() {
 }
 
 // Extract items from overall summaries
-func extractItems(summaries []bench.EntrySummary) []models.Item {
+func extractItems(summaries []models.EntrySummary) []models.Item {
 	items := make([]models.Item, 0, len(summaries))
 	for _, summary := range summaries {
 		items = append(items, summary.Results)

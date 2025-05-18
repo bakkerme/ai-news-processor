@@ -8,12 +8,11 @@ import (
 type Item struct {
 	Title          string `json:"title"`
 	ID             string `json:"id"`
-	Summary        string `json:"overview"`
-	CommentSummary string `json:"comment_overview"`
-	Link           string `json:"link"`
-	Relevance      string `json:"relevance"`
-	IsRelevant     bool   `json:"is_relevant"`
-	ThumbnailURL   string `json:"thumbnail_url"`
+	Summary        string `json:"summary"`
+	CommentSummary string `json:"commentSummary,omitempty"`
+	Link           string `json:"link,omitempty"`
+	IsRelevant     bool   `json:"isRelevant"`
+	ThumbnailURL   string `json:"thumbnail_url,omitempty"`
 }
 
 // KeyDevelopment represents a key development and its referenced item

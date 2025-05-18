@@ -7,10 +7,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/bakkerme/ai-news-processor/internal/bench"
-	"github.com/bakkerme/ai-news-processor/internal/models"
 	"github.com/bakkerme/ai-news-processor/internal/persona"
 	"github.com/bakkerme/ai-news-processor/internal/rss"
+	"github.com/bakkerme/ai-news-processor/models"
 )
 
 func GetMockLLMResponse() []models.Item {
@@ -58,8 +57,8 @@ func GetMockSummaryResponse(relevantItems []models.Item) *models.SummaryResponse
 	}
 }
 
-func GetMockBenchmarkData(items []models.Item, personaObj persona.Persona, entries []rss.Entry) bench.BenchmarkData {
-	entrySummaries := make([]bench.EntrySummary, len(items))
+func GetMockBenchmarkData(items []models.Item, personaObj persona.Persona, entries []rss.Entry) models.RunData {
+	entrySummaries := make([]models.EntrySummary, len(items))
 	var totalProcessingTime int64 = 0
 	var entryTotalProcessingTime int64 = 0
 
@@ -78,7 +77,7 @@ func GetMockBenchmarkData(items []models.Item, personaObj persona.Persona, entri
 			rawInput = entry.String(true) // Assuming String(true) gives a good representation
 		}
 
-		entrySummaries[i] = bench.EntrySummary{
+		entrySummaries[i] = models.EntrySummary{
 			RawInput:       rawInput,
 			Results:        item,
 			ProcessingTime: mockProcessingTime,
@@ -87,10 +86,10 @@ func GetMockBenchmarkData(items []models.Item, personaObj persona.Persona, entri
 	}
 	totalProcessingTime = entryTotalProcessingTime // Assuming only entry processing for mock
 
-	return bench.BenchmarkData{
+	return models.RunData{
 		EntrySummaries:                entrySummaries,
-		ImageSummaries:                []bench.ImageSummary{},      // Empty for mock
-		WebContentSummaries:           []bench.WebContentSummary{}, // Empty for mock
+		ImageSummaries:                []models.ImageSummary{},      // Empty for mock
+		WebContentSummaries:           []models.WebContentSummary{}, // Empty for mock
 		Persona:                       personaObj,
 		RunDate:                       time.Now(),
 		OverallModelUsed:              "mock-llm-model",
