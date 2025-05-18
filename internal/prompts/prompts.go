@@ -56,8 +56,8 @@ Use the following JSON structure:
 {
   "id": "t3_1keo3te",
   "title": "",
-  "overview": "",
-  "comment_overview": "",
+  "summary": "",
+  "commentSummary": "",
   "is_relevant": true
 }
 `
