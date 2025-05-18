@@ -9,7 +9,7 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "./internal",
+            "program": "./",
             "args": ["-persona", "LocalLLaMa"],
             "envFile": [
                 "${workspaceFolder}/.env",
@@ -21,7 +21,7 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "./bench",
+            "program": "./benchmark",
             "envFile": [
                 "${workspaceFolder}/.env",
                 "${workspaceFolder}/.envdebug",

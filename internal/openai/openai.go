@@ -28,12 +28,16 @@ type OpenAIClient interface {
 	// userPrompts: A list of user messages to send
 	// imageURLs: Optional list of image URLs to include in the prompt
 	// schemaParams: Optional schema parameters for response formatting (can be nil)
+	// temperature: The temperature to use for the API call
+	// maxTokens: Optional max tokens parameter to limit the response length (0 means no limit)
 	// returns: Channel that will receive the response or error
 	ChatCompletion(
 		systemPrompt string,
 		userPrompts []string,
 		imageURLs []string,
 		schemaParams *SchemaParameters,
+		temperature float64,
+		maxTokens int,
 		results chan customerrors.ErrorString,
 	)
 
@@ -45,6 +49,9 @@ type OpenAIClient interface {
 
 	// PreprocessJSON extracts JSON content from the API response
 	PreprocessJSON(response string) string
+
+	// GetModelName returns the model name used by this client
+	GetModelName() string
 }
 
 // DefaultOpenAIRetryConfig provides sensible default values for OpenAI retry behavior
@@ -93,6 +100,8 @@ func (c *Client) ChatCompletion(
 	userPrompts []string,
 	imageURLs []string,
 	schemaParams *SchemaParameters,
+	temperature float64,
+	maxTokens int,
 	results chan customerrors.ErrorString,
 ) {
 	// Prepare messages array
@@ -136,10 +145,20 @@ func (c *Client) ChatCompletion(
 		messages = append(messages, openai.UserMessage(strings.Join(userPrompts, "\n")))
 	}
 
+	currentTemperature := 1.0
+	if temperature != 0.0 {
+		currentTemperature = temperature
+	}
+
 	params := openai.ChatCompletionNewParams{
 		Model:       c.model,
 		Messages:    messages,
-		Temperature: param.NewOpt(0.5),
+		Temperature: param.NewOpt(currentTemperature),
+	}
+
+	// Add max tokens parameter if it's greater than 0
+	if maxTokens > 0 {
+		params.MaxTokens = openai.Int(int64(maxTokens))
 	}
 
 	if schemaParams != nil {
@@ -200,6 +219,11 @@ func (c *Client) PreprocessYAML(response string) string {
 
 func (c *Client) PreprocessJSON(response string) string {
 	return preprocess(response, "json")
+}
+
+// GetModelName returns the model name used by this client
+func (c *Client) GetModelName() string {
+	return c.model
 }
 
 // preprocess extracts content of the specified format from the API response

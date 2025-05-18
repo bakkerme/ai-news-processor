@@ -148,9 +148,7 @@ func (re *RedditExtractor) ExtractURLsFromEntry(entry rss.Entry) ([]string, erro
 		isReddit, err := re.isRedditDomain(u)
 		if err != nil {
 			// Log or handle URL parsing errors for individual URLs if needed
-			// For now, we can skip malformed URLs that cannot be parsed for domain checking
-			// Or return the error: return nil, fmt.Errorf("error checking domain for URL %s: %w", u, err)
-			fmt.Printf("Warning: Skipping URL '%s' due to parsing error: %v\n", u, err) // Example logging
+			fmt.Printf("Warning: Skipping URL '%s' due to parsing error: %v\n", u, err)
 			continue
 		}
 		if !isReddit {

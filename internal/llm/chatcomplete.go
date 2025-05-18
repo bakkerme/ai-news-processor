@@ -35,6 +35,8 @@ func chatCompletionForEntrySummary(client openai.OpenAIClient, systemPrompt stri
 		userPrompts,
 		imageURLs,
 		nil, // Schema parameters currently disabled
+		0.5, // temperature
+		0,   // max tokens (0 means no limit)
 		results,
 	)
 }
@@ -51,6 +53,8 @@ func chatCompletionForFeedSummary(client openai.OpenAIClient, systemPrompt strin
 		userPrompts,
 		[]string{}, // No images for feed summaries
 		nil,        // Schema parameters currently disabled
+		0.5,        // temperature
+		0,          // max tokens (0 means no limit)
 		results,
 	)
 }
@@ -66,6 +70,8 @@ func chatCompletionImageSummary(client openai.OpenAIClient, systemPrompt string,
 		[]string{}, // No additional text prompt, just let the model analyze the images
 		imageURLs,
 		nil, // Schema parameters not needed for image analysis
+		0.1, // temperature
+		400, // max tokens set to 400 to limit the response length
 		results,
 	)
 
@@ -89,6 +95,8 @@ func (p *Processor) chatCompletionForWebSummary(systemPrompt string, userPrompt 
 		[]string{userPrompt},
 		[]string{},
 		nil,
+		0.5, // temperature
+		0,   // max tokens (0 means no limit)
 		results,
 	)
 

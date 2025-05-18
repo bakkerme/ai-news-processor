@@ -78,11 +78,16 @@ func ChatCompletionForBenchmarkEvaluation(llmClient openai.OpenAIClient, systemP
 		Description: "an object representing a benchmark evaluation result (quality and relevance)",
 	}
 
+	// Setting temperature to 0.0 for more consistent evaluations
+	temperature := 0.0
+
 	llmClient.ChatCompletion(
 		systemPrompt,
 		userPrompts,
 		[]string{},
 		schemaParams,
+		temperature,
+		0,
 		results,
 	)
 }
@@ -120,37 +125,13 @@ func main() {
 
 	// Load benchmark data from benchmark.json
 	log.Println("Loading benchmark data from benchmark.json...")
-	benchmarkData, err := loadBenchmarkData("./results/benchmark.json")
+	benchmarkDataList, err := bench.LoadBenchmarkData()
 	if err != nil {
 		log.Printf("Error loading benchmark data: %v\n", err)
 		os.Exit(1)
 	}
-	log.Printf("Loaded benchmark data with persona: %s\n", benchmarkData.Persona)
-
-	// Set up persona handling
-	personaPath := "../personas/" // default to Docker path
-
-	// Load all personas and find the matching one
-	personas, err := persona.LoadPersonas(personaPath)
-	if err != nil {
-		log.Printf("Error loading personas: %v\n", err)
-		os.Exit(1)
-	}
-
-	var selectedPersona *persona.Persona
-	for i, p := range personas {
-		if p.Name == benchmarkData.Persona {
-			selectedPersona = &personas[i]
-			break
-		}
-	}
-
-	if selectedPersona == nil {
-		log.Printf("Error: Could not find persona %s in personas directory\n", benchmarkData.Persona)
-		os.Exit(1)
-	}
-
-	log.Printf("Found matching persona: %s\n", selectedPersona.Name)
+	benchmarkData := benchmarkDataList[0] // temp hardcode to first persona
+	log.Printf("Loaded benchmark data with persona: %s\n", benchmarkData.Persona.Name)
 
 	// Generate evaluation prompt with persona-specific information
 	tmpl, err := template.New("evaluation").Parse(evaluationPrompt)
@@ -160,7 +141,7 @@ func main() {
 	}
 
 	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, selectedPersona)
+	err = tmpl.Execute(&buf, benchmarkData.Persona)
 	if err != nil {
 		log.Printf("Error executing evaluation prompt template: %v\n", err)
 		os.Exit(1)
@@ -171,9 +152,11 @@ func main() {
 	// Build a map from ID to raw_input for matching
 	rawInputByID := make(map[string]string)
 	processedIDs := make(map[string]bool)
-	for _, raw := range benchmarkData.RawInput {
+
+	// Extract IDs from the raw input in overall summaries
+	for _, summary := range benchmarkData.EntrySummaries {
 		// Try to extract the ID from the raw input (assuming 'ID: <id>' is present)
-		lines := strings.Split(raw, "\n")
+		lines := strings.Split(summary.RawInput, "\n")
 		var id string
 		for _, line := range lines {
 			if strings.HasPrefix(line, "ID: ") {
@@ -182,45 +165,45 @@ func main() {
 			}
 		}
 		if id != "" {
-			rawInputByID[id] = raw
+			rawInputByID[id] = summary.RawInput
 		}
 	}
 
 	var results BenchmarkResults
 	results.DetailedEvaluations = make(map[string]EvaluationResult)
-	results.PersonaName = selectedPersona.Name
-	results.PersonaFocusAreas = selectedPersona.FocusAreas
+	results.PersonaName = benchmarkData.Persona.Name
+	results.PersonaFocusAreas = benchmarkData.Persona.FocusAreas
 	results.MissingItems = make([]string, 0)
 
-	// Process each entry in the benchmark data
-	for _, result := range benchmarkData.Results {
-		if result.ID == "" {
+	// Process each item in the benchmark data
+	for _, result := range benchmarkData.EntrySummaries {
+		if result.Results.ID == "" {
 			log.Printf("Warning: Empty ID for result\n")
 			continue
 		}
 
-		processedIDs[result.ID] = true
-		log.Printf("Processing entry (ID: %s)...\n", result.ID)
+		processedIDs[result.Results.ID] = true
+		log.Printf("Processing entry (ID: %s)...\n", result.Results.ID)
 
 		// Find the matching raw input by ID
-		rawInput, ok := rawInputByID[result.ID]
+		rawInput, ok := rawInputByID[result.Results.ID]
 		if !ok {
-			log.Printf("Warning: No matching raw input for result ID: %s\n", result.ID)
+			log.Printf("Warning: No matching raw input for result ID: %s\n", result.Results.ID)
 			continue
 		}
 
 		// Create evaluation input
 		evaluationInput := fmt.Sprintf("Source Material:\n%s\n\nGenerated Summary:\n%s\n",
 			rawInput,
-			formatSummary(result))
+			formatSummary(result.Results))
 
 		// Call LLM for evaluation
-		log.Printf("ChatCompletioning LLM for evaluation of entry ID: %s...\n", result.ID)
+		log.Printf("ChatCompletioning LLM for evaluation of entry ID: %s...\n", result.Results.ID)
 		resultChan := make(chan customerrors.ErrorString, 1)
 		ChatCompletionForBenchmarkEvaluation(llmClient, fullPrompt, []string{evaluationInput}, resultChan)
 		evalResponse := <-resultChan
 		if evalResponse.Err != nil {
-			log.Printf("Error evaluating entry %s: %v\n", result.ID, evalResponse.Err)
+			log.Printf("Error evaluating entry %s: %v\n", result.Results.ID, evalResponse.Err)
 			continue
 		}
 
@@ -229,12 +212,13 @@ func main() {
 		jsonStr := llmClient.PreprocessJSON(evalResponse.Value)
 		err = json.Unmarshal([]byte(jsonStr), &evalResult)
 		if err != nil {
-			log.Printf("Error parsing evaluation result for %s: %v\n", result.ID, err)
+			log.Printf("Error parsing evaluation result for %s: %v\n", result.Results.ID, err)
 			continue
 		}
 
-		log.Printf("Evaluation for entry ID %s: Quality Rating = %s, Relevance Correct = %v\n", result.ID, evalResult.QualityRating, evalResult.RelevanceCorrect)
-		results.DetailedEvaluations[result.ID] = evalResult
+		log.Printf("Evaluation for entry ID %s: Quality Rating = %s, Relevance Correct = %v\n",
+			result.Results.ID, evalResult.QualityRating, evalResult.RelevanceCorrect)
+		results.DetailedEvaluations[result.Results.ID] = evalResult
 		results.TotalItems++
 	}
 
@@ -286,22 +270,16 @@ func main() {
 
 	// Output results
 	log.Println("Outputting results...")
-	outputResults(results, benchmarkData.Results, selectedPersona)
+	outputResults(results, extractItems(benchmarkData.EntrySummaries), benchmarkData.Persona)
 }
 
-func loadBenchmarkData(filename string) (*bench.BenchmarkData, error) {
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read benchmark data: %w", err)
+// Extract items from overall summaries
+func extractItems(summaries []bench.EntrySummary) []models.Item {
+	items := make([]models.Item, 0, len(summaries))
+	for _, summary := range summaries {
+		items = append(items, summary.Results)
 	}
-
-	var benchmarkData bench.BenchmarkData
-	err = json.Unmarshal(data, &benchmarkData)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal benchmark data: %w", err)
-	}
-
-	return &benchmarkData, nil
+	return items
 }
 
 func formatSummary(item models.Item) string {
@@ -315,7 +293,7 @@ func formatSummary(item models.Item) string {
 	return summary.String()
 }
 
-func outputResults(results BenchmarkResults, items []models.Item, p *persona.Persona) {
+func outputResults(results BenchmarkResults, items []models.Item, p persona.Persona) {
 	// Build a map from ID to Title
 	titleMap := make(map[string]string)
 	for _, item := range items {

@@ -95,13 +95,9 @@ Your task is to analyze the provided image and generate a detailed description.
 
 The image is from a post titled: "{{.Title}}"
 
-Describe:
-* What is shown in the image (people, objects, text, UI elements, charts, etc.)
-* Any technical details visible in the image
-* How the image relates to the post title
-* Key insights that can be gained from the image
+Describe what is shown in the image (people, objects, text, UI elements, charts, etc.), within 400 words.
 
-Respond with a concise but comprehensive description focusing on technical and factual details.`
+Respond with a concise but comprehensive description focusing on technical and factual details. If something is not in English, is blurry or not clear, do not describe it.`
 
 // ComposePrompt generates a system prompt for the given persona using the base template
 func ComposePrompt(p persona.Persona, imageDescription string) (string, error) {

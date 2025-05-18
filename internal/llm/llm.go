@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bakkerme/ai-news-processor/internal/bench"
 	"github.com/bakkerme/ai-news-processor/internal/contentextractor"
 	"github.com/bakkerme/ai-news-processor/internal/customerrors"
 	"github.com/bakkerme/ai-news-processor/internal/fetcher"
@@ -21,6 +22,8 @@ import (
 	"github.com/bakkerme/ai-news-processor/internal/rss"
 	"github.com/bakkerme/ai-news-processor/internal/urlextraction"
 )
+
+// Note: Processor and EntryProcessConfig are defined in processor_types.go
 
 // NewProcessor creates a new LLM processor with the given clients and configuration
 func NewProcessor(client openai.OpenAIClient, imageClient openai.OpenAIClient, config EntryProcessConfig, articleExtractor contentextractor.ArticleExtractor, urlFetcher fetcher.Fetcher, urlExtractor urlextraction.Extractor, imageFetcher httputil.ImageFetcher) *Processor {
@@ -39,14 +42,26 @@ func NewProcessor(client openai.OpenAIClient, imageClient openai.OpenAIClient, c
 }
 
 // ProcessEntries takes RSS entries, processes them through an LLM, and returns processed items
-func (p *Processor) ProcessEntries(systemPrompt string, entries []rss.Entry, persona persona.Persona) ([]models.Item, []string, error) {
+func (p *Processor) ProcessEntries(systemPrompt string, entries []rss.Entry, persona persona.Persona) ([]models.Item, bench.BenchmarkData, error) {
 	var items []models.Item
-	var benchmarkInputs []string
 	var processingErrors []error
+
+	benchmarkData := bench.BenchmarkData{
+		EntrySummaries:      []bench.EntrySummary{},
+		ImageSummaries:      []bench.ImageSummary{},
+		WebContentSummaries: []bench.WebContentSummary{},
+		RunDate:             time.Now(),
+		Persona:             persona,
+	}
+
+	// Track total processing time if benchmarking is enabled
+	startTime := time.Now()
 
 	// PHASE 1: Process all images first if image processing is enabled. This needs to be done first because the image processing uses a seperate model that takes time to load.
 	if p.imageEnabled {
 		fmt.Println("Phase 1: Processing all images")
+
+		imageStartTime := time.Now()
 		for i := range entries {
 			if len(entries[i].ImageURLs) > 0 {
 				// Create the image prompt
@@ -57,23 +72,45 @@ func (p *Processor) ProcessEntries(systemPrompt string, entries []rss.Entry, per
 				}
 
 				fmt.Printf("Processing image for entry %d: %s\n", i, entries[i].ImageURLs[0].String())
+
+				// Track image processing time if benchmarking is enabled
+				imgStartTime := time.Now()
+
 				imageDescription, err := p.processImageWithRetry(entries[i], imagePrompt)
+
+				// Calculate processing time for benchmarking
+				imgProcessingTime := time.Since(imgStartTime).Milliseconds()
+
 				if err != nil {
 					fmt.Printf("Error processing image for entry %d: %v\n", i, err)
 				} else {
 					entries[i].ImageDescription = imageDescription
 					fmt.Printf("Image processing successful for entry %d\n", i)
+
+					// Add to benchmark data
+					imgSummary := bench.ImageSummary{
+						ImageURL:         entries[i].ImageURLs[0].String(),
+						ImageDescription: imageDescription,
+						Title:            entries[i].Title,
+						EntryID:          entries[i].ID,
+						ProcessingTime:   imgProcessingTime,
+					}
+					benchmarkData.AddImageSummary(imgSummary)
 				}
 			}
 		}
+
+		benchmarkData.ImageTotalProcessingTime = time.Since(imageStartTime).Milliseconds()
 	}
 
 	// PHASE 2: Process all external URLs
 	if p.urlSummaryEnabled {
 		fmt.Println("Phase 2: Processing all external URLs")
+
+		webStartTime := time.Now()
 		for i := range entries {
 			fmt.Printf("Processing external URLs for entry %d\n", i)
-			summaries, err := p.processExternalURLs(&entries[i], persona)
+			summaries, err := p.processExternalURLs(&entries[i], persona, &benchmarkData)
 			if err != nil {
 				fmt.Printf("Error processing external URLs for entry %d: %v\n", i, err)
 				processingErrors = append(processingErrors, fmt.Errorf("entry %d: %w", i, err))
@@ -83,35 +120,45 @@ func (p *Processor) ProcessEntries(systemPrompt string, entries []rss.Entry, per
 			// Add the summaries to the entry
 			entries[i].ExternalURLSummaries = summaries
 		}
-	}
 
-	// Store benchmark inputs if needed
-	if p.debugOutputBenchmark {
-		for _, entry := range entries {
-			benchmarkInputs = append(benchmarkInputs, entry.String(true))
-		}
+		benchmarkData.WebContentTotalProcessingTime = time.Since(webStartTime).Milliseconds()
 	}
 
 	// PHASE 3: Process the main entry text summarization for all entries
 	fmt.Println("Phase 3: Processing all text summarizations")
+	overallStartTime := time.Now()
 	for i, entry := range entries {
 		fmt.Printf("Processing entry text %d\n", i)
 
+		entryStartTime := time.Now()
+
 		// Process the main entry text (including external URL summaries if available)
 		item, err := p.processEntryWithRetry(systemPrompt, entry)
+
 		if err != nil {
 			fmt.Printf("Error processing entry %d: %v\n", i, err)
 			processingErrors = append(processingErrors, fmt.Errorf("entry %d: %w", i, err))
 			continue
 		}
 
+		entryProcessingTime := time.Since(entryStartTime).Milliseconds()
+
 		fmt.Printf("Processed item %d successfully\n", i)
 		items = append(items, item)
+
+		// Add to benchmark data
+		entrySummary := bench.EntrySummary{
+			RawInput:       entry.String(true),
+			Results:        item,
+			ProcessingTime: entryProcessingTime,
+		}
+		benchmarkData.AddEntrySummary(entrySummary)
 	}
+	benchmarkData.EntryTotalProcessingTime = time.Since(overallStartTime).Milliseconds()
 
 	// If all entries failed, return an error
 	if len(items) == 0 && len(processingErrors) > 0 {
-		return nil, benchmarkInputs, fmt.Errorf("all entries failed processing: %v", processingErrors[0])
+		return nil, benchmarkData, fmt.Errorf("all entries failed processing: %v", processingErrors[0])
 	}
 
 	// If some entries failed but we have some successes, just log the errors
@@ -119,11 +166,19 @@ func (p *Processor) ProcessEntries(systemPrompt string, entries []rss.Entry, per
 		fmt.Printf("warning: %d entries failed processing\n", len(processingErrors))
 	}
 
-	return items, benchmarkInputs, nil
+	// Finalize benchmark data
+	benchmarkData.TotalProcessingTime = time.Since(startTime).Milliseconds()
+
+	if len(entries) > 0 {
+		successCount := len(items)
+		benchmarkData.SuccessRate = float64(successCount) / float64(len(entries))
+	}
+
+	return items, benchmarkData, nil
 }
 
 // processExternalURLs extracts and processes external URLs from an entry
-func (p *Processor) processExternalURLs(entry *rss.Entry, persona persona.Persona) (map[string]string, error) {
+func (p *Processor) processExternalURLs(entry *rss.Entry, persona persona.Persona, benchmarkData *bench.BenchmarkData) (map[string]string, error) {
 	// 1. Extract external URLs
 	extractedURLs, err := p.urlExtractor.ExtractURLsFromEntry(*entry)
 	if err != nil {
@@ -154,6 +209,9 @@ func (p *Processor) processExternalURLs(entry *rss.Entry, persona persona.Person
 			continue // Skip to the next URL if parsing fails
 		}
 
+		// Start timing for benchmarking
+		webStartTime := time.Now()
+
 		// 2a. Fetch the content
 		resp, err := p.urlFetcher.Fetch(context.Background(), extractedURLStr)
 		if err != nil {
@@ -174,8 +232,6 @@ func (p *Processor) processExternalURLs(entry *rss.Entry, persona persona.Person
 			continue // Skip to the next URL if extraction fails
 		}
 
-		// fmt.Printf("extracted article content: %s\n", articleData.CleanedText)
-
 		// 2c. Summarize the extracted content with LLM
 		summary, err := p.summarizeWebSite(articleData.Title, extractedURLStr, articleData.CleanedText, persona)
 		if err != nil {
@@ -183,8 +239,24 @@ func (p *Processor) processExternalURLs(entry *rss.Entry, persona persona.Person
 			continue // Skip to the next URL if summarization fails
 		}
 
+		// Calculate processing time for benchmarking
+		webProcessingTime := time.Since(webStartTime).Milliseconds()
+
 		// 2d. Store the summary
 		summaries[extractedURLStr] = summary
+
+		// Add to benchmark data if benchmarking is enabled
+		if benchmarkData != nil {
+			webSummary := bench.WebContentSummary{
+				URL:             extractedURLStr,
+				OriginalContent: articleData.CleanedText,
+				Summary:         summary,
+				Title:           articleData.Title,
+				EntryID:         entry.ID,
+				ProcessingTime:  webProcessingTime,
+			}
+			benchmarkData.AddWebContentSummary(webSummary)
+		}
 	}
 
 	return summaries, nil
@@ -388,7 +460,7 @@ func FilterRelevantItems(items []models.Item) []models.Item {
 	return relevantItems
 }
 
-// llmResponseToItems converts a JSON LLM response to a slice of Items
+// llmResponseToItems converts a JSON LLM response to a single models.Item
 func llmResponseToItems(jsonStr string) (models.Item, error) {
 	var items models.Item
 	err := json.Unmarshal([]byte(jsonStr), &items)

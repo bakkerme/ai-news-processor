@@ -52,7 +52,13 @@ func (s *Service) RenderAndSend(items []models.Item, summary *models.SummaryResp
 
 // writeEmailToDisk writes the email content to a file for debugging
 func writeEmailToDisk(content string) error {
-	filename := fmt.Sprintf("email_%s.html", time.Now().Format("2006-01-02_15-04-05"))
+	// Create an 'emails' directory in the project root for debug emails
+	emailDir := "emails"
+	if err := os.MkdirAll(emailDir, 0755); err != nil {
+		return fmt.Errorf("could not create email directory: %w", err)
+	}
+
+	filename := fmt.Sprintf("%s/email_%s.html", emailDir, time.Now().Format("2006-01-02_15-04-05"))
 	err := os.WriteFile(filename, []byte(content), 0644)
 	if err != nil {
 		return fmt.Errorf("could not write email to disk: %w", err)

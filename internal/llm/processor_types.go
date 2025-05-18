@@ -19,6 +19,7 @@ type EntryProcessConfig struct {
 	ImageEnabled         bool // Whether image processing is enabled
 	DebugOutputBenchmark bool // Whether to output benchmark inputs
 	URLSummaryEnabled    bool // Whether URL summarization is enabled
+	BenchmarkEnabled     bool // Whether to collect benchmark data
 }
 
 // DefaultEntryProcessConfig provides default configuration for entry processing
@@ -30,6 +31,7 @@ var DefaultEntryProcessConfig = EntryProcessConfig{
 	ImageEnabled:         false,
 	DebugOutputBenchmark: false,
 	URLSummaryEnabled:    true,
+	BenchmarkEnabled:     false,
 }
 
 // Processor handles the processing of RSS entries with LLM integration

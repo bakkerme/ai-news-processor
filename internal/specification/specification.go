@@ -33,6 +33,8 @@ type Specification struct {
 	QualityFilterThreshold int `split_words:"true" default:"10"`
 
 	PersonasPath string `split_words:"true"`
+
+	AuditServiceUrl string `split_words:"true"`
 }
 
 // Validate checks if the specification is valid
@@ -81,6 +83,10 @@ func (s *Specification) Validate() error {
 	// Debug configuration validation
 	if s.DebugMaxEntries < 0 {
 		return fmt.Errorf("debug max entries cannot be negative")
+	}
+
+	if s.DebugOutputBenchmark && s.AuditServiceUrl == "" {
+		return fmt.Errorf("audit service URL is required when benchmark output is enabled")
 	}
 
 	return nil

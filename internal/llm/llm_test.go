@@ -19,12 +19,12 @@ import (
 
 // Mock implementations for dependencies
 type mockOpenAIClient struct {
-	ChatCompletionFunc func(systemPrompt string, userPrompts []string, imageURLs []string, schemaParams *openai.SchemaParameters, results chan customerrors.ErrorString)
+	ChatCompletionFunc func(systemPrompt string, userPrompts []string, imageURLs []string, schemaParams *openai.SchemaParameters, temperature float64, maxTokens int, results chan customerrors.ErrorString)
 }
 
-func (m *mockOpenAIClient) ChatCompletion(systemPrompt string, userPrompts []string, imageURLs []string, schemaParams *openai.SchemaParameters, results chan customerrors.ErrorString) {
+func (m *mockOpenAIClient) ChatCompletion(systemPrompt string, userPrompts []string, imageURLs []string, schemaParams *openai.SchemaParameters, temperature float64, maxTokens int, results chan customerrors.ErrorString) {
 	if m.ChatCompletionFunc != nil {
-		m.ChatCompletionFunc(systemPrompt, userPrompts, imageURLs, schemaParams, results)
+		m.ChatCompletionFunc(systemPrompt, userPrompts, imageURLs, schemaParams, temperature, maxTokens, results)
 		return
 	}
 	// Default mock behavior if ChatCompletionFunc is not set
@@ -33,6 +33,7 @@ func (m *mockOpenAIClient) ChatCompletion(systemPrompt string, userPrompts []str
 func (m *mockOpenAIClient) PreprocessJSON(s string) string          { return s }
 func (m *mockOpenAIClient) SetRetryConfig(config retry.RetryConfig) {}
 func (m *mockOpenAIClient) PreprocessYAML(response string) string   { return response }
+func (m *mockOpenAIClient) GetModelName() string                    { return "mock-model" }
 
 type mockArticleExtractor struct{}
 

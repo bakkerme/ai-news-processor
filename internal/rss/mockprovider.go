@@ -31,7 +31,7 @@ func (m *MockFeedProvider) FetchComments(ctx context.Context, entry Entry) (*Com
 
 // GetMockFeed implements FeedProvider.GetMockFeed
 func (m *MockFeedProvider) GetMockFeed(ctx context.Context, personaName string) (*Feed, error) {
-	path := filepath.Join("..", "feed_mocks", "rss", personaName, fmt.Sprintf("%s.rss", personaName))
+	path := filepath.Join("feed_mocks", "rss", personaName, fmt.Sprintf("%s.rss", personaName))
 	b, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read mock feed: %w", err)
@@ -48,7 +48,7 @@ func (m *MockFeedProvider) GetMockFeed(ctx context.Context, personaName string) 
 
 // GetMockComments implements FeedProvider.GetMockComments
 func (m *MockFeedProvider) GetMockComments(ctx context.Context, personaName string, entryID string) (*CommentFeed, error) {
-	path := filepath.Join("..", "feed_mocks", "rss", personaName, fmt.Sprintf("%s.rss", entryID))
+	path := filepath.Join("feed_mocks", "rss", personaName, fmt.Sprintf("%s.rss", entryID))
 	b, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read mock comments: %w", err)

@@ -1,9 +1,8 @@
-package main
+package internal
 
 import (
 	"flag"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/bakkerme/ai-news-processor/internal/bench"
@@ -23,7 +22,7 @@ import (
 	"github.com/bakkerme/ai-news-processor/internal/urlextraction"
 )
 
-func main() {
+func Run() {
 	s, err := specification.GetConfig()
 	if err != nil {
 		panic(err)
@@ -107,7 +106,7 @@ func main() {
 		entries = qualityfilter.Filter(entries, s.QualityFilterThreshold)
 
 		// Store all raw inputs for benchmarking
-		var benchmarkLLMInputs []string
+		var benchmarkData bench.BenchmarkData
 		var items []models.Item
 
 		// 4. Process entries with LLM
@@ -156,7 +155,7 @@ func main() {
 			)
 
 			// Process the entries using the processor
-			items, benchmarkLLMInputs, err = processor.ProcessEntries(systemPrompt, entries, persona)
+			items, benchmarkData, err = processor.ProcessEntries(systemPrompt, entries, persona)
 			if err != nil {
 				fmt.Printf("Could not process entries with LLM for persona %s: %v\n", persona.Name, err)
 				continue
@@ -164,6 +163,10 @@ func main() {
 		} else {
 			fmt.Println("Loading fake LLM response")
 			items = GetMockLLMResponse()
+			// Generate mock benchmark data using the mock items, the current persona, and the original entries
+			benchmarkData = GetMockBenchmarkData(items, persona, entries)
+			// Since this is a mock, there is no error from processing
+			err = nil
 		}
 
 		// 5. Enrich items with links from RSS entries
@@ -171,12 +174,12 @@ func main() {
 
 		// Output benchmark data if requested
 		if s.DebugOutputBenchmark {
-			benchData := &bench.BenchmarkData{
-				RawInput: benchmarkLLMInputs,
-				Results:  items,
-				Persona:  persona.Name,
+			err := bench.OutputBenchmarkData(&benchmarkData, s.AuditServiceUrl)
+			if err != nil {
+				fmt.Printf("Error outputting benchmark data for persona %s: %v\n", persona.Name, err)
+				// Decide if this should be a fatal error or just a warning
+				// For now, just print and continue to allow other personas to process.
 			}
-			outputBenchmarkData(benchData)
 		}
 
 		// 6. Filter for relevant items
@@ -204,7 +207,7 @@ func main() {
 			}
 		} else {
 			// Mock summary for debug mode
-			summaryResponse = GetMockSummaryResponse()
+			summaryResponse = GetMockSummaryResponse(relevantItems)
 		}
 
 		// 10. Render and send email
@@ -218,37 +221,4 @@ func main() {
 			fmt.Println("Skipping email")
 		}
 	}
-}
-
-// outputBenchmarkData writes benchmark data to a file
-func outputBenchmarkData(data *bench.BenchmarkData) {
-	filename := "../bench/results/benchmark.json"
-
-	// Ensure the directory exists
-	err := os.MkdirAll("bench/results", 0755)
-	if err != nil {
-		fmt.Printf("Error creating benchmark directory: %v\n", err)
-		return
-	}
-
-	file, err := os.Create(filename)
-	if err != nil {
-		fmt.Printf("Error creating benchmark file: %v\n", err)
-		return
-	}
-	defer file.Close()
-
-	jsonData, err := bench.SerializeBenchmarkData(data)
-	if err != nil {
-		fmt.Printf("Error serializing benchmark data: %v\n", err)
-		return
-	}
-
-	_, err = file.Write(jsonData)
-	if err != nil {
-		fmt.Printf("Error writing benchmark data: %v\n", err)
-		return
-	}
-
-	fmt.Printf("Benchmark data written to %s\n", filename)
 }

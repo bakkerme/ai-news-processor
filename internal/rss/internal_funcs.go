@@ -147,7 +147,7 @@ func dumpFeed(feedURL string, content Feedlike, personaName, itemName string) er
 	filename := itemName + ".rss"
 
 	// Create the directory path
-	dir := filepath.Join("..", "feed_mocks", "rss", personaName)
+	dir := filepath.Join("feed_mocks", "rss", personaName)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
