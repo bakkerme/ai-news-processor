@@ -174,11 +174,16 @@ func Run() {
 
 		// Output benchmark data if requested
 		if s.DebugOutputBenchmark {
-			err := bench.OutputRunData(&benchmarkData, s.AuditServiceUrl)
+			err := bench.WriteRunDataToDisk(&benchmarkData)
 			if err != nil {
-				fmt.Printf("Error outputting benchmark data for persona %s: %v\n", persona.Name, err)
-				// Decide if this should be a fatal error or just a warning
-				// For now, just print and continue to allow other personas to process.
+				fmt.Printf("Error writing benchmark data to disk for persona %s: %v\n", persona.Name, err)
+			}
+		}
+
+		if s.SendBenchmarkToAuditService {
+			err = bench.SubmitRunDataToAuditService(&benchmarkData, s.AuditServiceUrl)
+			if err != nil {
+				fmt.Printf("Warning: Failed to submit run data to audit service for persona %s: %v\n", persona.Name, err)
 			}
 		}
 

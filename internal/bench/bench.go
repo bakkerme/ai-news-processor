@@ -30,12 +30,10 @@ func SerializeRunData(data *models.RunData) ([]byte, error) {
 
 var benchmarkDir = "benchmarkresults" // This can remain, as it's about file storage
 
-// OutputRunData writes run data to a file and submits to audit service
-// The p *persona.Persona parameter is removed as data.Persona is now the full persona.Persona.
-func OutputRunData(data *models.RunData, auditServiceURL string) error {
-	// Create filename with persona name and timestamp
+// WriteRunDataToDisk writes run data to a file and creates a backup if needed
+func WriteRunDataToDisk(data *models.RunData) error {
 	personaName := "unknown"
-	if data.Persona.Name != "" { // data.Persona is now persona.Persona
+	if data.Persona.Name != "" {
 		personaName = data.Persona.Name
 	}
 
@@ -58,7 +56,7 @@ func OutputRunData(data *models.RunData, auditServiceURL string) error {
 
 		backupPath := filepath.Join(backupDir, "benchmark.json")
 		backupData, errReadFile := os.ReadFile(defaultPath)
-		if errReadFile == nil { // Check error for ReadFile
+		if errReadFile == nil {
 			errWrite := os.WriteFile(backupPath, backupData, 0644)
 			if errWrite != nil {
 				return fmt.Errorf("error creating backup: %w", errWrite)
@@ -82,17 +80,11 @@ func OutputRunData(data *models.RunData, auditServiceURL string) error {
 	}
 
 	fmt.Printf("Run data written to %s and %s\n", benchFilePath, defaultPath)
-
-	err = submitToAuditService(data, auditServiceURL)
-	if err != nil {
-		fmt.Printf("Warning: Failed to submit run data to audit service: %v\n", err)
-	}
-
 	return nil
 }
 
-// submitToAuditService sends the run data to the ai-news-auditability-service.
-func submitToAuditService(data *models.RunData, auditServiceURL string) error {
+// SubmitRunDataToAuditService sends the run data to the ai-news-auditability-service.
+func SubmitRunDataToAuditService(data *models.RunData, auditServiceURL string) error {
 	if !strings.HasSuffix(auditServiceURL, "/runs") {
 		if strings.HasSuffix(auditServiceURL, "/") {
 			auditServiceURL += "runs"
@@ -101,12 +93,10 @@ func submitToAuditService(data *models.RunData, auditServiceURL string) error {
 		}
 	}
 
-	jsonData, err := json.Marshal(data) // data is already *models.RunData
+	jsonData, err := json.Marshal(data)
 	if err != nil {
 		return fmt.Errorf("failed to marshal audit service payload: %w", err)
 	}
-
-	// fmt.Printf("jsonData: %s\n", string(jsonData)) // Keep for debugging if necessary
 
 	req, err := http.NewRequest("POST", auditServiceURL, bytes.NewBuffer(jsonData))
 	if err != nil {

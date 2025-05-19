@@ -86,3 +86,14 @@ go run main.go --persona=all
    ```
 
 There are also built docker images in the packages section.
+
+## Benchmark Output and Audit Service
+
+- Benchmark data is always written to disk if `ANP_DEBUG_OUTPUT_BENCHMARK` is true.
+- To send benchmark data to the audit service, set the environment variable:
+
+```
+ANP_SEND_BENCHMARK_TO_AUDIT_SERVICE=true
+```
+
+If this is not set (or set to false), benchmark data will only be written to disk and not sent to the audit service.

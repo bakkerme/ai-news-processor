@@ -35,6 +35,8 @@ type Specification struct {
 	PersonasPath string `split_words:"true"`
 
 	AuditServiceUrl string `split_words:"true"`
+
+	SendBenchmarkToAuditService bool `split_words:"true" default:"false"`
 }
 
 // Validate checks if the specification is valid
