@@ -97,8 +97,8 @@ func GetMockBenchmarkData(items []models.Item, personaObj persona.Persona, entri
 		WebContentModelUsed:           "mock-webcontent-model", // Or empty if not applicable
 		TotalProcessingTime:           totalProcessingTime,
 		EntryTotalProcessingTime:      entryTotalProcessingTime,
-		ImageTotalProcessingTime:      0,   // Mocked as 0
-		WebContentTotalProcessingTime: 0,   // Mocked as 0
+		ImageTotalProcessingTime:      1000,
+		WebContentTotalProcessingTime: 1000,
 		SuccessRate:                   1.0, // Assuming all mock items are "successful"
 	}
 }

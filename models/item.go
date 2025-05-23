@@ -6,24 +6,26 @@ import (
 
 // Item represents the structure of the JSON/YAML object
 type Item struct {
-	Title          string `json:"title"`
-	ID             string `json:"id"`
-	Summary        string `json:"summary"`
-	CommentSummary string `json:"commentSummary,omitempty"`
-	Link           string `json:"link,omitempty"`
-	IsRelevant     bool   `json:"isRelevant"`
-	ThumbnailURL   string `json:"thumbnail_url,omitempty"`
+	Title              string `json:"title"`
+	ID                 string `json:"id"`
+	Summary            string `json:"summary"`
+	CommentSummary     string `json:"commentSummary,omitempty"`
+	ImageSummary       string `json:"imageDescription,omitempty"`
+	ExternalURLSummary string `json:"externalURLSummary,omitempty"`
+	Link               string `json:"link,omitempty"`
+	IsRelevant         bool   `json:"isRelevant"`
+	ThumbnailURL       string `json:"thumbnailUrl,omitempty"`
 }
 
 // KeyDevelopment represents a key development and its referenced item
 type KeyDevelopment struct {
 	Text   string `json:"text"`
-	ItemID string `json:"item_id"`
+	ItemID string `json:"itemID"`
 }
 
 // SummaryResponse represents an overall summary of multiple relevant AI news items
 type SummaryResponse struct {
-	KeyDevelopments []KeyDevelopment `json:"key_developments"`
+	KeyDevelopments []KeyDevelopment `json:"keyDevelopments"`
 }
 
 // UnmarshalJSON implements custom unmarshaling for SummaryResponse to clean up fields

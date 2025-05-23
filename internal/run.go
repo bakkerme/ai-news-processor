@@ -172,21 +172,6 @@ func Run() {
 		// 5. Enrich items with links from RSS entries
 		items = llm.EnrichItems(items, entries)
 
-		// Output benchmark data if requested
-		if s.DebugOutputBenchmark {
-			err := bench.WriteRunDataToDisk(&benchmarkData)
-			if err != nil {
-				fmt.Printf("Error writing benchmark data to disk for persona %s: %v\n", persona.Name, err)
-			}
-		}
-
-		if s.SendBenchmarkToAuditService {
-			err = bench.SubmitRunDataToAuditService(&benchmarkData, s.AuditServiceUrl)
-			if err != nil {
-				fmt.Printf("Warning: Failed to submit run data to audit service for persona %s: %v\n", persona.Name, err)
-			}
-		}
-
 		// 6. Filter for relevant items
 		relevantItems := llm.FilterRelevantItems(items)
 		if len(relevantItems) == 0 {
@@ -213,6 +198,24 @@ func Run() {
 		} else {
 			// Mock summary for debug mode
 			summaryResponse = GetMockSummaryResponse(relevantItems)
+		}
+
+		// Store the overall summary in the benchmark data
+		benchmarkData.OverallSummary = summaryResponse
+
+		// Output benchmark data if requested
+		if s.DebugOutputBenchmark {
+			err := bench.WriteRunDataToDisk(&benchmarkData)
+			if err != nil {
+				fmt.Printf("Error writing benchmark data to disk for persona %s: %v\n", persona.Name, err)
+			}
+		}
+
+		if s.SendBenchmarkToAuditService {
+			err = bench.SubmitRunDataToAuditService(&benchmarkData, s.AuditServiceUrl)
+			if err != nil {
+				fmt.Printf("Warning: Failed to submit run data to audit service for persona %s: %v\n", persona.Name, err)
+			}
 		}
 
 		// 10. Render and send email

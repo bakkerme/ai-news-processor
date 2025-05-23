@@ -58,7 +58,7 @@ Use the following JSON structure:
   "title": "",
   "summary": "",
   "commentSummary": "",
-  "is_relevant": true
+  "isRelevant": true
 }
 `
 

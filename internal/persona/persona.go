@@ -8,22 +8,22 @@ import (
 )
 
 type Persona struct {
-	Name    string `yaml:"name"`     // Unique name for the persona (e.g., "LocalLLaMA")
-	FeedURL string `yaml:"feed_url"` // URL of the RSS feed (e.g., "https://reddit.com/r/localllama.rss")
-	Topic   string `yaml:"topic"`    // Main subject area (e.g., "AI Technology", "Gardening")
+	Name    string `yaml:"name" json:"name"`        // Unique name for the persona (e.g., "LocalLLaMA")
+	FeedURL string `yaml:"feed_url" json:"feedUrl"` // URL of the RSS feed (e.g., "https://reddit.com/r/localllama.rss")
+	Topic   string `yaml:"topic" json:"topic"`      // Main subject area (e.g., "AI Technology", "Gardening")
 
 	// Persona identity (separated from specific task instructions)
-	PersonaIdentity string `yaml:"persona_identity"` // Core identity and expertise of the persona
+	PersonaIdentity string `yaml:"persona_identity" json:"personaIdentity"` // Core identity and expertise of the persona
 
 	// Task-specific instructions
-	BasePromptTask    string `yaml:"base_prompt_task"`    // Task description for individual item analysis
-	SummaryPromptTask string `yaml:"summary_prompt_task"` // Task description for summary generation
+	BasePromptTask    string `yaml:"base_prompt_task" json:"basePromptTask"`       // Task description for individual item analysis
+	SummaryPromptTask string `yaml:"summary_prompt_task" json:"summaryPromptTask"` // Task description for summary generation
 
 	// Content focus and criteria
-	FocusAreas        []string `yaml:"focus_areas"`        // List of topics/keywords to prioritize
-	RelevanceCriteria []string `yaml:"relevance_criteria"` // List of criteria for relevance analysis
-	SummaryAnalysis   []string `yaml:"summary_analysis"`   // Focus areas for summary analysis
-	ExclusionCriteria []string `yaml:"exclusion_criteria"` // List of criteria to explicitly exclude items
+	FocusAreas        []string `yaml:"focus_areas" json:"focusAreas"`               // List of topics/keywords to prioritize
+	RelevanceCriteria []string `yaml:"relevance_criteria" json:"relevanceCriteria"` // List of criteria for relevance analysis
+	SummaryAnalysis   []string `yaml:"summary_analysis" json:"summaryAnalysis"`     // Focus areas for summary analysis
+	ExclusionCriteria []string `yaml:"exclusion_criteria" json:"exclusionCriteria"` // List of criteria to explicitly exclude items
 }
 
 // LoadPersonas loads all persona YAML files from the given directory

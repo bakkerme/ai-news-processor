@@ -8,28 +8,28 @@ import (
 
 // EntrySummary represents the raw input and results for the entire processing pipeline
 type EntrySummary struct {
-	RawInput       string `json:"raw_input"`          // The raw input strings sent to the LLM
-	Results        Item   `json:"results"`            // The processed results from the LLM, uses models.Item
-	ProcessingTime int64  `json:"processing_time_ms"` // Time taken to process the entry in milliseconds
+	RawInput       string `json:"rawInput"`         // The raw input strings sent to the LLM
+	Results        Item   `json:"results"`          // The processed results from the LLM, uses models.Item
+	ProcessingTime int64  `json:"processingTimeMs"` // Time taken to process the entry in milliseconds
 }
 
 // ImageSummary represents the benchmark data for image processing
 type ImageSummary struct {
-	ImageURL         string `json:"image_url"`          // URL of the image processed
-	ImageDescription string `json:"image_description"`  // The description generated for the image
-	Title            string `json:"title,omitempty"`    // Title associated with the image
-	EntryID          string `json:"entry_id,omitempty"` // ID of the entry the image belongs to
-	ProcessingTime   int64  `json:"processing_time_ms"` // Time taken to process the image in milliseconds
+	ImageURL         string `json:"imageURL"`          // URL of the image processed
+	ImageDescription string `json:"imageDescription"`  // The description generated for the image
+	Title            string `json:"title,omitempty"`   // Title associated with the image
+	EntryID          string `json:"entryID,omitempty"` // ID of the entry the image belongs to
+	ProcessingTime   int64  `json:"processingTimeMs"`  // Time taken to process the image in milliseconds
 }
 
 // WebContentSummary represents the benchmark data for web content processing
 type WebContentSummary struct {
-	URL             string `json:"url"`                // URL of the web content
-	OriginalContent string `json:"original_content"`   // Original content from the URL
-	Summary         string `json:"summary"`            // Summary generated for the web content
-	Title           string `json:"title,omitempty"`    // Title of the web content
-	EntryID         string `json:"entry_id,omitempty"` // ID of the entry the web content belongs to
-	ProcessingTime  int64  `json:"processing_time_ms"` // Time taken to process the web content in milliseconds
+	URL             string `json:"url"`               // URL of the web content
+	OriginalContent string `json:"originalContent"`   // Original content from the URL
+	Summary         string `json:"summary"`           // Summary generated for the web content
+	Title           string `json:"title,omitempty"`   // Title of the web content
+	EntryID         string `json:"entryID,omitempty"` // ID of the entry the web content belongs to
+	ProcessingTime  int64  `json:"processingTimeMs"`  // Time taken to process the web content in milliseconds
 }
 
 // RunData represents the data collected during a run, intended for auditing and benchmarking.
@@ -38,6 +38,7 @@ type RunData struct {
 	EntrySummaries                []EntrySummary      `json:"entrySummaries"`
 	ImageSummaries                []ImageSummary      `json:"imageSummaries,omitempty"`
 	WebContentSummaries           []WebContentSummary `json:"webContentSummaries,omitempty"`
+	OverallSummary                *SummaryResponse    `json:"overallSummary,omitempty"`
 	Persona                       persona.Persona     `json:"persona"`
 	RunDate                       time.Time           `json:"runDate"`
 	OverallModelUsed              string              `json:"overallModelUsed,omitempty"`
