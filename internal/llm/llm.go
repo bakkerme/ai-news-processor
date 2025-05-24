@@ -117,7 +117,7 @@ func (p *Processor) ProcessEntries(systemPrompt string, entries []rss.Entry, per
 			}
 
 			// Add the summaries to the entry
-			entries[i].ExternalURLSummaries = summaries
+			entries[i].WebContentSummaries = summaries
 		}
 
 		benchmarkData.WebContentTotalProcessingTime = time.Since(webStartTime).Milliseconds()
@@ -184,9 +184,12 @@ func (p *Processor) processExternalURLs(entry *rss.Entry, persona persona.Person
 		return nil, fmt.Errorf("failed to extract external URLs: %w", err)
 	}
 
+	// Store all extracted URLs in the ExternalURLs field
+	entry.ExternalURLs = extractedURLs
+
 	// Initialize the map for summaries if needed
-	if entry.ExternalURLSummaries == nil {
-		entry.ExternalURLSummaries = make(map[string]string)
+	if entry.WebContentSummaries == nil {
+		entry.WebContentSummaries = make(map[string]string)
 	}
 
 	if len(extractedURLs) == 0 {
@@ -194,47 +197,40 @@ func (p *Processor) processExternalURLs(entry *rss.Entry, persona persona.Person
 	}
 
 	// Only process the first URL for now
-	extractedURLs = []string{extractedURLs[0]}
+	extractedURLs = []url.URL{extractedURLs[0]}
 	summaries := make(map[string]string)
 
 	// 2. Process each extracted URL
 	for _, extractedURLStr := range extractedURLs {
-		fmt.Printf("processing external URL: %s\n", extractedURLStr)
-
-		// Parse URL string to *url.URL
-		parsedURL, err := url.Parse(extractedURLStr)
-		if err != nil {
-			fmt.Printf("warning: Failed to parse URL %s: %v\n", extractedURLStr, err)
-			continue // Skip to the next URL if parsing fails
-		}
+		fmt.Printf("processing external URL: %s\n", extractedURLStr.String())
 
 		// Start timing for benchmarking
 		webStartTime := time.Now()
 
 		// 2a. Fetch the content
-		resp, err := p.urlFetcher.Fetch(context.Background(), extractedURLStr)
+		resp, err := p.urlFetcher.Fetch(context.Background(), &extractedURLStr)
 		if err != nil {
-			fmt.Printf("warning: Failed to fetch content for %s: %v\n", extractedURLStr, err)
+			fmt.Printf("warning: Failed to fetch content for %s: %v\n", extractedURLStr.String(), err)
 			continue // Skip to the next URL if fetching fails
 		}
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			fmt.Printf("warning: Received non-OK status code for %s: %d\n", extractedURLStr, resp.StatusCode)
+			fmt.Printf("warning: Received non-OK status code for %s: %d\n", extractedURLStr.String(), resp.StatusCode)
 			continue // Skip to the next URL for non-OK status codes
 		}
 
 		// 2b. Extract the article text
-		articleData, err := p.articleExtractor.Extract(resp.Body, parsedURL)
+		articleData, err := p.articleExtractor.Extract(resp.Body, &extractedURLStr)
 		if err != nil {
-			fmt.Printf("warning: Failed to extract article content for %s: %v\n", extractedURLStr, err)
+			fmt.Printf("warning: Failed to extract article content for %s: %v\n", extractedURLStr.String(), err)
 			continue // Skip to the next URL if extraction fails
 		}
 
 		// 2c. Summarize the extracted content with LLM
-		summary, err := p.summarizeWebSite(articleData.Title, extractedURLStr, articleData.CleanedText, persona)
+		summary, err := p.summarizeWebSite(articleData.Title, &extractedURLStr, articleData.CleanedText, persona)
 		if err != nil {
-			fmt.Printf("warning: Failed to summarize content for %s: %v\n", extractedURLStr, err)
+			fmt.Printf("warning: Failed to summarize content for %s: %v\n", extractedURLStr.String(), err)
 			continue // Skip to the next URL if summarization fails
 		}
 
@@ -242,7 +238,7 @@ func (p *Processor) processExternalURLs(entry *rss.Entry, persona persona.Person
 		webProcessingTime := time.Since(webStartTime).Milliseconds()
 
 		// 2d. Store the summary
-		summaries[extractedURLStr] = summary
+		summaries[extractedURLStr.String()] = summary
 
 		// Add to benchmark data if benchmarking is enabled
 		if benchmarkData != nil {
@@ -262,7 +258,7 @@ func (p *Processor) processExternalURLs(entry *rss.Entry, persona persona.Person
 }
 
 // summarizeTextWithLLM summarizes given content using an LLM
-func (p *Processor) summarizeWebSite(pageTitle, url, content string, persona persona.Persona) (string, error) {
+func (p *Processor) summarizeWebSite(pageTitle string, url *url.URL, content string, persona persona.Persona) (string, error) {
 	// Create a system prompt for summarization
 	systemPrompt := fmt.Sprintf("You are a concise summarizer for %s. Provide brief, informative summaries of web content.", persona.Name)
 
@@ -436,6 +432,8 @@ func EnrichItems(items []models.Item, entries []rss.Entry) []models.Item {
 			continue
 		}
 
+		// Populate the Entry field with the associated RSS entry
+		enrichedItems[i].Entry = *entry
 		enrichedItems[i].Link = entry.Link.Href
 
 		if len(entry.ImageURLs) > 0 {

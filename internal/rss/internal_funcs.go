@@ -160,11 +160,3 @@ func dumpFeed(feedURL string, content Feedlike, personaName, itemName string) er
 
 	return nil
 }
-
-// ensureValidImageURL ensures a URL has a scheme (http:// or https://)
-func ensureValidImageURL(imgURL string) string {
-	if !strings.HasPrefix(imgURL, "http://") && !strings.HasPrefix(imgURL, "https://") {
-		return "https://" + imgURL
-	}
-	return imgURL
-}

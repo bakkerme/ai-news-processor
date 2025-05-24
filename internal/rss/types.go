@@ -6,8 +6,6 @@ import (
 	"net/url"
 	"strings"
 	"time"
-
-	"golang.org/x/net/html"
 )
 
 // Feedlike is an interface that can be used to represent any type that has a FeedString method, i.e. Feed and CommentFeed
@@ -36,16 +34,17 @@ func (cf *CommentFeed) FeedString() string {
 
 // Entry and EntryComments are used throughout the codebase for RSS feeds
 type Entry struct {
-	Title                string    `xml:"title"`
-	Link                 Link      `xml:"link"`
-	ID                   string    `xml:"id"`
-	Published            time.Time `xml:"published"`
-	Content              string    `xml:"content"`
-	Comments             []EntryComments
-	ImageURLs            []url.URL         // New field to store extracted image URLs
-	MediaThumbnail       MediaThumbnail    `xml:"http://search.yahoo.com/mrss/ thumbnail"` // Field to store thumbnail information from media namespace
-	ImageDescription     string            // Field to store image descriptions from dedicated image processing
-	ExternalURLSummaries map[string]string // New field to store summaries of external URLs found in content
+	Title               string    `xml:"title"`
+	Link                Link      `xml:"link"`
+	ID                  string    `xml:"id"`
+	Published           time.Time `xml:"published"`
+	Content             string    `xml:"content"`
+	Comments            []EntryComments
+	ExternalURLs        []url.URL         // New field to store external URLs found in content
+	ImageURLs           []url.URL         // New field to store extracted image URLs
+	MediaThumbnail      MediaThumbnail    `xml:"http://search.yahoo.com/mrss/ thumbnail"` // Field to store thumbnail information from media namespace
+	ImageDescription    string            // Field to store image descriptions from dedicated image processing
+	WebContentSummaries map[string]string // New field to store summaries of external URLs found in content
 }
 
 type EntryComments struct {
@@ -70,9 +69,16 @@ func (e *Entry) String(disableTruncation bool) string {
 		e.ImageDescription,
 	))
 
-	if len(e.ExternalURLSummaries) > 0 {
+	if len(e.ExternalURLs) > 0 {
+		s.WriteString("\nExternal URLs:\n")
+		for _, url := range e.ExternalURLs {
+			s.WriteString(fmt.Sprintf("- %s\n", url.String()))
+		}
+	}
+
+	if len(e.WebContentSummaries) > 0 {
 		s.WriteString("\nExternal URL Summaries:\n")
-		for url, summary := range e.ExternalURLSummaries {
+		for url, summary := range e.WebContentSummaries {
 			s.WriteString(fmt.Sprintf("- %s: %s\n", url, summary))
 		}
 	}
@@ -110,104 +116,4 @@ func (e *Entry) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 		e.Published = t
 	}
 	return nil
-}
-
-// ExtractImageURLs finds image URLs in the entry content and stores them in the ImageURLs field.
-func (e *Entry) ExtractImageURLs() error {
-	// Reset the ImageURLs slice
-	e.ImageURLs = nil
-
-	// Parse the content HTML for regular <img> tags and <a> tags with image links
-	doc, err := html.Parse(strings.NewReader(e.Content))
-	if err != nil {
-		return fmt.Errorf("failed to parse HTML content: %w", err)
-	}
-
-	// Traverse the DOM to find image URLs
-	urlMap := make(map[string]url.URL) // Use a map to automatically deduplicate
-	extractURLsFromNode(doc, urlMap)
-
-	// Convert map to slice
-	e.ImageURLs = make([]url.URL, 0, len(urlMap))
-	for _, u := range urlMap {
-		e.ImageURLs = append(e.ImageURLs, u)
-		fmt.Printf("Found image URL: %s\n", u.String())
-	}
-
-	return nil
-}
-
-// extractURLsFromNode recursively traverses HTML nodes to extract image URLs
-func extractURLsFromNode(n *html.Node, urlMap map[string]url.URL) {
-	if n.Type == html.ElementNode {
-		// Check for <img> tags
-		if n.Data == "img" {
-			for _, a := range n.Attr {
-				if a.Key == "src" {
-					addImageURLIfValid(a.Val, urlMap)
-					break
-				}
-			}
-		}
-
-		// Check for <a> tags with image links
-		if n.Data == "a" {
-			for _, a := range n.Attr {
-				if a.Key == "href" {
-					addImageURLIfValid(a.Val, urlMap)
-					break
-				}
-			}
-		}
-	}
-
-	// Continue traversing the DOM
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		extractURLsFromNode(c, urlMap)
-	}
-}
-
-// addImageURLIfValid adds a URL to the map if it's a valid image URL
-func addImageURLIfValid(urlStr string, urlMap map[string]url.URL) {
-	if isLikelyImageURL(urlStr) && !containsExcludedTerms(urlStr) {
-		validURL := ensureValidImageURL(urlStr)
-		u, err := url.Parse(validURL)
-		if err == nil {
-			urlMap[u.String()] = *u
-		}
-	}
-}
-
-// isLikelyImageURL checks if a URL is likely an image based on extension or known image hosting patterns
-func isLikelyImageURL(urlStr string) bool {
-	// Check for common image hosting patterns
-	lowerURL := strings.ToLower(urlStr)
-
-	// i.redd.it, i.imgur.com are dedicated image hosts
-	if strings.Contains(lowerURL, "i.redd.it") ||
-		strings.Contains(lowerURL, "preview.redd.it") ||
-		strings.Contains(lowerURL, "i.imgur.com") {
-		return true
-	}
-
-	// Check for common image extensions
-	return hasImageExtension(urlStr)
-}
-
-// hasImageExtension checks if a URL ends with a common image file extension
-func hasImageExtension(urlStr string) bool {
-	lowerURL := strings.ToLower(urlStr)
-	return strings.HasSuffix(lowerURL, ".jpg") ||
-		strings.HasSuffix(lowerURL, ".jpeg") ||
-		strings.HasSuffix(lowerURL, ".png") ||
-		strings.HasSuffix(lowerURL, ".gif") ||
-		strings.HasSuffix(lowerURL, ".bmp") ||
-		strings.HasSuffix(lowerURL, ".webp")
-}
-
-// containsExcludedTerms checks if a URL contains terms that indicate it's a low-quality image
-func containsExcludedTerms(urlStr string) bool {
-	lowerURL := strings.ToLower(urlStr)
-	return strings.Contains(lowerURL, "thumb") ||
-		strings.Contains(lowerURL, "external-preview")
 }

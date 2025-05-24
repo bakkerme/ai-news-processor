@@ -1,7 +1,6 @@
 package llm
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/bakkerme/ai-news-processor/internal/customerrors"
@@ -88,8 +87,6 @@ func (m *MockOpenAIClient) GetModelName() string {
 	}
 	return "mock-model" // Default behavior
 }
-
-var errTest = errors.New("test error")
 
 // TestChatCompletionForEntrySummary tests chatCompletionForEntrySummary.
 func TestChatCompletionForEntrySummary(t *testing.T) {

@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -267,5 +268,30 @@ func TestEntryUnmarshalXML(t *testing.T) {
 
 	if err == nil {
 		t.Fatal("Expected error for invalid date, got none")
+	}
+}
+
+func TestEntryStringWithExternalURLs(t *testing.T) {
+	entry := Entry{
+		Title:   "Test Entry",
+		ID:      "test-1",
+		Content: "Test content",
+		ExternalURLs: []url.URL{
+			{Scheme: "http", Host: "example.com"},
+			{Scheme: "https", Host: "test.org"},
+		},
+	}
+
+	result := entry.String(false)
+
+	// Check that external URLs are included in the string output
+	if !strings.Contains(result, "External URLs:") {
+		t.Error("Expected 'External URLs:' section in string output")
+	}
+	if !strings.Contains(result, "- http://example.com") {
+		t.Error("Expected first external URL in string output")
+	}
+	if !strings.Contains(result, "- https://test.org") {
+		t.Error("Expected second external URL in string output")
 	}
 }

@@ -2,19 +2,22 @@ package models
 
 import (
 	"encoding/json"
+
+	"github.com/bakkerme/ai-news-processor/internal/rss"
 )
 
 // Item represents the structure of the JSON/YAML object
 type Item struct {
-	Title              string `json:"title"`
-	ID                 string `json:"id"`
-	Summary            string `json:"summary"`
-	CommentSummary     string `json:"commentSummary,omitempty"`
-	ImageSummary       string `json:"imageDescription,omitempty"`
-	ExternalURLSummary string `json:"externalURLSummary,omitempty"`
-	Link               string `json:"link,omitempty"`
-	IsRelevant         bool   `json:"isRelevant"`
-	ThumbnailURL       string `json:"thumbnailUrl,omitempty"`
+	Title             string    `json:"title"`
+	ID                string    `json:"id"`
+	Summary           string    `json:"summary"`
+	CommentSummary    string    `json:"commentSummary,omitempty"`
+	ImageSummary      string    `json:"imageDescription,omitempty"`
+	WebContentSummary string    `json:"webContentSummary,omitempty"`
+	Link              string    `json:"link,omitempty"`
+	IsRelevant        bool      `json:"isRelevant"`
+	ThumbnailURL      string    `json:"thumbnailUrl,omitempty"`
+	Entry             rss.Entry `json:"entry,omitempty"`
 }
 
 // KeyDevelopment represents a key development and its referenced item

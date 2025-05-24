@@ -1,7 +1,6 @@
 package llm
 
 import (
-	"errors"
 	"fmt"
 	"testing"
 
@@ -11,8 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-var errTestGenerateSummary = errors.New("test error for generate summary")
 
 // TestGenerateSummary tests the GenerateSummary function.
 func TestGenerateSummary(t *testing.T) {
@@ -34,7 +31,7 @@ func TestGenerateSummary(t *testing.T) {
 		mockClient := &MockOpenAIClient{
 			PreprocessJSONFunc: func(response string) string {
 				// Return valid JSON for SummaryResponse
-				return `{"key_developments": [{"text": "Test Dev", "item_id": "id1"}], "emerging_trends": ["Trend 1"], "technical_highlight": "Highlight"}`
+				return `{"keyDevelopments": [{"text": "Test Dev", "itemID": "id1"}]}`
 			},
 		}
 

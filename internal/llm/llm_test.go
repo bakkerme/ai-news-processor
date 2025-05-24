@@ -43,17 +43,17 @@ func (m *mockArticleExtractor) Extract(body io.Reader, url *url.URL) (*contentex
 
 type mockFetcher struct{}
 
-func (m *mockFetcher) Fetch(ctx context.Context, url string) (*http.Response, error) {
+func (m *mockFetcher) Fetch(ctx context.Context, url *url.URL) (*http.Response, error) {
 	return nil, nil
 }
 
 type mockURLExtractor struct{}
 
-func (m *mockURLExtractor) ExtractURLsFromEntry(entry rss.Entry) ([]string, error) {
+func (m *mockURLExtractor) ExtractURLsFromEntry(entry rss.Entry) ([]url.URL, error) {
 	return nil, nil
 }
 
-func (m *mockURLExtractor) ExtractURLsFromEntries(entries []rss.Entry) (map[string][]string, error) {
+func (m *mockURLExtractor) ExtractURLsFromEntries(entries []rss.Entry) (map[string][]url.URL, error) {
 	return nil, nil
 }
 
@@ -128,8 +128,8 @@ func TestEnrichItems(t *testing.T) {
 	}
 
 	expectedItems := []models.Item{
-		{ID: "1", Title: "Item 1", Link: "http://example.com/1"},
-		{ID: "2", Title: "Item 2", Link: "http://example.com/2"},
+		{ID: "1", Title: "Item 1", Link: "http://example.com/1", Entry: rss.Entry{ID: "1", Link: rss.Link{Href: "http://example.com/1"}}},
+		{ID: "2", Title: "Item 2", Link: "http://example.com/2", Entry: rss.Entry{ID: "2", Link: rss.Link{Href: "http://example.com/2"}}},
 		{ID: "3", Title: "Item 3"},
 	}
 
@@ -146,7 +146,7 @@ func TestEnrichItems(t *testing.T) {
 	}
 	expectedWithNoID := []models.Item{
 		{Title: "Item No ID"},
-		{ID: "1", Title: "Item 1", Link: "http://example.com/1"},
+		{ID: "1", Title: "Item 1", Link: "http://example.com/1", Entry: rss.Entry{ID: "1", Link: rss.Link{Href: "http://example.com/1"}}},
 	}
 	enrichedNoID := EnrichItems(itemsWithNoID, entries)
 	if !reflect.DeepEqual(enrichedNoID, expectedWithNoID) {
@@ -233,7 +233,7 @@ func TestFilterRelevantItems(t *testing.T) {
 
 func TestLlmResponseToItems(t *testing.T) {
 	t.Run("valid json", func(t *testing.T) {
-		jsonStr := `{"id":"123","title":"Test Title","overview":"Test Summary","is_relevant":true}`
+		jsonStr := `{"id":"123","title":"Test Title","summary":"Test Summary","isRelevant":true}`
 		expectedItem := models.Item{
 			ID:         "123",
 			Title:      "Test Title",
@@ -282,7 +282,7 @@ func TestLlmResponseToItems(t *testing.T) {
 	})
 
 	t.Run("json with extra fields", func(t *testing.T) {
-		jsonStr := `{"id":"123","title":"Test Title","extra_field":"should be ignored","overview":"Test Overview"}`
+		jsonStr := `{"id":"123","title":"Test Title","extra_field":"should be ignored","summary":"Test Overview"}`
 		expectedItem := models.Item{
 			ID:      "123",
 			Title:   "Test Title",

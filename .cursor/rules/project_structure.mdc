@@ -5,20 +5,53 @@ alwaysApply: true
 ---
 # Project Structure
 
-- `internal/`: Core application logic
-  - `rss/`: RSS feed processing (see ./docs/rss.md)
-  - `llm/`: Language model integration
-  - `openai/`: OpenAI-api specific implementations
-  - `summary/`: Content summarization
-  - `email/`: Email handling and templates
-  - `persona/`: Persona management (see ./docs/persona.md)
-  - `prompts/`: System prompts
-  - `common/`: Shared utilities
+## Root Level
+- `main.go`: Application entry point
+- `go.mod` & `go.sum`: Go module dependencies
+- `Dockerfile` & `docker-compose.yml`: Containerization configuration
+- `.env*` files: Environment configurations
 
-- `feed_mocks/`: Mock RSS feed data for testing
-- `bench/`: Benchmarking tools and results (see ./docs/bench.md)
+## Core Directories
+
+### `internal/`: Core application logic
+- `rss/`: RSS feed processing (see ./docs/rss.md)
+- `llm/`: Language model integration
+- `openai/`: OpenAI-api specific implementations
+- `summary/`: Content summarization
+- `email/`: Email handling and templates
+- `persona/`: Persona management (see ./docs/persona.md)
+- `prompts/`: System prompts
+- `contentextractor/`: Content extraction logic
+- `fetcher/`: Data fetching utilities
+- `http/`: HTTP utilities and network operations
+  - `retry/`: Retry mechanisms
+- `urlextraction/`: URL extraction functionality
+- `customerrors/`: Custom error types
+- `specification/`: Specification definitions
+- `qualityfilter/`: Content quality filtering
+- `processed/`: Processed content handling
+- `testoutput/`: Test output storage
+- `bench/`: Benchmarking utilities
+- `run.go` & `mocks.go`: Core runtime and mock utilities
+
+### `feed_mocks/`: Mock RSS feed data for testing
+- `rss/`: RSS-specific mocks
+  - `Cursor/`: Cursor-related feed mocks
+  - `LocalLLaMa/`: LocalLLaMa-related feed mocks
+
+### Other Directories
+- `benchmark/`: Benchmarking tools
+- `benchmarkresults/`: Benchmark results and data
+  - `backup/`: Backup of benchmark results
 - `docs/`: Project documentation
 - `personas/`: Persona configurations
+- `models/`: Data models and schemas. Used externally by ai-news-auditability-service
+- `planning/`: Planning and design documents
+- `build/`: Build artifacts
+- `.github/`: GitHub workflows and configurations
+- `.cursor/`: Cursor IDE configuration and rules
 
+## Configuration Notes
 - CWD = ./internal
 - There are currently no test files
+- Environment files: `.env`, `.envdebug`, `.env.example`, `.env.benchmark`, `.env.benchmark.example`

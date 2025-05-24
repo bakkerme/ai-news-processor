@@ -12,12 +12,9 @@ import (
 	"time"
 
 	"github.com/bakkerme/ai-news-processor/models"
-	// persona import might not be directly needed here anymore if RunData contains the full persona
-	// and OutputRunData's signature changes.
 )
 
-// EntrySummary, ImageSummary, WebContentSummary, and BenchmarkData structs are now defined in internal/models
-// and will be imported as models.EntrySummary, models.ImageSummary, models.WebContentSummary, and models.RunData respectively.
+// EntrySummary, ImageSummary, WebContentSummary, and BenchmarkData structs are defined in internal/models
 
 // SerializeRunData converts RunData to JSON byte array
 func SerializeRunData(data *models.RunData) ([]byte, error) {
@@ -126,21 +123,6 @@ func SubmitRunDataToAuditService(data *models.RunData, auditServiceURL string) e
 
 	fmt.Printf("Run data successfully submitted to audit service at %s\n", auditServiceURL)
 	return nil
-}
-
-// AddImageSummaryToRunData adds an image summary to the run data
-func AddImageSummaryToRunData(rd *models.RunData, summary models.ImageSummary) {
-	rd.ImageSummaries = append(rd.ImageSummaries, summary)
-}
-
-// AddWebContentSummaryToRunData adds a web content summary to the run data
-func AddWebContentSummaryToRunData(rd *models.RunData, summary models.WebContentSummary) {
-	rd.WebContentSummaries = append(rd.WebContentSummaries, summary)
-}
-
-// AddEntrySummaryToRunData adds an entry summary to the run data
-func AddEntrySummaryToRunData(rd *models.RunData, summary models.EntrySummary) {
-	rd.EntrySummaries = append(rd.EntrySummaries, summary)
 }
 
 // LoadRunData loads the most recent run data for each persona from a file

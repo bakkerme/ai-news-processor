@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"time"
 
@@ -58,47 +59,136 @@ func GetMockSummaryResponse(relevantItems []models.Item) *models.SummaryResponse
 }
 
 func GetMockBenchmarkData(items []models.Item, personaObj persona.Persona, entries []rss.Entry) models.RunData {
-	entrySummaries := make([]models.EntrySummary, len(items))
-	var totalProcessingTime int64 = 0
-	var entryTotalProcessingTime int64 = 0
+	// First, enrich the items with Entry field (like in real processing)
+	enrichedItems := make([]models.Item, len(items))
+	copy(enrichedItems, items)
 
-	// Find the corresponding rss.Entry for each models.Item to populate RawInput
+	// Create entry map for efficient lookup
 	entryMap := make(map[string]rss.Entry)
 	for _, entry := range entries {
 		entryMap[entry.ID] = entry
 	}
 
-	for i, item := range items {
-		mockProcessingTime := int64(10 + i%5) // Mock processing time between 10-14ms
+	// Enrich items with Entry field and other data
+	for i, item := range enrichedItems {
+		if item.ID != "" {
+			if entry, ok := entryMap[item.ID]; ok {
+				enrichedItems[i].Entry = entry
+				enrichedItems[i].Link = entry.Link.Href
+				if len(entry.ImageURLs) > 0 {
+					enrichedItems[i].ThumbnailURL = entry.ImageURLs[0].String()
+				} else if entry.MediaThumbnail.URL != "" {
+					enrichedItems[i].ThumbnailURL = entry.MediaThumbnail.URL
+				}
+			}
+		}
+	}
+
+	// Initialize slices
+	entrySummaries := make([]models.EntrySummary, len(enrichedItems))
+	imageSummaries := make([]models.ImageSummary, 0)
+	webContentSummaries := make([]models.WebContentSummary, 0)
+
+	// Timing variables
+	var entryTotalProcessingTime int64 = 0
+	var imageTotalProcessingTime int64 = 0
+	var webContentTotalProcessingTime int64 = 0
+
+	// Process each item to create mock benchmark data
+	for i, item := range enrichedItems {
+		// Mock entry processing time (10-50ms range)
+		entryProcessingTime := int64(10 + (i%5)*10)
 		rawInput := fmt.Sprintf("Mock raw input for item ID: %s, Title: %s", item.ID, item.Title)
 
 		// If we found a corresponding entry, use its String() method for a more realistic RawInput
-		if entry, ok := entryMap[item.ID]; ok {
-			rawInput = entry.String(true) // Assuming String(true) gives a good representation
+		if item.Entry.ID != "" {
+			rawInput = item.Entry.String(true)
 		}
 
 		entrySummaries[i] = models.EntrySummary{
 			RawInput:       rawInput,
 			Results:        item,
-			ProcessingTime: mockProcessingTime,
+			ProcessingTime: entryProcessingTime,
 		}
-		entryTotalProcessingTime += mockProcessingTime
+		entryTotalProcessingTime += entryProcessingTime
+
+		// Mock image processing if item has image data
+		if item.ImageSummary != "" {
+			imageProcessingTime := int64(1000) // 1 minute
+			imageURL := item.Entry.ImageURLs[0].String()
+
+			imageSummary := models.ImageSummary{
+				ImageURL:         imageURL,
+				ImageDescription: item.ImageSummary,
+				Title:            item.Title,
+				EntryID:          item.ID,
+				ProcessingTime:   imageProcessingTime,
+			}
+			imageSummaries = append(imageSummaries, imageSummary)
+			imageTotalProcessingTime += imageProcessingTime
+		}
+
+		// Mock web content processing if item has web content data
+		if item.WebContentSummary != "" {
+			webProcessingTime := int64(200 + (i%4)*75) // 200-425ms range
+			webURL := item.Entry.Link.Href
+			mockOriginalContent := fmt.Sprintf("Mock original web content for %s. This would be the extracted article text that was summarized. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.", item.Title)
+
+			// Use actual link if available
+			if item.Link != "" {
+				webURL = item.Link
+			}
+
+			parsedURL, err := url.Parse(webURL)
+			if err != nil {
+				log.Fatalf("Error parsing URL: %v", err)
+			}
+
+			webSummary := models.WebContentSummary{
+				URL:             *parsedURL,
+				OriginalContent: mockOriginalContent,
+				Summary:         item.WebContentSummary,
+				Title:           fmt.Sprintf("Web Content for %s", item.Title),
+				EntryID:         item.ID,
+				ProcessingTime:  webProcessingTime,
+			}
+			webContentSummaries = append(webContentSummaries, webSummary)
+			webContentTotalProcessingTime += webProcessingTime
+		}
 	}
-	totalProcessingTime = entryTotalProcessingTime // Assuming only entry processing for mock
+
+	// Calculate total processing time
+	totalProcessingTime := entryTotalProcessingTime + imageTotalProcessingTime + webContentTotalProcessingTime
+
+	// Generate overall summary for relevant items
+	relevantItems := make([]models.Item, 0)
+	for _, item := range enrichedItems {
+		if item.IsRelevant && item.ID != "" {
+			relevantItems = append(relevantItems, item)
+		}
+	}
+	overallSummary := GetMockSummaryResponse(relevantItems)
+
+	// Calculate success rate (assume all items processed successfully for mock)
+	successRate := 1.0
+	if len(items) > 0 {
+		successRate = float64(len(enrichedItems)) / float64(len(items))
+	}
 
 	return models.RunData{
 		EntrySummaries:                entrySummaries,
-		ImageSummaries:                []models.ImageSummary{},      // Empty for mock
-		WebContentSummaries:           []models.WebContentSummary{}, // Empty for mock
+		ImageSummaries:                imageSummaries,
+		WebContentSummaries:           webContentSummaries,
+		OverallSummary:                overallSummary,
 		Persona:                       personaObj,
 		RunDate:                       time.Now(),
 		OverallModelUsed:              "mock-llm-model",
-		ImageModelUsed:                "mock-image-model",      // Or empty if not applicable
-		WebContentModelUsed:           "mock-webcontent-model", // Or empty if not applicable
+		ImageModelUsed:                "mock-image-model",
+		WebContentModelUsed:           "mock-webcontent-model",
 		TotalProcessingTime:           totalProcessingTime,
 		EntryTotalProcessingTime:      entryTotalProcessingTime,
-		ImageTotalProcessingTime:      1000,
-		WebContentTotalProcessingTime: 1000,
-		SuccessRate:                   1.0, // Assuming all mock items are "successful"
+		ImageTotalProcessingTime:      imageTotalProcessingTime,
+		WebContentTotalProcessingTime: webContentTotalProcessingTime,
+		SuccessRate:                   successRate,
 	}
 }

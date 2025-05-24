@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -18,12 +19,14 @@ import (
 )
 
 // Helper function to create a test server with a configurable handler
-func setupTestServer(t *testing.T, handler http.HandlerFunc) *httptest.Server {
+func setupTestServer(t *testing.T, handler http.HandlerFunc) (*httptest.Server, *url.URL) {
 	t.Helper()
 	server := httptest.NewServer(handler)
 	// No need to defer server.Close() here, as each test that uses it should manage its lifecycle
 	// or it can be closed in a t.Cleanup() if used across multiple sub-tests in a table.
-	return server
+	url, err := url.Parse(server.URL)
+	require.NoError(t, err)
+	return server, url
 }
 
 func TestHTTPFetcher_Fetch_Successful(t *testing.T) {
@@ -39,7 +42,7 @@ func TestHTTPFetcher_Fetch_Successful(t *testing.T) {
 		_, err := w.Write([]byte(expectedBody))
 		assert.NoError(t, err)
 	}
-	server := setupTestServer(t, handler)
+	server, serverURL := setupTestServer(t, handler)
 	defer server.Close()
 
 	client := server.Client() // Use the test server's client
@@ -48,7 +51,7 @@ func TestHTTPFetcher_Fetch_Successful(t *testing.T) {
 
 	f := fetcher.NewHTTPFetcher(client, retryCfg, expectedUserAgent)
 
-	resp, err := f.Fetch(context.Background(), server.URL)
+	resp, err := f.Fetch(context.Background(), serverURL)
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	defer resp.Body.Close()
@@ -67,12 +70,12 @@ func TestHTTPFetcher_Fetch_DefaultUserAgent(t *testing.T) {
 		userAgentReceived = r.Header.Get("User-Agent")
 		w.WriteHeader(http.StatusOK)
 	}
-	server := setupTestServer(t, handler)
+	server, serverURL := setupTestServer(t, handler)
 	defer server.Close()
 
 	f := fetcher.NewHTTPFetcher(server.Client(), retry.DefaultRetryConfig, "") // Empty user agent
 
-	resp, err := f.Fetch(context.Background(), server.URL)
+	resp, err := f.Fetch(context.Background(), serverURL)
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	defer resp.Body.Close()
@@ -88,7 +91,7 @@ func TestHTTPFetcher_Fetch_ClientError_NonRetryable(t *testing.T) {
 		atomic.AddInt32(&requestCount, 1)
 		http.Error(w, "Not Found", http.StatusNotFound)
 	}
-	server := setupTestServer(t, handler)
+	server, serverURL := setupTestServer(t, handler)
 	defer server.Close()
 
 	client := server.Client()
@@ -100,7 +103,7 @@ func TestHTTPFetcher_Fetch_ClientError_NonRetryable(t *testing.T) {
 
 	f := fetcher.NewHTTPFetcher(client, retryCfg, "test-agent/1.0")
 
-	resp, err := f.Fetch(context.Background(), server.URL)
+	resp, err := f.Fetch(context.Background(), serverURL)
 	require.Error(t, err) // Expect an error
 	require.NotNil(t, resp, "Response should not be nil even on HTTPError")
 	defer resp.Body.Close()
@@ -261,12 +264,12 @@ func TestHTTPFetcher_Fetch_RetryScenarios(t *testing.T) {
 			t.Parallel()
 
 			handler, attemptsCounter := tc.handlerSetup(t)
-			server := setupTestServer(t, handler)
+			server, serverURL := setupTestServer(t, handler)
 			defer server.Close()
 
 			f := fetcher.NewHTTPFetcher(server.Client(), tc.retryCfg, "test-agent-retry/1.0")
 
-			resp, err := f.Fetch(context.Background(), server.URL)
+			resp, err := f.Fetch(context.Background(), serverURL)
 
 			if tc.expectError {
 				require.Error(t, err, "Expected an error")
@@ -320,7 +323,7 @@ func TestHTTPFetcher_Fetch_NetworkTimeout(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("Should not reach here"))
 	}
-	server := setupTestServer(t, handler)
+	server, serverURL := setupTestServer(t, handler)
 	defer server.Close()
 
 	// Client with a very short timeout
@@ -337,7 +340,7 @@ func TestHTTPFetcher_Fetch_NetworkTimeout(t *testing.T) {
 	f := fetcher.NewHTTPFetcher(shortTimeoutClient, retryCfg, "test-agent-timeout/1.0")
 
 	startTime := time.Now()
-	resp, err := f.Fetch(context.Background(), server.URL)
+	resp, err := f.Fetch(context.Background(), serverURL)
 	duration := time.Since(startTime)
 
 	require.Error(t, err, "Expected a timeout error")
@@ -377,7 +380,7 @@ func TestHTTPFetcher_Fetch_ContextCancellation(t *testing.T) {
 		<-serverDone // Wait until test signals to complete
 		w.WriteHeader(http.StatusOK)
 	}
-	server := setupTestServer(t, handler)
+	server, serverURL := setupTestServer(t, handler)
 	defer server.Close()
 	defer close(serverDone) // Ensure handler can exit
 
@@ -395,7 +398,7 @@ func TestHTTPFetcher_Fetch_ContextCancellation(t *testing.T) {
 		cancel()
 	}()
 
-	resp, err := f.Fetch(ctx, server.URL)
+	resp, err := f.Fetch(ctx, serverURL)
 
 	require.Error(t, err, "Expected an error due to context cancellation")
 	if resp != nil {
@@ -428,7 +431,7 @@ func TestHTTPFetcher_Fetch_RetryAfterHeader(t *testing.T) {
 		_, _ = w.Write([]byte("Success after Retry-After"))
 		close(serverDone) // Signal that the second request has been processed
 	}
-	server := setupTestServer(t, handler)
+	server, serverURL := setupTestServer(t, handler)
 	defer server.Close()
 
 	retryCfg := retry.DefaultRetryConfig
@@ -439,7 +442,7 @@ func TestHTTPFetcher_Fetch_RetryAfterHeader(t *testing.T) {
 
 	f := fetcher.NewHTTPFetcher(server.Client(), retryCfg, "test-agent-retry-after/1.0")
 
-	resp, err := f.Fetch(context.Background(), server.URL)
+	resp, err := f.Fetch(context.Background(), serverURL)
 
 	// Wait for the server to have processed the second request if it occurred
 	select {

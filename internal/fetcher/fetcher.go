@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -29,7 +30,7 @@ func (e *HTTPError) Error() string {
 
 // Fetcher defines the interface for fetching HTTP content.
 type Fetcher interface {
-	Fetch(ctx context.Context, url string) (*http.Response, error)
+	Fetch(ctx context.Context, url *url.URL) (*http.Response, error)
 }
 
 // HTTPFetcher implements the Fetcher interface using a standard http.Client
@@ -63,9 +64,9 @@ func NewHTTPFetcher(client *http.Client, cfg retry.RetryConfig, userAgent string
 
 // Fetch performs an HTTP GET request to the specified URL with retry logic.
 // The caller is responsible for closing the response body if the error is nil.
-func (hf *HTTPFetcher) Fetch(ctx context.Context, url string) (*http.Response, error) {
+func (hf *HTTPFetcher) Fetch(ctx context.Context, url *url.URL) (*http.Response, error) {
 	retryableFunc := func(innerCtx context.Context) (*http.Response, error) {
-		req, err := http.NewRequestWithContext(innerCtx, http.MethodGet, url, nil)
+		req, err := http.NewRequestWithContext(innerCtx, http.MethodGet, url.String(), nil)
 		if err != nil {
 			// This error is likely non-retryable (e.g., malformed URL)
 			return nil, fmt.Errorf("failed to create request: %w", err)

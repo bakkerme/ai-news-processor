@@ -26,15 +26,6 @@ func FetchAndProcessFeed(provider FeedProvider, feedURL string, debugRssDump boo
 		return nil, fmt.Errorf("no entries found in feed")
 	}
 
-	// Extract images from each entry
-	for i := range entries {
-		err := entries[i].ExtractImageURLs()
-		if err != nil {
-			// Log the error and continue to process other entries
-			fmt.Printf("Warning: Failed to extract images for entry %s: %v\n", entries[i].ID, err)
-		}
-	}
-
 	return entries, nil
 }
 

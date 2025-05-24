@@ -3,6 +3,7 @@ package prompts
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"text/template"
 
 	"github.com/bakkerme/ai-news-processor/internal/persona"
@@ -53,13 +54,7 @@ Do not start with 'This post...' or 'This item...'.
 
 Respond only with valid JSON. Put JSON in ` + "```json" + ` tags.
 Use the following JSON structure:
-{
-  "id": "t3_1keo3te",
-  "title": "",
-  "summary": "",
-  "commentSummary": "",
-  "isRelevant": true
-}
+{{.ItemJSONExample}}
 `
 
 const summaryPromptTemplate = `You are {{.PersonaIdentity}}
@@ -79,14 +74,7 @@ The response format for KeyDevelopments should be an array of objects, each with
 Focus on technical accuracy while maintaining an engaging, analytical style. Avoid generic statements and focus on specific, concrete developments and their implications. This is a newsletter.
 
 Respond only with valid JSON. Put JSON in ` + "```json" + ` tags.
-{
-  "key_developments": [
-    {
-      "text": "",
-      "item_id": ""
-    }
-  ]
-}
+{{.SummaryJSONExample}}
 `
 
 const imagePromptTemplate = `You are {{.PersonaIdentity}}
@@ -106,13 +94,21 @@ func ComposePrompt(p persona.Persona, imageDescription string) (string, error) {
 		return "", err
 	}
 
-	// Create a data structure for the template that includes the image description
+	// Generate JSON example automatically from real struct
+	itemJSONExample, err := GetRealItemJSONExample()
+	if err != nil {
+		return "", fmt.Errorf("failed to generate item JSON example: %w", err)
+	}
+
+	// Create a data structure for the template that includes the image description and generated JSON example
 	data := struct {
 		persona.Persona
 		ImageDescription string
+		ItemJSONExample  string
 	}{
 		Persona:          p,
 		ImageDescription: imageDescription,
+		ItemJSONExample:  itemJSONExample,
 	}
 
 	var buf bytes.Buffer
@@ -133,11 +129,19 @@ func ComposeSummaryPrompt(p persona.Persona) (string, error) {
 		return "", err
 	}
 
-	// Create a data structure for the template that includes the image descriptions
+	// Generate JSON example automatically from real struct
+	summaryJSONExample, err := GetRealSummaryResponseJSONExample()
+	if err != nil {
+		return "", fmt.Errorf("failed to generate summary JSON example: %w", err)
+	}
+
+	// Create a data structure for the template that includes the generated JSON example
 	data := struct {
 		persona.Persona
+		SummaryJSONExample string
 	}{
-		Persona: p,
+		Persona:            p,
+		SummaryJSONExample: summaryJSONExample,
 	}
 
 	var buf bytes.Buffer
