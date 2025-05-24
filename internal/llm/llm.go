@@ -46,11 +46,19 @@ func (p *Processor) ProcessEntries(systemPrompt string, entries []rss.Entry, per
 	var processingErrors []error
 
 	benchmarkData := models.RunData{
-		EntrySummaries:      []models.EntrySummary{},
-		ImageSummaries:      []models.ImageSummary{},
-		WebContentSummaries: []models.WebContentSummary{},
-		RunDate:             time.Now(),
-		Persona:             persona,
+		EntrySummaries:                []models.EntrySummary{},
+		ImageSummaries:                []models.ImageSummary{},
+		WebContentSummaries:           []models.WebContentSummary{},
+		RunDate:                       time.Now(),
+		Persona:                       persona,
+		OverallModelUsed:              p.client.GetModelName(),
+		ImageModelUsed:                p.imageClient.GetModelName(),
+		WebContentModelUsed:           p.client.GetModelName(),
+		TotalProcessingTime:           0,
+		EntryTotalProcessingTime:      0,
+		ImageTotalProcessingTime:      0,
+		WebContentTotalProcessingTime: 0,
+		SuccessRate:                   0,
 	}
 
 	// Track total processing time if benchmarking is enabled
