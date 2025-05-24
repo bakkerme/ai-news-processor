@@ -7,16 +7,22 @@ import (
 	"strings"
 
 	xhtml "golang.org/x/net/html"
-
-	"github.com/bakkerme/ai-news-processor/internal/rss"
 )
 
-// Extractor defines the interface for URL extraction from RSS entries
+// ContentProvider defines the interface for objects that can provide content for URL extraction
+type ContentProvider interface {
+	GetID() string
+	GetContent() string
+}
+
+// Extractor defines the interface for URL extraction from content providers
 type Extractor interface {
-	// ExtractURLsFromEntry processes a single RSS entry and returns a slice of external URLs
-	ExtractURLsFromEntry(entry rss.Entry) ([]url.URL, error)
-	// ExtractURLsFromEntries processes multiple RSS entries and returns a map of entry IDs to their external URLs
-	ExtractURLsFromEntries(entries []rss.Entry) (map[string][]url.URL, error)
+	// ExtractExternalURLsFromEntries processes multiple content providers and returns a map of IDs to their external URLs
+	ExtractExternalURLsFromEntries(entries []ContentProvider) (map[string][]url.URL, error)
+	ExtractImageURLsFromEntries(entries []ContentProvider) (map[string][]url.URL, error)
+
+	ExtractExternalURLsFromEntry(entry ContentProvider) ([]url.URL, error)
+	ExtractImageURLsFromEntry(entry ContentProvider) ([]url.URL, error)
 }
 
 // RedditExtractor implements the Extractor interface for Reddit-specific URL extraction
@@ -27,33 +33,93 @@ func NewRedditExtractor() *RedditExtractor {
 	return &RedditExtractor{}
 }
 
-// ExtractURLsFromEntries processes a slice of RSS entries and extracts external URLs
+// ExtractExternalURLsFromEntries processes a slice of content providers and extracts external URLs
 // from the Content field of each entry, filtering out reddit.com and redd.it URLs.
 // It returns a map where the key is the Entry ID and the value is a slice of unique external URLs.
 // This function is kept for potential batch processing needs but the primary task focuses on single entry processing.
-func (re *RedditExtractor) ExtractURLsFromEntries(entries []rss.Entry) (map[string][]url.URL, error) {
+func (re *RedditExtractor) ExtractExternalURLsFromEntries(entries []ContentProvider) (map[string][]url.URL, error) {
 	results := make(map[string][]url.URL)
 
 	for _, entry := range entries {
-		if entry.ID == "" {
+		if entry.GetID() == "" {
 			// Potentially log a warning or handle entries with no ID if necessary
 			continue
 		}
 
-		extractedUrls, err := re.ExtractURLsFromEntry(entry)
+		extractedUrls, err := re.ExtractExternalURLsFromEntry(entry)
 		if err != nil {
 			// For now, return error immediately. Consider collecting errors or partial results later.
-			return nil, fmt.Errorf("error extracting external URLs for entry ID %s: %w", entry.ID, err)
+			return nil, fmt.Errorf("error extracting external URLs for entry ID %s: %w", entry.GetID(), err)
 		}
 
-		results[entry.ID] = extractedUrls
+		results[entry.GetID()] = extractedUrls
 	}
 
 	return results, nil
 }
 
-// extractURLsFromHTML extracts all href attributes from anchor tags in an HTML string.
-// It parses the HTML and traverses the node tree to find all <a> elements and their href attributes.
+// ExtractImageURLsFromEntries processes a slice of content providers and extracts image URLs
+// from the Content field of each entry, filtering out URLs that are not likely images or contain excluded terms.
+func (re *RedditExtractor) ExtractImageURLsFromEntries(entries []ContentProvider) (map[string][]url.URL, error) {
+	results := make(map[string][]url.URL)
+
+	for _, entry := range entries {
+		extractedUrls, err := re.ExtractImageURLsFromEntry(entry)
+		if err != nil {
+			return nil, fmt.Errorf("error extracting image URLs for entry ID %s: %w", entry.GetID(), err)
+		}
+
+		results[entry.GetID()] = extractedUrls
+	}
+
+	return results, nil
+}
+
+// ExtractExternalURLsFromEntry processes a single content provider and extracts external URLs
+// from its Content field. It filters out URLs belonging to reddit.com or redd.it.
+func (re *RedditExtractor) ExtractExternalURLsFromEntry(entry ContentProvider) ([]url.URL, error) {
+	allURLs, err := re.extractURLsFromEntry(entry)
+	if err != nil {
+		return nil, fmt.Errorf("error extracting external URLs from entry ID %s: %w", entry.GetID(), err)
+	}
+
+	var externalURLs []url.URL
+	for _, u := range allURLs {
+		isReddit, err := re.isRedditDomain(u.String())
+		if err != nil {
+			return nil, fmt.Errorf("error checking if URL is Reddit domain: %w", err)
+		}
+		if !isReddit {
+			externalURLs = append(externalURLs, u)
+		}
+	}
+
+	return externalURLs, nil
+}
+
+// ExtractImageURLsFromEntry processes a single content provider and extracts image URLs
+// from its Content field. It filters out URLs that are not likely images or contain excluded terms.
+func (re *RedditExtractor) ExtractImageURLsFromEntry(entry ContentProvider) ([]url.URL, error) {
+	imageURLs, err := re.extractURLsFromEntry(entry)
+	if err != nil {
+		return nil, fmt.Errorf("error extracting image URLs from entry ID %s: %w", entry.GetID(), err)
+	}
+
+	var validImageURLs []url.URL
+	for _, u := range imageURLs {
+		validURL := ensureValidImageURL(u.String())
+		if isLikelyImageURL(validURL) && !containsExcludedTerms(validURL) {
+			u, err := url.Parse(validURL)
+			if err == nil {
+				validImageURLs = append(validImageURLs, *u)
+			}
+		}
+	}
+	return validImageURLs, nil
+}
+
+// extractURLsFromHTML extracts all href attributes from anchor tags and src attributes from img tags in an HTML string.
+// It parses the HTML and traverses the node tree to find all <a> and <img> elements and their href/src attributes.
 func (re *RedditExtractor) extractURLsFromHTML(htmlContent string) ([]string, error) {
 	if strings.TrimSpace(htmlContent) == "" {
 		return []string{}, nil
@@ -70,13 +136,24 @@ func (re *RedditExtractor) extractURLsFromHTML(htmlContent string) ([]string, er
 	var urls []string
 	var f func(*xhtml.Node)
 	f = func(n *xhtml.Node) {
-		if n.Type == xhtml.ElementNode && n.Data == "a" {
-			for _, a := range n.Attr {
-				if a.Key == "href" {
-					if a.Val != "" { // Ensure URL is not empty
-						urls = append(urls, a.Val)
+		if n.Type == xhtml.ElementNode {
+			if n.Data == "a" {
+				for _, a := range n.Attr {
+					if a.Key == "href" {
+						if a.Val != "" { // Ensure URL is not empty
+							urls = append(urls, a.Val)
+						}
+						break
 					}
-					break
+				}
+			} else if n.Data == "img" {
+				for _, a := range n.Attr {
+					if a.Key == "src" {
+						if a.Val != "" { // Ensure URL is not empty
+							urls = append(urls, a.Val)
+						}
+						break
+					}
 				}
 			}
 		}
@@ -85,7 +162,17 @@ func (re *RedditExtractor) extractURLsFromHTML(htmlContent string) ([]string, er
 		}
 	}
 	f(doc)
-	return urls, nil
+
+	// Filter out invalid or relative URLs
+	var validURLs []string
+	for _, u := range urls {
+		parsed, err := url.Parse(u)
+		if err == nil && parsed.IsAbs() {
+			validURLs = append(validURLs, u)
+		}
+	}
+
+	return validURLs, nil
 }
 
 // isRedditDomain checks if the given URL belongs to any Reddit domain.
@@ -132,12 +219,12 @@ func filterNonHTTPProtocols(urls []string) []string {
 	return httpURLs
 }
 
-// ExtractURLsFromEntry processes a single RSS entry and extracts external URLs
+// ExtractURLsFromEntry processes a single content provider and extracts external URLs
 // from its Content field.
-func (re *RedditExtractor) ExtractURLsFromEntry(entry rss.Entry) ([]url.URL, error) {
-	allURLs, err := re.extractURLsFromHTML(entry.Content)
+func (re *RedditExtractor) extractURLsFromEntry(entry ContentProvider) ([]url.URL, error) {
+	allURLs, err := re.extractURLsFromHTML(entry.GetContent())
 	if err != nil {
-		return nil, fmt.Errorf("error extracting all URLs from entry ID %s: %w", entry.ID, err)
+		return nil, fmt.Errorf("error extracting all URLs from entry ID %s: %w", entry.GetID(), err)
 	}
 
 	// Filter out non-HTTP/HTTPS URLs first
@@ -153,47 +240,6 @@ func (re *RedditExtractor) ExtractURLsFromEntry(entry rss.Entry) ([]url.URL, err
 	}
 
 	return externalURLs, nil
-}
-
-// ExtractExternalURLsFromEntry processes a single RSS entry and extracts external URLs
-// from its Content field. It filters out URLs belonging to reddit.com or redd.it.
-func (re *RedditExtractor) ExtractExternalURLsFromEntry(entry rss.Entry) ([]url.URL, error) {
-	allURLs, err := re.ExtractURLsFromEntry(entry)
-	if err != nil {
-		return nil, fmt.Errorf("error extracting external URLs from entry ID %s: %w", entry.ID, err)
-	}
-
-	var externalURLs []url.URL
-	for _, u := range allURLs {
-		isReddit, err := re.isRedditDomain(u.String())
-		if err != nil {
-			return nil, fmt.Errorf("error checking if URL is Reddit domain: %w", err)
-		}
-		if !isReddit {
-			externalURLs = append(externalURLs, u)
-		}
-	}
-
-	return externalURLs, nil
-}
-
-func (re *RedditExtractor) ExtractImageURLsFromEntry(entry rss.Entry) ([]url.URL, error) {
-	imageURLs, err := re.ExtractURLsFromEntry(entry)
-	if err != nil {
-		return nil, fmt.Errorf("error extracting image URLs from entry ID %s: %w", entry.ID, err)
-	}
-
-	var validImageURLs []url.URL
-	for _, u := range imageURLs {
-		validURL := ensureValidImageURL(u.String())
-		if isLikelyImageURL(validURL) && !containsExcludedTerms(validURL) {
-			u, err := url.Parse(validURL)
-			if err == nil {
-				validImageURLs = append(validImageURLs, *u)
-			}
-		}
-	}
-	return validImageURLs, nil
 }
 
 // isLikelyImageURL checks if a URL is likely an image based on extension or known image hosting patterns

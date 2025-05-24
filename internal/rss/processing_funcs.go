@@ -3,10 +3,12 @@ package rss
 import (
 	"context"
 	"fmt"
+
+	"github.com/bakkerme/ai-news-processor/internal/urlextraction"
 )
 
 // FetchAndProcessFeed fetches an RSS feed from the given URL and processes it
-func FetchAndProcessFeed(provider FeedProvider, feedURL string, debugRssDump bool, personaName string) ([]Entry, error) {
+func FetchAndProcessFeed(provider FeedProvider, urlExtractor urlextraction.Extractor, feedURL string, debugRssDump bool, personaName string) ([]Entry, error) {
 	fmt.Printf("Loading RSS feed: %s\n", feedURL)
 
 	rssFeed, err := provider.FetchFeed(context.Background(), feedURL)
@@ -26,15 +28,7 @@ func FetchAndProcessFeed(provider FeedProvider, feedURL string, debugRssDump boo
 		return nil, fmt.Errorf("no entries found in feed")
 	}
 
-	return entries, nil
-}
-
-// FetchAndEnrichWithComments adds comments to each RSS entry
-func FetchAndEnrichWithComments(provider FeedProvider, entries []Entry, debugRssDump bool, personaName string) ([]Entry, error) {
-	enrichedEntries := make([]Entry, len(entries))
-	copy(enrichedEntries, entries)
-
-	for i, entry := range enrichedEntries {
+	for i, entry := range entries {
 		commentFeed, err := provider.FetchComments(context.Background(), entry)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load rss comment data for entry %s: %w", entry.ID, err)
@@ -46,10 +40,27 @@ func FetchAndEnrichWithComments(provider FeedProvider, entries []Entry, debugRss
 			}
 		}
 
-		enrichedEntries[i].Comments = commentFeed.Entries
+		entries[i].Comments = commentFeed.Entries
+
+		// extract image urls
+		imageURLs, err := urlExtractor.ExtractImageURLsFromEntry(entry)
+		if err != nil {
+			return nil, fmt.Errorf("failed to extract image URLs: %w", err)
+		}
+
+		entries[i].ImageURLs = imageURLs
+
+		// extract external urls
+		externalURLs, err := urlExtractor.ExtractExternalURLsFromEntry(entry)
+		if err != nil {
+			return nil, fmt.Errorf("failed to extract external URLs: %w", err)
+		}
+
+		entries[i].ExternalURLs = externalURLs
+
 	}
 
-	return enrichedEntries, nil
+	return entries, nil
 }
 
 // FindEntryByID finds an RSS entry with the given ID

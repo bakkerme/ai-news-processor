@@ -94,6 +94,16 @@ func (e *Entry) GetCommentRSSURL() string {
 	return fmt.Sprintf("%s.rss?depth=1", e.Link.Href)
 }
 
+// GetID returns the Entry's ID, implementing the ContentProvider interface
+func (e Entry) GetID() string {
+	return e.ID
+}
+
+// GetContent returns the Entry's Content, implementing the ContentProvider interface
+func (e Entry) GetContent() string {
+	return e.Content
+}
+
 // UnmarshalXML implements xml.Unmarshaler for custom time parsing
 func (e *Entry) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	type Alias Entry

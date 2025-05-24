@@ -82,9 +82,10 @@ func Run() {
 	// Process each persona
 	for _, persona := range selectedPersonas {
 		fmt.Printf("Processing persona: %s\n", persona.Name)
+		urlExtractor := urlextraction.NewRedditExtractor()
 
 		// 1. Fetch and process RSS feed using FeedProvider
-		entries, err := rss.FetchAndProcessFeed(feedProvider, persona.FeedURL, s.DebugRssDump, persona.Name)
+		entries, err := rss.FetchAndProcessFeed(feedProvider, urlExtractor, persona.FeedURL, s.DebugRssDump, persona.Name)
 		if err != nil {
 			fmt.Printf("Failed to process RSS feed for persona %s: %v\n", persona.Name, err)
 			continue
@@ -95,21 +96,14 @@ func Run() {
 			entries = entries[:s.DebugMaxEntries]
 		}
 
-		// 2. Enrich entries with comments
-		entries, err = rss.FetchAndEnrichWithComments(feedProvider, entries, s.DebugRssDump, persona.Name)
-		if err != nil {
-			fmt.Printf("Failed to enrich entries with comments for persona %s: %v\n", persona.Name, err)
-			continue
-		}
-
-		// 3. Filter entries with quality filter
+		// 2. Filter entries with quality filter
 		entries = qualityfilter.Filter(entries, s.QualityFilterThreshold)
 
 		// Store all raw inputs for benchmarking
 		var benchmarkData models.RunData
 		var items []models.Item
 
-		// 4. Process entries with LLM
+		// 3. Process entries with LLM
 		if !s.DebugMockLLM {
 			fmt.Println("Sending to LLM")
 			systemPrompt, err := prompts.ComposePrompt(persona, "")
@@ -139,7 +133,6 @@ func Run() {
 
 			// Initialize dependencies for the processor
 			urlFetcher := fetcher.NewHTTPFetcher(nil, retryConfig, fetcher.DefaultUserAgent)
-			urlExtractor := urlextraction.NewRedditExtractor()
 			imageFetcher := &httputil.DefaultImageFetcher{}
 			articleExtractor := &contentextractor.DefaultArticleExtractor{}
 

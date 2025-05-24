@@ -1,8 +1,6 @@
 package qualityfilter
 
-import (
-	"github.com/bakkerme/ai-news-processor/internal/rss"
-)
+import "github.com/bakkerme/ai-news-processor/internal/rss"
 
 // Filter returns a list of entries that have more comments than the specified threshold
 func Filter(entries []rss.Entry, threshold int) []rss.Entry {

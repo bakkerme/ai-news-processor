@@ -14,6 +14,7 @@ import (
 	"github.com/bakkerme/ai-news-processor/internal/http/retry"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
 	"github.com/bakkerme/ai-news-processor/internal/rss"
+	"github.com/bakkerme/ai-news-processor/internal/urlextraction"
 	"github.com/bakkerme/ai-news-processor/models"
 )
 
@@ -49,11 +50,19 @@ func (m *mockFetcher) Fetch(ctx context.Context, url *url.URL) (*http.Response, 
 
 type mockURLExtractor struct{}
 
-func (m *mockURLExtractor) ExtractURLsFromEntry(entry rss.Entry) ([]url.URL, error) {
+func (m *mockURLExtractor) ExtractExternalURLsFromEntries(entries []urlextraction.ContentProvider) (map[string][]url.URL, error) {
 	return nil, nil
 }
 
-func (m *mockURLExtractor) ExtractURLsFromEntries(entries []rss.Entry) (map[string][]url.URL, error) {
+func (m *mockURLExtractor) ExtractImageURLsFromEntries(entries []urlextraction.ContentProvider) (map[string][]url.URL, error) {
+	return nil, nil
+}
+
+func (m *mockURLExtractor) ExtractExternalURLsFromEntry(entry urlextraction.ContentProvider) ([]url.URL, error) {
+	return nil, nil
+}
+
+func (m *mockURLExtractor) ExtractImageURLsFromEntry(entry urlextraction.ContentProvider) ([]url.URL, error) {
 	return nil, nil
 }
 

@@ -179,7 +179,7 @@ func (p *Processor) ProcessEntries(systemPrompt string, entries []rss.Entry, per
 // processExternalURLs extracts and processes external URLs from an entry
 func (p *Processor) processExternalURLs(entry *rss.Entry, persona persona.Persona, benchmarkData *models.RunData) (map[string]string, error) {
 	// 1. Extract external URLs
-	extractedURLs, err := p.urlExtractor.ExtractURLsFromEntry(*entry)
+	extractedURLs, err := p.urlExtractor.ExtractExternalURLsFromEntry(*entry)
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract external URLs: %w", err)
 	}
