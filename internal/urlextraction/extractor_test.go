@@ -293,6 +293,7 @@ func TestRedditExtractor_ExtractAllURLsFromEntry(t *testing.T) {
 			},
 			want: []string{
 				"https://www.reddit.com/r/LocalLLaMA/comments/1kf1yg9/qwen332biq4_xs_ggufs_mmlupro_benchmark_comparison/",
+				"https://external-preview.redd.it/jJ4wm0NIfgUy0MSOkw2YI6r-EjpVW_Y_SPR-xICfNk4.jpg?width=640&crop=smart&auto=webp&s=8bf4c693cb7ebd3ae7a7b3eb2dc65cfbfc6e1d6d",
 				"https://preview.redd.it/9ptc0cl2svye1.png?width=2475&format=png&auto=webp&s=06a3b551fba60a33877f8e67af9932e381a15cc6",
 				"https://huggingface.co/unsloth/Qwen3-32B-GGUF/blob/main/Qwen3-32B-IQ4_XS.gguf",
 				"https://huggingface.co/unsloth/Qwen3-32B-128K-GGUF/blob/main/Qwen3-32B-128K-IQ4_XS.gguf",
@@ -552,7 +553,7 @@ func TestRedditExtractor_ExtractImageURLsFromEntry(t *testing.T) {
 			name: "valid image URLs",
 			entry: mockContentProvider{
 				id:      "2",
-				content: `<img src=\"https://example.com/image.jpg\"> <img src=\"https://example.com/photo.png\">`,
+				content: `<img src="https://example.com/image.jpg"> <img src="https://example.com/photo.png">`,
 			},
 			want:    []string{"https://example.com/image.jpg", "https://example.com/photo.png"},
 			wantErr: false,
@@ -561,7 +562,7 @@ func TestRedditExtractor_ExtractImageURLsFromEntry(t *testing.T) {
 			name: "invalid image URLs",
 			entry: mockContentProvider{
 				id:      "3",
-				content: `<img src=\"not-a-url\">`,
+				content: `<img src="not-a-url">`,
 			},
 			want:    []string{},
 			wantErr: false,
@@ -609,7 +610,7 @@ func TestRedditExtractor_ExtractImageURLsFromEntries(t *testing.T) {
 			entries: []mockContentProvider{
 				{
 					id:      "1",
-					content: `<img src=\"https://example.com/image.jpg\">`,
+					content: `<img src="https://example.com/image.jpg">`,
 				},
 			},
 			want: map[string][]string{
@@ -622,7 +623,7 @@ func TestRedditExtractor_ExtractImageURLsFromEntries(t *testing.T) {
 			entries: []mockContentProvider{
 				{
 					id:      "2",
-					content: `<img src=\"https://example.com/photo.png\">`,
+					content: `<img src="https://example.com/photo.png">`,
 				},
 				{
 					id:      "3",

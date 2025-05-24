@@ -75,6 +75,53 @@ func (g *JSONExampleGenerator) createExampleStruct(structType interface{}) inter
 	return newStruct.Interface()
 }
 
+// Add an allowlist to filter fields for JSON example generation
+func (g *JSONExampleGenerator) createExampleStructWithAllowlist(structType interface{}, allowlist map[string]bool) interface{} {
+	t := reflect.TypeOf(structType)
+
+	// If it's a pointer, get the element
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+
+	// Create a new instance of the struct
+	newStruct := reflect.New(t).Elem()
+
+	// Fill in the fields with example values
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		fieldValue := newStruct.Field(i)
+
+		// Skip unexported fields
+		if !fieldValue.CanSet() {
+			continue
+		}
+
+		// Get the JSON tag name
+		jsonTag := field.Tag.Get("json")
+		if jsonTag == "-" {
+			continue // Skip fields marked with json:"-"
+		}
+
+		// Parse JSON tag to get the field name
+		tagParts := strings.Split(jsonTag, ",")
+		fieldName := tagParts[0]
+		if fieldName == "" {
+			fieldName = field.Name
+		}
+
+		// Check if the field is in the allowlist
+		if !allowlist[fieldName] {
+			continue
+		}
+
+		// Set example values based on field type and name
+		g.setExampleValue(fieldValue, field, fieldName)
+	}
+
+	return newStruct.Interface()
+}
+
 // setExampleValue sets appropriate example values based on field type and name
 func (g *JSONExampleGenerator) setExampleValue(fieldValue reflect.Value, field reflect.StructField, jsonFieldName string) {
 	switch fieldValue.Kind() {
@@ -165,10 +212,27 @@ func (g *JSONExampleGenerator) setSliceExample(fieldValue reflect.Value, field r
 	fieldValue.Set(slice)
 }
 
-// GetItemJSONExample returns a formatted JSON example for the Item struct
+// Update GetItemJSONExample to use the allowlist
 func GetItemJSONExample() (string, error) {
 	generator := &JSONExampleGenerator{}
-	return generator.GenerateJSONExampleCompact(createItemExample())
+	allowlist := map[string]bool{
+		"id":             true,
+		"title":          true,
+		"summary":        true,
+		"commentSummary": true,
+		"isRelevant":     true,
+	}
+	return generator.GenerateJSONExampleCompactWithAllowlist(createItemExample(), allowlist)
+}
+
+// GenerateJSONExampleCompactWithAllowlist creates a compact JSON example with an allowlist
+func (g *JSONExampleGenerator) GenerateJSONExampleCompactWithAllowlist(structType interface{}, allowlist map[string]bool) (string, error) {
+	example := g.createExampleStructWithAllowlist(structType, allowlist)
+	jsonBytes, err := json.Marshal(example)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal example struct: %w", err)
+	}
+	return string(jsonBytes), nil
 }
 
 // GetSummaryResponseJSONExample returns a formatted JSON example for the SummaryResponse struct
