@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/url"
 	"os"
 	"time"
 
@@ -139,13 +138,8 @@ func GetMockBenchmarkData(items []models.Item, personaObj persona.Persona, entri
 				webURL = item.Link
 			}
 
-			parsedURL, err := url.Parse(webURL)
-			if err != nil {
-				log.Fatalf("Error parsing URL: %v", err)
-			}
-
 			webSummary := models.WebContentSummary{
-				URL:             *parsedURL,
+				URL:             webURL,
 				OriginalContent: mockOriginalContent,
 				Summary:         item.WebContentSummary,
 				Title:           fmt.Sprintf("Web Content for %s", item.Title),

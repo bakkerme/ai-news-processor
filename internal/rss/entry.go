@@ -34,17 +34,17 @@ func (cf *CommentFeed) FeedString() string {
 
 // Entry and EntryComments are used throughout the codebase for RSS feeds
 type Entry struct {
-	Title               string    `xml:"title"`
-	Link                Link      `xml:"link"`
-	ID                  string    `xml:"id"`
-	Published           time.Time `xml:"published"`
-	Content             string    `xml:"content"`
-	Comments            []EntryComments
-	ExternalURLs        []url.URL         // New field to store external URLs found in content
-	ImageURLs           []url.URL         // New field to store extracted image URLs
-	MediaThumbnail      MediaThumbnail    `xml:"http://search.yahoo.com/mrss/ thumbnail"` // Field to store thumbnail information from media namespace
-	ImageDescription    string            // Field to store image descriptions from dedicated image processing
-	WebContentSummaries map[string]string // New field to store summaries of external URLs found in content
+	Title               string            `xml:"title" json:"title"`
+	Link                Link              `xml:"link" json:"link"`
+	ID                  string            `xml:"id" json:"id"`
+	Published           time.Time         `xml:"published" json:"published"`
+	Content             string            `xml:"content" json:"content"`
+	Comments            []EntryComments   `xml:"comments" json:"comments"`
+	ExternalURLs        []url.URL         `json:"externalURLs"`                                                 // New field to store external URLs found in content
+	ImageURLs           []url.URL         `json:"imageURLs"`                                                    // New field to store extracted image URLs
+	MediaThumbnail      MediaThumbnail    `xml:"http://search.yahoo.com/mrss/ thumbnail" json:"mediaThumbnail"` // Field to store thumbnail information from media namespace
+	ImageDescription    string            `json:"imageDescription"`                                             // Field to store image descriptions from dedicated image processing
+	WebContentSummaries map[string]string `json:"webContentSummaries"`                                          // New field to store summaries of external URLs found in content
 }
 
 type EntryComments struct {

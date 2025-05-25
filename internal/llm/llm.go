@@ -48,7 +48,7 @@ func (p *Processor) ProcessEntries(systemPrompt string, entries []rss.Entry, per
 	benchmarkData := models.RunData{
 		EntrySummaries:                []models.EntrySummary{},
 		ImageSummaries:                []models.ImageSummary{},
-		WebContentSummaries:           []models.WebContentSummary{},
+		WebContentSummaries:           []models.WebContentSummary{}, // This feature is unused for now, since web summaries do not use llm
 		RunDate:                       time.Now(),
 		Persona:                       persona,
 		OverallModelUsed:              p.client.GetModelName(),
@@ -251,7 +251,7 @@ func (p *Processor) processExternalURLs(entry *rss.Entry, persona persona.Person
 		// Add to benchmark data if benchmarking is enabled
 		if benchmarkData != nil {
 			webSummary := models.WebContentSummary{
-				URL:             extractedURLStr,
+				URL:             extractedURLStr.String(),
 				OriginalContent: articleData.CleanedText,
 				Summary:         summary,
 				Title:           articleData.Title,
