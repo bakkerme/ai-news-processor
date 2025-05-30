@@ -21,5 +21,8 @@ COPY --from=builder /app/personas /app/personas
 COPY build/crontab /etc/cron.d/appcron
 COPY build/init.sh /app/init.sh
 
+# Set execute permissions
+RUN chmod +x /app/main /app/init.sh
+
 # Command to run the executable
 CMD ["sh", "/app/init.sh"]
