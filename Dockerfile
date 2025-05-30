@@ -7,7 +7,7 @@ WORKDIR /app
 COPY . .
 
 # Build the application
-RUN GOOS=linux go build -o /app/main ./internal
+RUN GOOS=linux go build -o /app/main .
 
 # Final stage
 FROM alpine:latest
