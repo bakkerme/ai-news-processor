@@ -423,6 +423,60 @@ func (p *Processor) retryItemFunc(processFn func() (models.Item, error), process
 	return result, nil
 }
 
+// retrySummaryFunc is a helper to retry a function that returns a models.SummaryResponse and error
+func (p *Processor) retrySummaryFunc(processFn func() (*models.SummaryResponse, error), processType string) (*models.SummaryResponse, error) {
+	// Create retry config from processor's config
+	retryConfig := retry.RetryConfig{
+		InitialBackoff: p.config.InitialBackoff,
+		BackoffFactor:  p.config.BackoffFactor,
+		MaxRetries:     p.config.MaxRetries,
+		MaxBackoff:     p.config.MaxBackoff,
+	}
+
+	// Create a basic shouldRetry function that handles common errors
+	shouldRetry := func(err error) bool {
+		if err == nil {
+			return false // No error, no need to retry
+		}
+		// Add more sophisticated retry logic as needed
+		return true // For now, retry on any error
+	}
+
+	var result *models.SummaryResponse
+	var lastErr error
+
+	// Manually implement retry logic since we can't use type parameters on methods
+	// and retry.RetryWithBackoff expects T to match for both the function and return value
+	backoff := retryConfig.InitialBackoff
+	for attempt := 0; attempt <= retryConfig.MaxRetries; attempt++ {
+		if attempt > 0 {
+			fmt.Printf("retrying %s processing (attempt %d/%d) after error: %v\n",
+				processType, attempt, retryConfig.MaxRetries, lastErr)
+			time.Sleep(backoff)
+			backoff = time.Duration(float64(backoff) * retryConfig.BackoffFactor)
+			if backoff > retryConfig.MaxBackoff {
+				backoff = retryConfig.MaxBackoff
+			}
+		}
+
+		var err error
+		result, err = processFn()
+		if err == nil {
+			return result, nil // Success
+		}
+
+		lastErr = err
+		if !shouldRetry(err) {
+			break // Don't retry non-retryable errors
+		}
+	}
+
+	if lastErr != nil {
+		return nil, fmt.Errorf("max retries exceeded for %s: %w", processType, lastErr)
+	}
+	return result, nil
+}
+
 // EnrichItems adds links from RSS entries to items based on item ID
 func EnrichItems(items []models.Item, entries []rss.Entry) []models.Item {
 	enrichedItems := make([]models.Item, len(items))
@@ -473,4 +527,38 @@ func llmResponseToItems(jsonStr string) (models.Item, error) {
 		return models.Item{}, fmt.Errorf("could not unmarshal llm response to items: %w", err)
 	}
 	return items, nil
+}
+
+// generateSummaryWithRetry generates a summary with retry support
+func (p *Processor) generateSummaryWithRetry(entries []rss.Entry, persona persona.Persona) (*models.SummaryResponse, error) {
+	processFn := func() (*models.SummaryResponse, error) {
+		// Create input for summary
+		summaryInputs := make([]string, len(entries))
+		for i, entry := range entries {
+			summaryInputs[i] = entry.String(true)
+		}
+
+		summaryChannel := make(chan customerrors.ErrorString, 1)
+		summaryPrompt, err := prompts.ComposeSummaryPrompt(persona)
+		if err != nil {
+			return nil, fmt.Errorf("could not compose summary prompt for persona %s: %w", persona.Name, err)
+		}
+
+		go chatCompletionForFeedSummary(p.client, summaryPrompt, summaryInputs, summaryChannel)
+
+		summaryResult := <-summaryChannel
+		if summaryResult.Err != nil {
+			return nil, fmt.Errorf("could not generate summary: %w", summaryResult.Err)
+		}
+
+		processedSummary := p.client.PreprocessJSON(summaryResult.Value)
+		summary, err := models.UnmarshalSummaryResponseJSON([]byte(processedSummary))
+		if err != nil {
+			return nil, fmt.Errorf("could not parse summary response: %w", err)
+		}
+
+		return summary, nil
+	}
+
+	return p.retrySummaryFunc(processFn, "summary")
 }
