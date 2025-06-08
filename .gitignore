@@ -22,4 +22,7 @@ node_modules/
 
 # Task files
 tasks.json
-tasks/ 
+tasks/
+
+# Go binary
+ai-news-processor 
