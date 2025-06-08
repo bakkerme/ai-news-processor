@@ -178,7 +178,9 @@
             <a name="item-{{.ID}}"></a>
             <div class="item">
                 {{if .ThumbnailURL}}
-                    <img src="{{.ThumbnailURL}}" alt="Thumbnail" style="width: 100%; height: 200px; object-fit: cover;">
+                    <a href="{{.Link}}">
+                        <img src="{{.ThumbnailURL}}" alt="Thumbnail" style="width: 100%; height: 200px; object-fit: cover;">
+                    </a>
                 {{end}}
                 <div class="item-title">{{.Title}}</div>
                 <div class="item-summary">
