@@ -218,6 +218,7 @@ func GetItemJSONExample() (string, error) {
 	allowlist := map[string]bool{
 		"id":             true,
 		"title":          true,
+		"overview":       true,
 		"summary":        true,
 		"commentSummary": true,
 		"isRelevant":     true,
@@ -246,6 +247,7 @@ func GetSummaryResponseJSONExample() (string, error) {
 type itemExample struct {
 	Title             string `json:"title"`
 	ID                string `json:"id"`
+	Overview          string `json:"overview"`
 	Summary           string `json:"summary"`
 	CommentSummary    string `json:"commentSummary,omitempty"`
 	ImageSummary      string `json:"imageDescription,omitempty"`
