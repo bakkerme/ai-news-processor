@@ -7,6 +7,14 @@ import (
 	"github.com/invopop/jsonschema"
 )
 
+// Max token limits to prevent infinite LLM generation
+const (
+	MaxTokensEntrySummary = 2000 // For structured JSON responses with all fields
+	MaxTokensFeedSummary  = 1500 // For structured summary responses  
+	MaxTokensImageSummary = 600  // For image descriptions
+	MaxTokensWebSummary   = 800  // For web content summaries
+)
+
 // Generate the JSON schema at initialization time
 var ItemResponseSchema = GenerateSchema[[]models.Item]()
 var SummaryResponseSchema = GenerateSchema[models.SummaryResponse]()
@@ -34,9 +42,9 @@ func chatCompletionForEntrySummary(client openai.OpenAIClient, systemPrompt stri
 		systemPrompt,
 		userPrompts,
 		imageURLs,
-		nil, // Schema parameters currently disabled
-		0.5, // temperature
-		0,   // max tokens (0 means no limit)
+		nil,                  // Schema parameters currently disabled
+		0.5,                  // temperature
+		MaxTokensEntrySummary, // max tokens to prevent infinite generation
 		results,
 	)
 }
@@ -51,10 +59,10 @@ func chatCompletionForFeedSummary(client openai.OpenAIClient, systemPrompt strin
 	client.ChatCompletion(
 		systemPrompt,
 		userPrompts,
-		[]string{}, // No images for feed summaries
-		nil,        // Schema parameters currently disabled
-		0.5,        // temperature
-		0,          // max tokens (0 means no limit)
+		[]string{},            // No images for feed summaries
+		nil,                   // Schema parameters currently disabled
+		0.5,                   // temperature
+		MaxTokensFeedSummary,  // max tokens to prevent infinite generation
 		results,
 	)
 }
@@ -69,9 +77,9 @@ func chatCompletionImageSummary(client openai.OpenAIClient, systemPrompt string,
 		systemPrompt,
 		[]string{}, // No additional text prompt, just let the model analyze the images
 		imageURLs,
-		nil, // Schema parameters not needed for image analysis
-		0.1, // temperature
-		400, // max tokens set to 400 to limit the response length
+		nil,                  // Schema parameters not needed for image analysis
+		0.1,                  // temperature
+		MaxTokensImageSummary, // max tokens to prevent infinite generation
 		results,
 	)
 
@@ -95,8 +103,8 @@ func (p *Processor) chatCompletionForWebSummary(systemPrompt string, userPrompt 
 		[]string{userPrompt},
 		[]string{},
 		nil,
-		0.5, // temperature
-		0,   // max tokens (0 means no limit)
+		0.5,                 // temperature
+		MaxTokensWebSummary, // max tokens to prevent infinite generation
 		results,
 	)
 

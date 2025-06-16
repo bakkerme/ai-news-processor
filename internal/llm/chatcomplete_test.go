@@ -108,7 +108,7 @@ func TestChatCompletionForEntrySummary(t *testing.T) {
 	// SchemaParams are currently nil in the tested function
 	assert.Nil(t, mockClient.LastSchemaParams)
 	assert.Equal(t, 0.5, mockClient.LastTemperature)
-	assert.Equal(t, 0, mockClient.LastMaxTokens)
+	assert.Equal(t, MaxTokensEntrySummary, mockClient.LastMaxTokens)
 }
 
 func TestChatCompletionForFeedSummary(t *testing.T) {
@@ -129,7 +129,7 @@ func TestChatCompletionForFeedSummary(t *testing.T) {
 	// SchemaParams are currently nil in the tested function
 	assert.Nil(t, mockClient.LastSchemaParams)
 	assert.Equal(t, 0.5, mockClient.LastTemperature)
-	assert.Equal(t, 0, mockClient.LastMaxTokens)
+	assert.Equal(t, MaxTokensFeedSummary, mockClient.LastMaxTokens)
 }
 
 // TestChatCompletionImageSummary tests chatCompletionImageSummary.
@@ -149,7 +149,53 @@ func TestChatCompletionImageSummary(t *testing.T) {
 	assert.Equal(t, imageURLs, mockClient.LastImageURLs)
 	assert.Nil(t, mockClient.LastSchemaParams, "SchemaParams should be nil for image summary")
 	assert.Equal(t, 0.1, mockClient.LastTemperature)
-	assert.Equal(t, 400, mockClient.LastMaxTokens)
+	assert.Equal(t, MaxTokensImageSummary, mockClient.LastMaxTokens)
+}
+
+// TestMaxTokenLimitsPreventInfiniteGeneration verifies that max token limits are properly set
+func TestMaxTokenLimitsPreventInfiniteGeneration(t *testing.T) {
+	t.Run("EntrySummary", func(t *testing.T) {
+		mockClient := &MockOpenAIClient{}
+		results := make(chan customerrors.ErrorString, 1)
+
+		chatCompletionForEntrySummary(mockClient, "test", []string{"test"}, nil, results)
+		<-results
+
+		assert.Equal(t, MaxTokensEntrySummary, mockClient.LastMaxTokens, "Entry summary should use MaxTokensEntrySummary")
+		assert.Greater(t, MaxTokensEntrySummary, 0, "MaxTokensEntrySummary should be greater than 0")
+	})
+
+	t.Run("FeedSummary", func(t *testing.T) {
+		mockClient := &MockOpenAIClient{}
+		results := make(chan customerrors.ErrorString, 1)
+
+		chatCompletionForFeedSummary(mockClient, "test", []string{"test"}, results)
+		<-results
+
+		assert.Equal(t, MaxTokensFeedSummary, mockClient.LastMaxTokens, "Feed summary should use MaxTokensFeedSummary")
+		assert.Greater(t, MaxTokensFeedSummary, 0, "MaxTokensFeedSummary should be greater than 0")
+	})
+
+	t.Run("ImageSummary", func(t *testing.T) {
+		mockClient := &MockOpenAIClient{}
+
+		_, err := chatCompletionImageSummary(mockClient, "test", []string{"test"})
+		assert.NoError(t, err)
+
+		assert.Equal(t, MaxTokensImageSummary, mockClient.LastMaxTokens, "Image summary should use MaxTokensImageSummary")
+		assert.Greater(t, MaxTokensImageSummary, 0, "MaxTokensImageSummary should be greater than 0")
+	})
+
+	t.Run("WebSummary", func(t *testing.T) {
+		mockClient := &MockOpenAIClient{}
+		processor := &Processor{client: mockClient}
+
+		_, err := processor.chatCompletionForWebSummary("test", "test")
+		assert.NoError(t, err)
+
+		assert.Equal(t, MaxTokensWebSummary, mockClient.LastMaxTokens, "Web summary should use MaxTokensWebSummary")
+		assert.Greater(t, MaxTokensWebSummary, 0, "MaxTokensWebSummary should be greater than 0")
+	})
 }
 
 // TODO: Add tests for error cases, e.g., when the client.ChatCompletion sends an error on the results channel.
