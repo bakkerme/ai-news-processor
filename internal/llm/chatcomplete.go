@@ -7,6 +7,12 @@ import (
 	"github.com/invopop/jsonschema"
 )
 
+// Max token limits - only for non-JSON responses to prevent quality degradation
+const (
+	MaxTokensImageSummary = 800  // For image descriptions (non-JSON, can be safely limited)
+	MaxTokensWebSummary   = 1000 // For web content summaries (non-JSON, can be safely limited)
+)
+
 // Generate the JSON schema at initialization time
 var ItemResponseSchema = GenerateSchema[[]models.Item]()
 var SummaryResponseSchema = GenerateSchema[models.SummaryResponse]()
@@ -36,7 +42,7 @@ func chatCompletionForEntrySummary(client openai.OpenAIClient, systemPrompt stri
 		imageURLs,
 		nil, // Schema parameters currently disabled
 		0.5, // temperature
-		0,   // max tokens (0 means no limit)
+		0,   // max tokens (0 means no limit - needed for complete JSON generation)
 		results,
 	)
 }
@@ -54,7 +60,7 @@ func chatCompletionForFeedSummary(client openai.OpenAIClient, systemPrompt strin
 		[]string{}, // No images for feed summaries
 		nil,        // Schema parameters currently disabled
 		0.5,        // temperature
-		0,          // max tokens (0 means no limit)
+		0,          // max tokens (0 means no limit - needed for complete JSON generation)
 		results,
 	)
 }
@@ -69,9 +75,9 @@ func chatCompletionImageSummary(client openai.OpenAIClient, systemPrompt string,
 		systemPrompt,
 		[]string{}, // No additional text prompt, just let the model analyze the images
 		imageURLs,
-		nil, // Schema parameters not needed for image analysis
-		0.1, // temperature
-		400, // max tokens set to 400 to limit the response length
+		nil,                  // Schema parameters not needed for image analysis
+		0.1,                  // temperature
+		MaxTokensImageSummary, // max tokens to prevent infinite generation
 		results,
 	)
 
@@ -95,8 +101,8 @@ func (p *Processor) chatCompletionForWebSummary(systemPrompt string, userPrompt 
 		[]string{userPrompt},
 		[]string{},
 		nil,
-		0.5, // temperature
-		0,   // max tokens (0 means no limit)
+		0.5,                // temperature
+		MaxTokensWebSummary, // reasonable limit for web summaries (non-JSON)
 		results,
 	)
 

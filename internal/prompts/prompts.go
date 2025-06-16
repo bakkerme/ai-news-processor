@@ -56,6 +56,10 @@ Write in a conversational, engaging style while maintaining technical accuracy. 
 
 Do not start with 'This post...' or 'This item...'.
 
+Keep responses concise but comprehensive. Aim for:
+* Summary: 2-3 sentences per paragraph (500-800 words total)
+* CommentSummary: 2-3 sentences per paragraph (300-600 words total)
+
 Respond only with valid JSON. Put JSON in ` + "```json" + ` tags.
 Use the following JSON structure:
 {{.ItemJSONExample}}
@@ -77,6 +81,8 @@ The response format for KeyDevelopments should be an array of objects, each with
 
 Focus on technical accuracy while maintaining an engaging, analytical style. Avoid generic statements and focus on specific, concrete developments and their implications. This is a newsletter.
 
+Keep the response concise but informative. Aim for 2-3 key developments with 1-2 sentences each.
+
 Respond only with valid JSON. Put JSON in ` + "```json" + ` tags.
 {{.SummaryJSONExample}}
 `
@@ -88,6 +94,8 @@ Your task is to analyze the provided image and generate a detailed description.
 The image is from a post titled: "{{.Title}}"
 
 Describe what is shown in the image (people, objects, text, UI elements, charts, etc.), within 400 words.
+
+Keep your description concise but comprehensive, focusing on the most important and technically relevant details.
 
 Respond with a concise but comprehensive description focusing on technical and factual details. If something is not in English, is blurry or not clear, do not describe it.`
 

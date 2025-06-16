@@ -269,10 +269,10 @@ func (p *Processor) processExternalURLs(entry *rss.Entry, persona persona.Person
 // summarizeTextWithLLM summarizes given content using an LLM
 func (p *Processor) summarizeWebSite(pageTitle string, url *url.URL, content string, persona persona.Persona) (string, error) {
 	// Create a system prompt for summarization
-	systemPrompt := fmt.Sprintf("You are a concise summarizer for %s. Provide brief, informative summaries of web content.", persona.Name)
+	systemPrompt := fmt.Sprintf("You are a concise summarizer for %s. Provide brief, informative summaries of web content. Keep summaries to 300-500 words and focus on key technical insights.", persona.Name)
 
 	// Use simple prompt for initial implementation
-	userPrompt := fmt.Sprintf("Please provide a concise summary of the following article content:\n\n%s\n\nTitle: %s\n\nURL: %s", content, pageTitle, url)
+	userPrompt := fmt.Sprintf("Please provide a concise summary of the following article content (aim for 300-500 words):\n\n%s\n\nTitle: %s\n\nURL: %s", content, pageTitle, url)
 
 	// disable qwen thinking
 	userPrompt += "\n/no_thinking"

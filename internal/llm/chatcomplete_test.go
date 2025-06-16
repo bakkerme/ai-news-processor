@@ -149,7 +149,51 @@ func TestChatCompletionImageSummary(t *testing.T) {
 	assert.Equal(t, imageURLs, mockClient.LastImageURLs)
 	assert.Nil(t, mockClient.LastSchemaParams, "SchemaParams should be nil for image summary")
 	assert.Equal(t, 0.1, mockClient.LastTemperature)
-	assert.Equal(t, 400, mockClient.LastMaxTokens)
+	assert.Equal(t, MaxTokensImageSummary, mockClient.LastMaxTokens)
+}
+
+// TestSafeApproachToPreventInfiniteGeneration verifies that the safe approach is implemented
+func TestSafeApproachToPreventInfiniteGeneration(t *testing.T) {
+	t.Run("EntrySummary_UnlimitedForJSON", func(t *testing.T) {
+		mockClient := &MockOpenAIClient{}
+		results := make(chan customerrors.ErrorString, 1)
+
+		chatCompletionForEntrySummary(mockClient, "test", []string{"test"}, nil, results)
+		<-results
+
+		assert.Equal(t, 0, mockClient.LastMaxTokens, "Entry summary should use unlimited tokens (0) to ensure complete JSON")
+	})
+
+	t.Run("FeedSummary_UnlimitedForJSON", func(t *testing.T) {
+		mockClient := &MockOpenAIClient{}
+		results := make(chan customerrors.ErrorString, 1)
+
+		chatCompletionForFeedSummary(mockClient, "test", []string{"test"}, results)
+		<-results
+
+		assert.Equal(t, 0, mockClient.LastMaxTokens, "Feed summary should use unlimited tokens (0) to ensure complete JSON")
+	})
+
+	t.Run("ImageSummary_LimitedForNonJSON", func(t *testing.T) {
+		mockClient := &MockOpenAIClient{}
+
+		_, err := chatCompletionImageSummary(mockClient, "test", []string{"test"})
+		assert.NoError(t, err)
+
+		assert.Equal(t, MaxTokensImageSummary, mockClient.LastMaxTokens, "Image summary should use MaxTokensImageSummary for non-JSON responses")
+		assert.Greater(t, MaxTokensImageSummary, 0, "MaxTokensImageSummary should be greater than 0")
+	})
+
+	t.Run("WebSummary_LimitedForNonJSON", func(t *testing.T) {
+		mockClient := &MockOpenAIClient{}
+		processor := &Processor{client: mockClient}
+
+		_, err := processor.chatCompletionForWebSummary("test", "test")
+		assert.NoError(t, err)
+
+		assert.Equal(t, MaxTokensWebSummary, mockClient.LastMaxTokens, "Web summary should use MaxTokensWebSummary for non-JSON responses")
+		assert.Greater(t, MaxTokensWebSummary, 0, "MaxTokensWebSummary should be greater than 0")
+	})
 }
 
 // TODO: Add tests for error cases, e.g., when the client.ChatCompletion sends an error on the results channel.
