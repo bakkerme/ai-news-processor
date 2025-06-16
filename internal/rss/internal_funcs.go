@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -139,7 +140,7 @@ func fetchWithRetry(url string, config retry.RetryConfig) (*http.Response, error
 
 // dumpFeed saves the raw RSS content to disk for debugging purposes
 func dumpFeed(feedURL string, content Feedlike, personaName, itemName string) error {
-	fmt.Printf("Dumping RSS for %s\n", feedURL)
+	log.Printf("Dumping RSS for %s\n", feedURL)
 
 	feedString := content.FeedString()
 

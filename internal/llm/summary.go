@@ -1,7 +1,7 @@
 package llm
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/bakkerme/ai-news-processor/internal/contentextractor"
 	"github.com/bakkerme/ai-news-processor/internal/fetcher"
@@ -16,7 +16,7 @@ import (
 
 // GenerateSummary creates a summary for a set of relevant RSS entries with retry support
 func GenerateSummary(client openai.OpenAIClient, entries []rss.Entry, p persona.Persona) (*models.SummaryResponse, error) {
-	fmt.Println("Generating summary of relevant items")
+	log.Println("Generating summary of relevant items")
 
 	// Create processor config for retry logic
 	processorConfig := EntryProcessConfig{
