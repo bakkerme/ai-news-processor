@@ -35,6 +35,10 @@ If an item matches any of the exclusion criteria, set the IsRelevant field to fa
 For each item, provide a newsletter-style explanation that includes:
 * "ID"
 * "Title"
+* "Overview"
+	* A quick, concise overview of the post content in 2-3 bullet points or sentences
+	* Designed to help readers quickly decide if they want to read the full post
+	* Should highlight the most important aspects without going into deep technical detail
 * "Summary"
 	* 1 - 2 paragraphs, extracting key points of interest from the post, image description, factoring in relevant, factual information from the comments
 	* Extrapolate on the details of these key points of interest
