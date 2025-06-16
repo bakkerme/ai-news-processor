@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -76,7 +77,7 @@ func WriteRunDataToDisk(data *models.RunData) error {
 		return fmt.Errorf("error writing to default benchmark file: %w", err)
 	}
 
-	fmt.Printf("Run data written to %s and %s\n", benchFilePath, defaultPath)
+	log.Printf("Run data written to %s and %s\n", benchFilePath, defaultPath)
 	return nil
 }
 
@@ -121,7 +122,7 @@ func SubmitRunDataToAuditService(data *models.RunData, auditServiceURL string) e
 		return fmt.Errorf("audit service returned status %s: %s", resp.Status, string(bodyBytes))
 	}
 
-	fmt.Printf("Run data successfully submitted to audit service at %s\n", auditServiceURL)
+	log.Printf("Run data successfully submitted to audit service at %s\n", auditServiceURL)
 	return nil
 }
 
@@ -164,14 +165,14 @@ func LoadRunData() ([]models.RunData, error) {
 		dataBytes, err := os.ReadFile(filePath)
 		if err != nil {
 			// It's possible a file was deleted between listing and reading, log and continue or handle
-			fmt.Printf("Warning: failed to read run data file %s: %v\n", filePath, err)
+			log.Printf("Warning: failed to read run data file %s: %v\n", filePath, err)
 			continue
 		}
 
 		var runData models.RunData // Changed type
 		err = json.Unmarshal(dataBytes, &runData)
 		if err != nil {
-			fmt.Printf("Warning: failed to unmarshal run data from file %s: %v\n", filePath, err)
+			log.Printf("Warning: failed to unmarshal run data from file %s: %v\n", filePath, err)
 			continue
 		}
 

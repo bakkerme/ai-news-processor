@@ -3,6 +3,7 @@ package internal
 import (
 	"flag"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/bakkerme/ai-news-processor/internal/bench"
@@ -31,7 +32,7 @@ func Run() {
 	// Print the duration it took to run the job
 	startTime := time.Now()
 	defer func() {
-		fmt.Printf("Job took %v\n", time.Since(startTime))
+		log.Printf("Job took %v\n", time.Since(startTime))
 	}()
 
 	// Initialize the OpenAI client with safe timeouts to prevent infinite generation
@@ -41,7 +42,7 @@ func Run() {
 	var imageClient openai.OpenAIClient
 	if s.LlmImageEnabled {
 		imageClient = openai.NewWithSafeTimeouts(s.LlmUrl, s.LlmApiKey, s.LlmImageModel)
-		fmt.Println("Image processing enabled with model:", s.LlmImageModel)
+		log.Println("Image processing enabled with model:", s.LlmImageModel)
 	} else {
 		// Use the main client as a fallback
 		imageClient = openaiClient
@@ -71,7 +72,7 @@ func Run() {
 	// Create appropriate feed provider based on debug settings
 	var feedProvider rss.FeedProvider
 	if s.DebugMockRss {
-		fmt.Println("Using mock feed provider")
+		log.Println("Using mock feed provider")
 		// Use the persona name from the first selected persona for mock data
 		// Each persona will still use its own mock data in processing
 		feedProvider = rss.NewMockFeedProvider(selectedPersonas[0].Name)
@@ -81,13 +82,13 @@ func Run() {
 
 	// Process each persona
 	for _, persona := range selectedPersonas {
-		fmt.Printf("Processing persona: %s\n", persona.Name)
+		log.Printf("Processing persona: %s\n", persona.Name)
 		urlExtractor := urlextraction.NewRedditExtractor()
 
 		// 1. Fetch and process RSS feed using FeedProvider
 		entries, err := rss.FetchAndProcessFeed(feedProvider, urlExtractor, persona.FeedURL, s.DebugRssDump, persona.Name)
 		if err != nil {
-			fmt.Printf("Failed to process RSS feed for persona %s: %v\n", persona.Name, err)
+			log.Printf("Failed to process RSS feed for persona %s: %v\n", persona.Name, err)
 			continue
 		}
 
@@ -105,10 +106,10 @@ func Run() {
 
 		// 3. Process entries with LLM
 		if !s.DebugMockLLM {
-			fmt.Println("Sending to LLM")
+			log.Println("Sending to LLM")
 			systemPrompt, err := prompts.ComposePrompt(persona, "")
 			if err != nil {
-				fmt.Printf("Could not compose prompt for persona %s: %v\n", persona.Name, err)
+				log.Printf("Could not compose prompt for persona %s: %v\n", persona.Name, err)
 				continue
 			}
 
@@ -150,11 +151,11 @@ func Run() {
 			// Process the entries using the processor
 			items, benchmarkData, err = processor.ProcessEntries(systemPrompt, entries, persona)
 			if err != nil {
-				fmt.Printf("Could not process entries with LLM for persona %s: %v\n", persona.Name, err)
+				log.Printf("Could not process entries with LLM for persona %s: %v\n", persona.Name, err)
 				continue
 			}
 		} else {
-			fmt.Println("Loading fake LLM response")
+			log.Println("Loading fake LLM response")
 			items = GetMockLLMResponse()
 			// Generate mock benchmark data using the mock items, the current persona, and the original entries
 			benchmarkData = GetMockBenchmarkData(items, persona, entries)
@@ -168,7 +169,7 @@ func Run() {
 		// 6. Filter for relevant items
 		relevantItems := llm.FilterRelevantItems(items)
 		if len(relevantItems) == 0 {
-			fmt.Println("no items to render as an email")
+			log.Println("no items to render as an email")
 			continue
 		}
 
@@ -200,14 +201,14 @@ func Run() {
 		if s.DebugOutputBenchmark {
 			err := bench.WriteRunDataToDisk(&benchmarkData)
 			if err != nil {
-				fmt.Printf("Error writing benchmark data to disk for persona %s: %v\n", persona.Name, err)
+				log.Printf("Error writing benchmark data to disk for persona %s: %v\n", persona.Name, err)
 			}
 		}
 
 		if s.SendBenchmarkToAuditService {
 			err = bench.SubmitRunDataToAuditService(&benchmarkData, s.AuditServiceUrl)
 			if err != nil {
-				fmt.Printf("Warning: Failed to submit run data to audit service for persona %s: %v\n", persona.Name, err)
+				log.Printf("Warning: Failed to submit run data to audit service for persona %s: %v\n", persona.Name, err)
 			}
 		}
 
@@ -215,11 +216,11 @@ func Run() {
 		if !s.DebugSkipEmail {
 			err = emailService.RenderAndSend(relevantItems, summaryResponse, persona.Name)
 			if err != nil {
-				fmt.Printf("Could not send email for persona %s: %v\n", persona.Name, err)
+				log.Printf("Could not send email for persona %s: %v\n", persona.Name, err)
 				continue
 			}
 		} else {
-			fmt.Println("Skipping email")
+			log.Println("Skipping email")
 		}
 	}
 }

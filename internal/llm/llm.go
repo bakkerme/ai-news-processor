@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -66,7 +67,7 @@ func (p *Processor) ProcessEntries(systemPrompt string, entries []rss.Entry, per
 
 	// PHASE 1: Process all images first if image processing is enabled. This needs to be done first because the image processing uses a seperate model that takes time to load.
 	if p.imageEnabled {
-		fmt.Println("Phase 1: Processing all images")
+		log.Println("Phase 1: Processing all images")
 
 		imageStartTime := time.Now()
 		for i := range entries {
@@ -74,11 +75,11 @@ func (p *Processor) ProcessEntries(systemPrompt string, entries []rss.Entry, per
 				// Create the image prompt
 				imagePrompt, err := prompts.ComposeImagePrompt(persona, entries[i].Title)
 				if err != nil {
-					fmt.Printf("Error creating image prompt for entry %d: %v\n", i, err)
+					log.Printf("Error creating image prompt for entry %d: %v\n", i, err)
 					continue
 				}
 
-				fmt.Printf("Processing image for entry %d: %s\n", i, entries[i].ImageURLs[0].String())
+				log.Printf("Processing image for entry %d: %s\n", i, entries[i].ImageURLs[0].String())
 
 				// Track image processing time if benchmarking is enabled
 				imgStartTime := time.Now()
@@ -89,10 +90,10 @@ func (p *Processor) ProcessEntries(systemPrompt string, entries []rss.Entry, per
 				imgProcessingTime := time.Since(imgStartTime).Milliseconds()
 
 				if err != nil {
-					fmt.Printf("Error processing image for entry %d: %v\n", i, err)
+					log.Printf("Error processing image for entry %d: %v\n", i, err)
 				} else {
 					entries[i].ImageDescription = imageDescription
-					fmt.Printf("Image processing successful for entry %d\n", i)
+					log.Printf("Image processing successful for entry %d\n", i)
 
 					// Add to benchmark data
 					imgSummary := models.ImageSummary{
@@ -112,14 +113,14 @@ func (p *Processor) ProcessEntries(systemPrompt string, entries []rss.Entry, per
 
 	// PHASE 2: Process all external URLs
 	if p.urlSummaryEnabled {
-		fmt.Println("Phase 2: Processing all external URLs")
+		log.Println("Phase 2: Processing all external URLs")
 
 		webStartTime := time.Now()
 		for i := range entries {
-			fmt.Printf("Processing external URLs for entry %d\n", i)
+			log.Printf("Processing external URLs for entry %d\n", i)
 			summaries, err := p.processExternalURLs(&entries[i], persona, &benchmarkData)
 			if err != nil {
-				fmt.Printf("Error processing external URLs for entry %d: %v\n", i, err)
+				log.Printf("Error processing external URLs for entry %d: %v\n", i, err)
 				processingErrors = append(processingErrors, fmt.Errorf("entry %d: %w", i, err))
 				continue
 			}
@@ -132,10 +133,10 @@ func (p *Processor) ProcessEntries(systemPrompt string, entries []rss.Entry, per
 	}
 
 	// PHASE 3: Process the main entry text summarization for all entries
-	fmt.Println("Phase 3: Processing all text summarizations")
+	log.Println("Phase 3: Processing all text summarizations")
 	overallStartTime := time.Now()
 	for i, entry := range entries {
-		fmt.Printf("Processing entry text %d\n", i)
+		log.Printf("Processing entry text %d\n", i)
 
 		entryStartTime := time.Now()
 
@@ -143,14 +144,14 @@ func (p *Processor) ProcessEntries(systemPrompt string, entries []rss.Entry, per
 		item, err := p.processEntryWithRetry(systemPrompt, entry)
 
 		if err != nil {
-			fmt.Printf("Error processing entry %d: %v\n", i, err)
+			log.Printf("Error processing entry %d: %v\n", i, err)
 			processingErrors = append(processingErrors, fmt.Errorf("entry %d: %w", i, err))
 			continue
 		}
 
 		entryProcessingTime := time.Since(entryStartTime).Milliseconds()
 
-		fmt.Printf("Processed item %d successfully\n", i)
+		log.Printf("Processed item %d successfully\n", i)
 		items = append(items, item)
 
 		// Add to benchmark data
@@ -170,7 +171,7 @@ func (p *Processor) ProcessEntries(systemPrompt string, entries []rss.Entry, per
 
 	// If some entries failed but we have some successes, just log the errors
 	if len(processingErrors) > 0 {
-		fmt.Printf("warning: %d entries failed processing\n", len(processingErrors))
+		log.Printf("warning: %d entries failed processing\n", len(processingErrors))
 	}
 
 	// Finalize benchmark data
@@ -210,7 +211,7 @@ func (p *Processor) processExternalURLs(entry *rss.Entry, persona persona.Person
 
 	// 2. Process each extracted URL
 	for _, extractedURLStr := range extractedURLs {
-		fmt.Printf("processing external URL: %s\n", extractedURLStr.String())
+		log.Printf("processing external URL: %s\n", extractedURLStr.String())
 
 		// Start timing for benchmarking
 		webStartTime := time.Now()
@@ -218,27 +219,27 @@ func (p *Processor) processExternalURLs(entry *rss.Entry, persona persona.Person
 		// 2a. Fetch the content
 		resp, err := p.urlFetcher.Fetch(context.Background(), &extractedURLStr)
 		if err != nil {
-			fmt.Printf("warning: Failed to fetch content for %s: %v\n", extractedURLStr.String(), err)
+			log.Printf("warning: Failed to fetch content for %s: %v\n", extractedURLStr.String(), err)
 			continue // Skip to the next URL if fetching fails
 		}
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			fmt.Printf("warning: Received non-OK status code for %s: %d\n", extractedURLStr.String(), resp.StatusCode)
+			log.Printf("warning: Received non-OK status code for %s: %d\n", extractedURLStr.String(), resp.StatusCode)
 			continue // Skip to the next URL for non-OK status codes
 		}
 
 		// 2b. Extract the article text
 		articleData, err := p.articleExtractor.Extract(resp.Body, &extractedURLStr)
 		if err != nil {
-			fmt.Printf("warning: Failed to extract article content for %s: %v\n", extractedURLStr.String(), err)
+			log.Printf("warning: Failed to extract article content for %s: %v\n", extractedURLStr.String(), err)
 			continue // Skip to the next URL if extraction fails
 		}
 
 		// 2c. Summarize the extracted content with LLM
 		summary, err := p.summarizeWebSite(articleData.Title, &extractedURLStr, articleData.CleanedText, persona)
 		if err != nil {
-			fmt.Printf("warning: Failed to summarize content for %s: %v\n", extractedURLStr.String(), err)
+			log.Printf("warning: Failed to summarize content for %s: %v\n", extractedURLStr.String(), err)
 			continue // Skip to the next URL if summarization fails
 		}
 
@@ -396,7 +397,7 @@ func (p *Processor) retryItemFunc(processFn func() (models.Item, error), process
 	backoff := retryConfig.InitialBackoff
 	for attempt := 0; attempt <= retryConfig.MaxRetries; attempt++ {
 		if attempt > 0 {
-			fmt.Printf("retrying %s processing (attempt %d/%d) after error: %v\n",
+			log.Printf("retrying %s processing (attempt %d/%d) after error: %v\n",
 				processType, attempt, retryConfig.MaxRetries, lastErr)
 			time.Sleep(backoff)
 			backoff = time.Duration(float64(backoff) * retryConfig.BackoffFactor)
@@ -450,7 +451,7 @@ func (p *Processor) retrySummaryFunc(processFn func() (*models.SummaryResponse, 
 	backoff := retryConfig.InitialBackoff
 	for attempt := 0; attempt <= retryConfig.MaxRetries; attempt++ {
 		if attempt > 0 {
-			fmt.Printf("retrying %s processing (attempt %d/%d) after error: %v\n",
+			log.Printf("retrying %s processing (attempt %d/%d) after error: %v\n",
 				processType, attempt, retryConfig.MaxRetries, lastErr)
 			time.Sleep(backoff)
 			backoff = time.Duration(float64(backoff) * retryConfig.BackoffFactor)
@@ -490,7 +491,7 @@ func EnrichItems(items []models.Item, entries []rss.Entry) []models.Item {
 
 		entry := rss.FindEntryByID(id, entries)
 		if entry == nil {
-			fmt.Printf("could not find item with ID %s in RSS entry\n", id)
+			log.Printf("could not find item with ID %s in RSS entry\n", id)
 			continue
 		}
 

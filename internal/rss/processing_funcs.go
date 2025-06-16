@@ -3,13 +3,14 @@ package rss
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/bakkerme/ai-news-processor/internal/urlextraction"
 )
 
 // FetchAndProcessFeed fetches an RSS feed from the given URL and processes it
 func FetchAndProcessFeed(provider FeedProvider, urlExtractor urlextraction.Extractor, feedURL string, debugRssDump bool, personaName string) ([]Entry, error) {
-	fmt.Printf("Loading RSS feed: %s\n", feedURL)
+	log.Printf("Loading RSS feed: %s\n", feedURL)
 
 	rssFeed, err := provider.FetchFeed(context.Background(), feedURL)
 	if err != nil {
@@ -19,7 +20,7 @@ func FetchAndProcessFeed(provider FeedProvider, urlExtractor urlextraction.Extra
 	// Dump RSS content if debug flag is enabled
 	if debugRssDump {
 		if err := dumpFeed(feedURL, rssFeed, personaName, personaName); err != nil {
-			fmt.Printf("Warning: Failed to dump RSS feed: %v\n", err)
+			log.Printf("Warning: Failed to dump RSS feed: %v\n", err)
 		}
 	}
 
@@ -36,7 +37,7 @@ func FetchAndProcessFeed(provider FeedProvider, urlExtractor urlextraction.Extra
 
 		if debugRssDump {
 			if err := dumpFeed(entry.GetCommentRSSURL(), commentFeed, personaName, entry.ID); err != nil {
-				fmt.Printf("Warning: Failed to dump RSS comment feed: %v\n", err)
+				log.Printf("Warning: Failed to dump RSS comment feed: %v\n", err)
 			}
 		}
 

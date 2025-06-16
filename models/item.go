@@ -10,6 +10,7 @@ import (
 type Item struct {
 	Title             string    `json:"title"`
 	ID                string    `json:"id"`
+	Overview          string    `json:"overview"`
 	Summary           string    `json:"summary"`
 	CommentSummary    string    `json:"commentSummary,omitempty"`
 	ImageSummary      string    `json:"imageDescription,omitempty"`
