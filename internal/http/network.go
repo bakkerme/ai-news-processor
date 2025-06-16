@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -20,21 +21,21 @@ func FetchImageAsBase64(imageURL string) string {
 	// Make the HTTP request
 	resp, err := client.Get(imageURL)
 	if err != nil {
-		fmt.Printf("Error fetching image %s: %v\n", imageURL, err)
+		log.Printf("Error fetching image %s: %v\n", imageURL, err)
 		return ""
 	}
 	defer resp.Body.Close()
 
 	// Check if response status is OK
 	if resp.StatusCode != http.StatusOK {
-		fmt.Printf("Error fetching image %s: status code %d\n", imageURL, resp.StatusCode)
+		log.Printf("Error fetching image %s: status code %d\n", imageURL, resp.StatusCode)
 		return ""
 	}
 
 	// Read the image data
 	imageData, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Printf("Error reading image data %s: %v\n", imageURL, err)
+		log.Printf("Error reading image data %s: %v\n", imageURL, err)
 		return ""
 	}
 

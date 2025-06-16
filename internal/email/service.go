@@ -2,6 +2,7 @@ package email
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -42,7 +43,7 @@ func (s *Service) RenderAndSend(items []models.Item, summary *models.SummaryResp
 	}
 
 	if !s.config.DebugSkipEmail {
-		fmt.Printf("Sending email to %s\n", s.config.EmailTo)
+		log.Printf("Sending email to %s\n", s.config.EmailTo)
 		return s.emailer.Send(s.config.EmailTo, fmt.Sprintf("%s News", personaName), email)
 	}
 
@@ -63,6 +64,6 @@ func writeEmailToDisk(content string) error {
 	if err != nil {
 		return fmt.Errorf("could not write email to disk: %w", err)
 	}
-	fmt.Printf("Email written to %s\n", filename)
+	log.Printf("Email written to %s\n", filename)
 	return nil
 }
