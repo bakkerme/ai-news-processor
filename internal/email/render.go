@@ -3,6 +3,7 @@ package email
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"text/template"
 
 	"embed"
@@ -25,8 +26,23 @@ func RenderEmail(items []models.Item, summary *models.SummaryResponse, personaNa
 		return "", fmt.Errorf("failed to read template: %w", err)
 	}
 
+	// Create template functions
+	funcMap := template.FuncMap{
+		"split": strings.Split,
+		"trimBullet": func(s string) string {
+			s = strings.TrimSpace(s)
+			if strings.HasPrefix(s, "•") {
+				s = strings.TrimSpace(s[len("•"):])
+			}
+			if strings.HasPrefix(s, "-") {
+				s = strings.TrimSpace(s[1:])
+			}
+			return s
+		},
+	}
+
 	// Create and parse the template
-	tmpl, err := template.New("email").Parse(string(tmplContent))
+	tmpl, err := template.New("email").Funcs(funcMap).Parse(string(tmplContent))
 	if err != nil {
 		return "", fmt.Errorf("failed to parse template: %w", err)
 	}

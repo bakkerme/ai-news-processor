@@ -150,6 +150,23 @@
             color: #2d3748;
             font-size: 1.1em;
         }
+        .overview-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .overview-list li {
+            margin-bottom: 5px;
+            padding-left: 15px;
+            position: relative;
+        }
+        .overview-list li:before {
+            content: "•";
+            color: #4299e1;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
     </style>
 </head>
 <body>
@@ -183,7 +200,13 @@
                 <div class="item-title">{{.Title}}</div>
                 {{if .Overview}}
                 <div class="highlight-box">
-                    <strong>Overview:</strong> {{.Overview}}
+                    <ul class="overview-list">
+                        {{range $line := split .Overview "\n"}}
+                        {{if $line}}
+                        <li>{{trimBullet $line}}</li>
+                        {{end}}
+                        {{end}}
+                    </ul>
                 </div>
                 {{end}}
                 <div class="item-summary">
