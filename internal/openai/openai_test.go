@@ -186,3 +186,26 @@ func TestPreprocessYAML(t *testing.T) {
 		})
 	}
 }
+
+func TestNewWithSafeTimeouts(t *testing.T) {
+	client := NewWithSafeTimeouts("http://localhost:8080", "test-key", "test-model")
+	
+	// Verify the client was created
+	if client == nil {
+		t.Fatal("expected client to be created, got nil")
+	}
+	
+	// Verify the model is set correctly
+	if client.model != "test-model" {
+		t.Errorf("expected model to be 'test-model', got %q", client.model)
+	}
+	
+	// Verify the safe timeout configuration is used
+	if client.retry.MaxTotalTimeout != SafeOpenAIRetryConfig.MaxTotalTimeout {
+		t.Errorf("expected MaxTotalTimeout to be %v, got %v", SafeOpenAIRetryConfig.MaxTotalTimeout, client.retry.MaxTotalTimeout)
+	}
+	
+	if client.retry.MaxRetries != SafeOpenAIRetryConfig.MaxRetries {
+		t.Errorf("expected MaxRetries to be %d, got %d", SafeOpenAIRetryConfig.MaxRetries, client.retry.MaxRetries)
+	}
+}

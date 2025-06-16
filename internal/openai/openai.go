@@ -63,6 +63,15 @@ var DefaultOpenAIRetryConfig = retry.RetryConfig{
 	MaxTotalTimeout: 30 * time.Minute, // LLM calls can take a while
 }
 
+// SafeOpenAIRetryConfig provides safer defaults to prevent infinite generation hangs
+var SafeOpenAIRetryConfig = retry.RetryConfig{
+	MaxRetries:      3,
+	InitialBackoff:  1 * time.Second,
+	MaxBackoff:      10 * time.Second,
+	BackoffFactor:   2.0,
+	MaxTotalTimeout: 5 * time.Minute, // Stricter timeout to prevent hangs
+}
+
 type Client struct {
 	client *openai.Client
 	model  string
@@ -80,6 +89,20 @@ func New(baseURL, key, model string) *Client {
 		client: &client,
 		model:  model,
 		retry:  DefaultOpenAIRetryConfig,
+	}
+}
+
+// NewWithSafeTimeouts creates a new OpenAI client with safer timeouts to prevent infinite generation
+func NewWithSafeTimeouts(baseURL, key, model string) *Client {
+	client := openai.NewClient(
+		option.WithAPIKey(key),
+		option.WithBaseURL(baseURL),
+		option.WithJSONSet("cache_set", true),
+	)
+	return &Client{
+		client: &client,
+		model:  model,
+		retry:  SafeOpenAIRetryConfig,
 	}
 }
 

@@ -7,12 +7,10 @@ import (
 	"github.com/invopop/jsonschema"
 )
 
-// Max token limits to prevent infinite LLM generation
+// Max token limits - only for non-JSON responses to prevent quality degradation
 const (
-	MaxTokensEntrySummary = 2000 // For structured JSON responses with all fields
-	MaxTokensFeedSummary  = 1500 // For structured summary responses  
-	MaxTokensImageSummary = 600  // For image descriptions
-	MaxTokensWebSummary   = 800  // For web content summaries
+	MaxTokensImageSummary = 800  // For image descriptions (non-JSON, can be safely limited)
+	MaxTokensWebSummary   = 1000 // For web content summaries (non-JSON, can be safely limited)
 )
 
 // Generate the JSON schema at initialization time
@@ -42,9 +40,9 @@ func chatCompletionForEntrySummary(client openai.OpenAIClient, systemPrompt stri
 		systemPrompt,
 		userPrompts,
 		imageURLs,
-		nil,                  // Schema parameters currently disabled
-		0.5,                  // temperature
-		MaxTokensEntrySummary, // max tokens to prevent infinite generation
+		nil, // Schema parameters currently disabled
+		0.5, // temperature
+		0,   // max tokens (0 means no limit - needed for complete JSON generation)
 		results,
 	)
 }
@@ -59,10 +57,10 @@ func chatCompletionForFeedSummary(client openai.OpenAIClient, systemPrompt strin
 	client.ChatCompletion(
 		systemPrompt,
 		userPrompts,
-		[]string{},            // No images for feed summaries
-		nil,                   // Schema parameters currently disabled
-		0.5,                   // temperature
-		MaxTokensFeedSummary,  // max tokens to prevent infinite generation
+		[]string{}, // No images for feed summaries
+		nil,        // Schema parameters currently disabled
+		0.5,        // temperature
+		0,          // max tokens (0 means no limit - needed for complete JSON generation)
 		results,
 	)
 }
@@ -103,8 +101,8 @@ func (p *Processor) chatCompletionForWebSummary(systemPrompt string, userPrompt 
 		[]string{userPrompt},
 		[]string{},
 		nil,
-		0.5,                 // temperature
-		MaxTokensWebSummary, // max tokens to prevent infinite generation
+		0.5,                // temperature
+		MaxTokensWebSummary, // reasonable limit for web summaries (non-JSON)
 		results,
 	)
 

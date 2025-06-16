@@ -34,13 +34,13 @@ func Run() {
 		fmt.Printf("Job took %v\n", time.Since(startTime))
 	}()
 
-	// Initialize the OpenAI client
-	openaiClient := openai.New(s.LlmUrl, s.LlmApiKey, s.LlmModel)
+	// Initialize the OpenAI client with safe timeouts to prevent infinite generation
+	openaiClient := openai.NewWithSafeTimeouts(s.LlmUrl, s.LlmApiKey, s.LlmModel)
 
 	// Initialize the image client if image processing is enabled
 	var imageClient openai.OpenAIClient
 	if s.LlmImageEnabled {
-		imageClient = openai.New(s.LlmUrl, s.LlmApiKey, s.LlmImageModel)
+		imageClient = openai.NewWithSafeTimeouts(s.LlmUrl, s.LlmApiKey, s.LlmImageModel)
 		fmt.Println("Image processing enabled with model:", s.LlmImageModel)
 	} else {
 		// Use the main client as a fallback
