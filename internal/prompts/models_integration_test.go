@@ -22,11 +22,9 @@ func TestRealModelsIntegration(t *testing.T) {
 			t.Fatalf("Generated example is not valid JSON: %v", err)
 		}
 
-		// Verify it has the expected structure based on the real models.Item struct
+		// Verify it has the expected structure based on the real models.ItemSubset struct
 		expectedFields := []string{
-			"title", "id", "summary", "commentSummary",
-			"imageDescription", "webContentSummary",
-			"link", "isRelevant", "thumbnailUrl", "entry",
+			"title", "id", "overview", "summary", "commentSummary", "isRelevant",
 		}
 
 		for _, field := range expectedFields {
@@ -67,7 +65,7 @@ func TestRealModelsIntegration(t *testing.T) {
 		}
 
 		// Try to unmarshal it back into the real struct
-		var item models.Item
+		var item models.ItemSubset
 		err = json.Unmarshal([]byte(example), &item)
 		if err != nil {
 			t.Fatalf("Failed to unmarshal generated example back to struct: %v", err)
@@ -120,20 +118,32 @@ func TestRealModelsIntegration(t *testing.T) {
 			t.Fatalf("Failed to generate example: %v", err)
 		}
 
-		// Check that the JSON field names match the struct tags from models.Item
+		// Check that the JSON field names match the struct tags from models.ItemSubset
 		// This validates that we're reading the tags correctly
-		if !strings.Contains(example, `"imageDescription"`) {
-			t.Errorf("Expected to find 'imageDescription' field (from JSON tag)")
+		if !strings.Contains(example, `"overview"`) {
+			t.Errorf("Expected to find 'overview' field (from JSON tag)")
 		}
-		if !strings.Contains(example, `"thumbnailUrl"`) {
-			t.Errorf("Expected to find 'thumbnailUrl' field (from JSON tag)")
-		}
-
-		// Make sure we're not generating field names that don't exist in the real struct
-		if strings.Contains(example, `"imageUrl"`) {
-			t.Errorf("Found 'imageUrl' which shouldn't exist - should be 'thumbnailUrl'")
+		if !strings.Contains(example, `"commentSummary"`) {
+			t.Errorf("Expected to find 'commentSummary' field (from JSON tag)")
 		}
 
-		t.Logf("JSON field names correctly match struct tags")
+		// Make sure we're not generating field names that don't exist in the ItemSubset struct
+		if strings.Contains(example, `"imageDescription"`) {
+			t.Errorf("Found 'imageDescription' which shouldn't exist in ItemSubset")
+		}
+		if strings.Contains(example, `"thumbnailUrl"`) {
+			t.Errorf("Found 'thumbnailUrl' which shouldn't exist in ItemSubset")
+		}
+		if strings.Contains(example, `"webContentSummary"`) {
+			t.Errorf("Found 'webContentSummary' which shouldn't exist in ItemSubset")
+		}
+		if strings.Contains(example, `"link"`) {
+			t.Errorf("Found 'link' which shouldn't exist in ItemSubset")
+		}
+		if strings.Contains(example, `"entry"`) {
+			t.Errorf("Found 'entry' which shouldn't exist in ItemSubset")
+		}
+
+		t.Logf("JSON field names correctly match ItemSubset struct tags")
 	})
 }
