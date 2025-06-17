@@ -21,6 +21,15 @@ type Item struct {
 	Entry             rss.Entry `json:"entry,omitempty"`
 }
 
+type ItemSubset struct {
+	Title          string `json:"title"`
+	ID             string `json:"id"`
+	Overview       string `json:"overview"`
+	Summary        string `json:"summary"`
+	CommentSummary string `json:"commentSummary,omitempty"`
+	IsRelevant     bool   `json:"isRelevant"`
+}
+
 // KeyDevelopment represents a key development and its referenced item
 type KeyDevelopment struct {
 	Text   string `json:"text"`

@@ -7,7 +7,7 @@ import (
 // GetRealItemJSONExample generates a JSON example using the actual models.Item struct
 func GetRealItemJSONExample() (string, error) {
 	generator := &JSONExampleGenerator{}
-	return generator.GenerateJSONExampleCompact(models.Item{})
+	return generator.GenerateJSONExampleCompact(models.ItemSubset{})
 }
 
 // GetRealSummaryResponseJSONExample generates a JSON example using the actual models.SummaryResponse struct
