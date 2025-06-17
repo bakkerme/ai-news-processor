@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -228,6 +229,13 @@ func (c *Client) ChatCompletion(
 		}
 		return
 	}
+
+	// Log token usage information
+	log.Printf("LLM Token Usage - Model: %s, Input Tokens: %d, Output Tokens: %d, Total Tokens: %d\n",
+		c.model,
+		resp.Usage.PromptTokens,
+		resp.Usage.CompletionTokens,
+		resp.Usage.TotalTokens)
 
 	results <- customerrors.ErrorString{
 		Value: resp.Choices[0].Message.Content,
