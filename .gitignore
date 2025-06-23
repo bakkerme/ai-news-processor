@@ -25,4 +25,5 @@ tasks.json
 tasks/
 
 # Go binary
-ai-news-processor 
+ai-news-processor
+build/ai-news-processor

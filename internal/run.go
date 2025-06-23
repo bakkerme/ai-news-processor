@@ -187,7 +187,8 @@ func Run() {
 		if !s.DebugMockLLM {
 			summaryResponse, err = llm.GenerateSummary(openaiClient, relevantEntries, persona)
 			if err != nil {
-				panic(fmt.Errorf("could not generate summary: %w", err))
+				log.Printf("Could not generate summary for persona %s: %v\n", persona.Name, err)
+				continue
 			}
 		} else {
 			// Mock summary for debug mode
