@@ -300,10 +300,12 @@ func (p *Processor) summarizeWebSite(pageTitle string, url *url.URL, content str
 func (p *Processor) processEntryWithRetry(systemPrompt string, entry rss.Entry) (models.Item, error) {
 	entryString := entry.String(true)
 
+	noThink := "/no_thinking"
+
 	processFn := func() (models.Item, error) {
 		// Process the entry
 		results := make(chan customerrors.ErrorString, 1)
-		chatCompletionForEntrySummary(p.client, systemPrompt, []string{entryString}, nil, results)
+		chatCompletionForEntrySummary(p.client, systemPrompt, []string{entryString, noThink}, nil, results)
 		result := <-results
 		close(results)
 
