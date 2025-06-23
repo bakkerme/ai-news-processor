@@ -231,11 +231,16 @@ func (c *Client) ChatCompletion(
 	}
 
 	// Log token usage information
-	log.Printf("LLM Token Usage - Model: %s, Input Tokens: %d, Output Tokens: %d, Total Tokens: %d\n",
+	responseContent := resp.Choices[0].Message.Content
+	wordCount := len(strings.Fields(responseContent))
+	charCount := len(responseContent)
+	log.Printf("LLM Token Usage - Model: %s, Input Tokens: %d, Output Tokens: %d, Total Tokens: %d, Word Count: %d, Character Count: %d\n",
 		c.model,
 		resp.Usage.PromptTokens,
 		resp.Usage.CompletionTokens,
-		resp.Usage.TotalTokens)
+		resp.Usage.TotalTokens,
+		wordCount,
+		charCount)
 
 	results <- customerrors.ErrorString{
 		Value: resp.Choices[0].Message.Content,
