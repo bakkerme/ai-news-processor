@@ -533,12 +533,12 @@ func llmResponseToItems(jsonStr string) (models.Item, error) {
 }
 
 // generateSummaryWithRetry generates a summary with retry support
-func (p *Processor) generateSummaryWithRetry(entries []rss.Entry, persona persona.Persona) (*models.SummaryResponse, error) {
+func (p *Processor) generateSummaryWithRetry(items []models.Item, persona persona.Persona) (*models.SummaryResponse, error) {
 	processFn := func() (*models.SummaryResponse, error) {
 		// Create input for summary
-		summaryInputs := make([]string, len(entries))
-		for i, entry := range entries {
-			summaryInputs[i] = entry.String(true)
+		summaryInputs := make([]string, len(items))
+		for i, item := range items {
+			summaryInputs[i] = item.ToSummaryString()
 		}
 
 		summaryChannel := make(chan customerrors.ErrorString, 1)

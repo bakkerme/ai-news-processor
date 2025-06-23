@@ -9,13 +9,12 @@ import (
 	"github.com/bakkerme/ai-news-processor/internal/http/retry"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
 	"github.com/bakkerme/ai-news-processor/internal/persona"
-	"github.com/bakkerme/ai-news-processor/internal/rss"
 	"github.com/bakkerme/ai-news-processor/internal/urlextraction"
 	"github.com/bakkerme/ai-news-processor/models"
 )
 
-// GenerateSummary creates a summary for a set of relevant RSS entries with retry support
-func GenerateSummary(client openai.OpenAIClient, entries []rss.Entry, p persona.Persona) (*models.SummaryResponse, error) {
+// GenerateSummary creates a summary for a set of relevant Items with retry support
+func GenerateSummary(client openai.OpenAIClient, items []models.Item, p persona.Persona) (*models.SummaryResponse, error) {
 	log.Println("Generating summary of relevant items")
 
 	// Create processor config for retry logic
@@ -52,5 +51,5 @@ func GenerateSummary(client openai.OpenAIClient, entries []rss.Entry, p persona.
 	)
 
 	// Use the retry-enabled summary generation
-	return processor.generateSummaryWithRetry(entries, p)
+	return processor.generateSummaryWithRetry(items, p)
 }

@@ -173,19 +173,10 @@ func Run() {
 			continue
 		}
 
-		// 7. Get relevant entries for summary
-		relevantEntries := make([]rss.Entry, 0, len(relevantItems))
-		for _, item := range relevantItems {
-			entry := rss.FindEntryByID(item.ID, entries)
-			if entry != nil {
-				relevantEntries = append(relevantEntries, *entry)
-			}
-		}
-
 		// 9. Generate summary for relevant items
 		var summaryResponse *models.SummaryResponse
 		if !s.DebugMockLLM {
-			summaryResponse, err = llm.GenerateSummary(openaiClient, relevantEntries, persona)
+			summaryResponse, err = llm.GenerateSummary(openaiClient, relevantItems, persona)
 			if err != nil {
 				log.Printf("Could not generate summary for persona %s: %v\n", persona.Name, err)
 				continue

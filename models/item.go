@@ -2,6 +2,8 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
+	"strings"
 
 	"github.com/bakkerme/ai-news-processor/internal/rss"
 )
@@ -19,6 +21,19 @@ type Item struct {
 	IsRelevant        bool      `json:"isRelevant"`
 	ThumbnailURL      string    `json:"thumbnailUrl,omitempty"`
 	Entry             rss.Entry `json:"entry,omitempty"`
+}
+
+// ToSummaryString creates a concise string representation of the Item for summary generation
+// This includes ID, Title, Summary, and CommentSummary (if present)
+func (item *Item) ToSummaryString() string {
+	var itemStr strings.Builder
+	fmt.Fprintf(&itemStr, "ID: %s\n", item.ID)
+	fmt.Fprintf(&itemStr, "Title: %s\n", item.Title)
+	fmt.Fprintf(&itemStr, "Summary: %s\n", item.Summary)
+	if item.CommentSummary != "" {
+		fmt.Fprintf(&itemStr, "Comment Summary: %s\n", item.CommentSummary)
+	}
+	return itemStr.String()
 }
 
 type ItemSubset struct {

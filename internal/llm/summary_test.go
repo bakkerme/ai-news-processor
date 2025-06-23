@@ -6,7 +6,7 @@ import (
 
 	"github.com/bakkerme/ai-news-processor/internal/persona"
 	"github.com/bakkerme/ai-news-processor/internal/prompts"
-	"github.com/bakkerme/ai-news-processor/internal/rss"
+	"github.com/bakkerme/ai-news-processor/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -21,10 +21,10 @@ func TestGenerateSummary(t *testing.T) {
 		FocusAreas:        []string{"artificial intelligence", "machine learning"},
 	}
 
-	// Mock RSS entries
-	testEntries := []rss.Entry{
-		{Title: "Entry 1", Content: "Content 1", ID: "id1", Link: rss.Link{Href: "http://example.com/1"}},
-		{Title: "Entry 2", Content: "Content 2", ID: "id2", Link: rss.Link{Href: "http://example.com/2"}},
+	// Mock Items for testing
+	testItems := []models.Item{
+		{Title: "Entry 1", Summary: "Summary of Content 1", CommentSummary: "Comment Summary 1", ID: "id1", IsRelevant: true},
+		{Title: "Entry 2", Summary: "Summary of Content 2", CommentSummary: "Comment Summary 2", ID: "id2", IsRelevant: true},
 	}
 
 	t.Run("SuccessfulSummaryGeneration", func(t *testing.T) {
@@ -35,7 +35,7 @@ func TestGenerateSummary(t *testing.T) {
 			},
 		}
 
-		summary, err := GenerateSummary(mockClient, testEntries, testPersona)
+		summary, err := GenerateSummary(mockClient, testItems, testPersona)
 
 		assert.NoError(t, err)
 		require.NotNil(t, summary)
@@ -64,7 +64,7 @@ func TestGenerateSummary(t *testing.T) {
 
 		mockClient := &MockOpenAIClient{}
 
-		summary, err := GenerateSummary(mockClient, testEntries, errorPersona)
+		summary, err := GenerateSummary(mockClient, testItems, errorPersona)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), fmt.Sprintf("could not compose summary prompt for persona %s", errorPersona.Name))
@@ -78,7 +78,7 @@ func TestGenerateSummary(t *testing.T) {
 		// Instead of using ChatCompletionFunc, we'll handle this in
 		// the test by checking for the error message pattern
 
-		summary, err := GenerateSummary(mockClient, testEntries, testPersona)
+		summary, err := GenerateSummary(mockClient, testItems, testPersona)
 
 		assert.Error(t, err)
 		assert.Nil(t, summary)
@@ -92,7 +92,7 @@ func TestGenerateSummary(t *testing.T) {
 			},
 		}
 
-		summary, err := GenerateSummary(mockClient, testEntries, testPersona)
+		summary, err := GenerateSummary(mockClient, testItems, testPersona)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "could not parse summary response")
@@ -108,7 +108,7 @@ func TestGenerateSummary(t *testing.T) {
 			},
 		}
 
-		summary, err := GenerateSummary(mockClient, testEntries, testPersona)
+		summary, err := GenerateSummary(mockClient, testItems, testPersona)
 
 		// If UnmarshalJSON doesn't error on extraneous fields, err will be nil.
 		// The summary object will be created but its fields will be zero/empty.
