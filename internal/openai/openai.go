@@ -243,7 +243,7 @@ func (c *Client) ChatCompletion(
 	responseCharCount := len(responseContent)
 
 	// Log token usage information
-	log.Printf("LLM Token Usage - Model: %s, Input Tokens: %d, Output Tokens: %d, Total Tokens: %d, Output Word Count: %d, OutputCharacter Count: %d\n Input Word Count: %d, Input Character Count: %d",
+	log.Printf("LLM Token Usage - Model: %s, Input Tokens: %d, Output Tokens: %d, Total Tokens: %d, Output Word Count: %d, OutputCharacter Count: %d, Input Word Count: %d, Input Character Count: %d",
 		c.model,
 		resp.Usage.PromptTokens,
 		resp.Usage.CompletionTokens,
@@ -253,6 +253,11 @@ func (c *Client) ChatCompletion(
 		requestWordCount,
 		requestCharCount,
 	)
+
+	results <- customerrors.ErrorString{
+		Value: resp.Choices[0].Message.Content,
+		Err:   nil,
+	}
 }
 
 // PreprocessYAML extracts YAML content from the API response
