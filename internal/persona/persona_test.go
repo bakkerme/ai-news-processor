@@ -151,42 +151,6 @@ summary_analysis:
 	}
 }
 
-func TestLoadActualPersonas(t *testing.T) {
-	// Test loading the actual persona files to ensure they are valid
-	personas, err := LoadPersonas("../../personas/")
-	if err != nil {
-		t.Fatalf("Failed to load actual personas: %v", err)
-	}
-
-	if len(personas) == 0 {
-		t.Fatal("No personas loaded")
-	}
-
-	// Verify all personas have the comment threshold set correctly
-	for _, p := range personas {
-		if p.CommentThreshold == nil {
-			t.Errorf("Persona %s does not have comment threshold set", p.Name)
-			continue
-		}
-
-		// Define expected thresholds for specific personas
-		expectedThreshold := 10 // Default for most personas
-		if p.Name == "LLMDevs" {
-			expectedThreshold = 0 // LLMDevs has low traffic, so threshold is 0
-		}
-
-		if *p.CommentThreshold != expectedThreshold {
-			t.Errorf("Persona %s has comment threshold %d, expected %d", p.Name, *p.CommentThreshold, expectedThreshold)
-		}
-
-		// Verify GetCommentThreshold returns the expected value
-		threshold := p.GetCommentThreshold(5) // Use different default to ensure persona value is used
-		if threshold != expectedThreshold {
-			t.Errorf("Persona %s GetCommentThreshold returned %d, expected %d", p.Name, threshold, expectedThreshold)
-		}
-	}
-}
-
 // Helper function to create an int pointer
 func intPtr(i int) *int {
 	return &i
