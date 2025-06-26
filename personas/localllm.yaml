@@ -38,4 +38,4 @@ summary_analysis:
   - "Industry impact and adoption patterns"
 
 # Quality filtering
-comment_threshold: 10
+comment_threshold: 0
