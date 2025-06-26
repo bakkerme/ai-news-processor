@@ -12,7 +12,7 @@ import (
 type Item struct {
 	Title             string    `json:"title"`
 	ID                string    `json:"id"`
-	Overview          string    `json:"overview"`
+	Overview          []string  `json:"overview"`
 	Summary           string    `json:"summary"`
 	CommentSummary    string    `json:"commentSummary,omitempty"`
 	ImageSummary      string    `json:"imageDescription,omitempty"`
@@ -39,7 +39,7 @@ func (item *Item) ToSummaryString() string {
 type ItemSubset struct {
 	Title          string `json:"title"`
 	ID             string `json:"id"`
-	Overview       string `json:"overview"`
+	Overview       []string `json:"overview"`
 	Summary        string `json:"summary"`
 	CommentSummary string `json:"commentSummary,omitempty"`
 	IsRelevant     bool   `json:"isRelevant"`
@@ -56,8 +56,17 @@ type SummaryResponse struct {
 	KeyDevelopments []KeyDevelopment `json:"keyDevelopments"`
 }
 
-// UnmarshalJSON implements custom unmarshaling for SummaryResponse to clean up fields
+// UnmarshalJSON implements custom unmarshaling for SummaryResponse to handle both object and array formats
 func (s *SummaryResponse) UnmarshalJSON(data []byte) error {
+	// First, try to unmarshal as an array of KeyDevelopment objects
+	var keyDevelopments []KeyDevelopment
+	if err := json.Unmarshal(data, &keyDevelopments); err == nil {
+		// If successful, it's an array format
+		s.KeyDevelopments = keyDevelopments
+		return nil
+	}
+	
+	// If that fails, try to unmarshal as the expected object format
 	type Alias SummaryResponse
 	aux := &struct {
 		*Alias

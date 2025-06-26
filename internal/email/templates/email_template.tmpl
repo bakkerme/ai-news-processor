@@ -203,9 +203,9 @@
                 {{if .Overview}}
                 <div class="highlight-box">
                     <ul class="overview-list">
-                        {{range $line := split .Overview "\n"}}
-                        {{if $line}}
-                        <li>{{trimBullet $line}}</li>
+                        {{range .Overview}}
+                        {{if .}}
+                        <li>{{trimBullet .}}</li>
                         {{end}}
                         {{end}}
                     </ul>

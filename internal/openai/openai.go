@@ -236,22 +236,18 @@ func (c *Client) ChatCompletion(
 		requestContent += userPrompt + "\n"
 	}
 	requestWordCount := len(strings.Fields(requestContent))
-	requestCharCount := len(requestContent)
 
 	responseContent := resp.Choices[0].Message.Content
 	responseWordCount := len(strings.Fields(responseContent))
-	responseCharCount := len(responseContent)
 
 	// Log token usage information
-	log.Printf("LLM Token Usage - Model: %s, Input Tokens: %d, Output Tokens: %d, Total Tokens: %d, Output Word Count: %d, OutputCharacter Count: %d, Input Word Count: %d, Input Character Count: %d",
+	log.Printf("LLM Token Usage - Model: %s, Input Tokens: %d, Output Tokens: %d, Total Tokens: %d, Output Word Count: %d,  Input Word Count: %d",
 		c.model,
 		resp.Usage.PromptTokens,
 		resp.Usage.CompletionTokens,
 		resp.Usage.TotalTokens,
 		responseWordCount,
-		responseCharCount,
 		requestWordCount,
-		requestCharCount,
 	)
 
 	results <- customerrors.ErrorString{
@@ -357,7 +353,7 @@ func escapeJSONNewlines(jsonStr string) string {
 	var result strings.Builder
 	inString := false
 	escaped := false
-	
+
 	for _, char := range jsonStr {
 		switch char {
 		case '"':
@@ -395,7 +391,7 @@ func escapeJSONNewlines(jsonStr string) string {
 			escaped = false
 		}
 	}
-	
+
 	return result.String()
 }
 

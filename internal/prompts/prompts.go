@@ -36,7 +36,8 @@ For each item, provide a newsletter-style explanation that includes:
 * "ID"
 * "Title"
 * "Overview"
-	* A quick, concise overview of the post content in 2-3 bullet points or sentences
+	* An array of 2-3 concise bullet points summarizing the post content
+	* Each array element should be a complete sentence or bullet point
 	* Designed to help readers quickly decide if they want to read the full post
 	* Should highlight the most important aspects without going into deep technical detail
 * "Summary"
@@ -60,7 +61,7 @@ Keep responses concise but comprehensive. Aim for:
 * Summary: 2-3 sentences per paragraph (500-800 words total)
 * CommentSummary: 2-3 sentences per paragraph (300-600 words total)
 
-Respond only with valid JSON. Put JSON in ` + "```json" + ` tags.
+Respond only with valid JSON. Put JSON in ` + "```json" + ` tags. Do not add "" within the JSON other than what is required by the JSON format.
 Use the following JSON structure:
 {{.ItemJSONExample}}
 `

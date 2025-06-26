@@ -151,6 +151,8 @@ func (g *JSONExampleGenerator) getStringExample(jsonName, fieldName string) stri
 	switch strings.ToLower(jsonName) {
 	case "id", "itemid":
 		return "t3_1keo3te"
+	case "overview":
+		return "- This is an point of interest in the post\n- It highlights a key aspect of the content\n- Provides a brief overview for readers"
 	case "title":
 		return "Example Article Title"
 	case "summary":
@@ -196,20 +198,31 @@ func (g *JSONExampleGenerator) getFloatExample(jsonName, fieldName string) float
 func (g *JSONExampleGenerator) setSliceExample(fieldValue reflect.Value, field reflect.StructField, jsonFieldName string) {
 	elementType := fieldValue.Type().Elem()
 
-	// Create a slice with one example element
-	slice := reflect.MakeSlice(fieldValue.Type(), 1, 1)
-	element := slice.Index(0)
-
 	if elementType.Kind() == reflect.Struct {
+		// Create a slice with one example element
+		slice := reflect.MakeSlice(fieldValue.Type(), 1, 1)
+		element := slice.Index(0)
 		// For struct slices, create an example struct
 		exampleStruct := g.createExampleStruct(reflect.New(elementType).Interface())
 		element.Set(reflect.ValueOf(exampleStruct))
+		fieldValue.Set(slice)
 	} else if elementType.Kind() == reflect.String {
-		// For string slices, add an example string
-		element.SetString("example item")
+		// For string slices, handle special cases
+		if strings.ToLower(jsonFieldName) == "overview" {
+			// Create a slice with multiple example overview items
+			slice := reflect.MakeSlice(fieldValue.Type(), 3, 3)
+			slice.Index(0).SetString("This is a point of interest in the post")
+			slice.Index(1).SetString("It highlights a key aspect of the content")
+			slice.Index(2).SetString("Provides a brief overview for readers")
+			fieldValue.Set(slice)
+		} else {
+			// Create a slice with one example element
+			slice := reflect.MakeSlice(fieldValue.Type(), 1, 1)
+			element := slice.Index(0)
+			element.SetString("example item")
+			fieldValue.Set(slice)
+		}
 	}
-
-	fieldValue.Set(slice)
 }
 
 // Update GetItemJSONExample to use the allowlist
@@ -245,16 +258,16 @@ func GetSummaryResponseJSONExample() (string, error) {
 // Temporary example structs - these would be replaced with actual imports
 // when integrating with the real models package
 type itemExample struct {
-	Title             string `json:"title"`
-	ID                string `json:"id"`
-	Overview          string `json:"overview"`
-	Summary           string `json:"summary"`
-	CommentSummary    string `json:"commentSummary,omitempty"`
-	ImageSummary      string `json:"imageDescription,omitempty"`
-	WebContentSummary string `json:"webContentSummary,omitempty"`
-	Link              string `json:"link,omitempty"`
-	IsRelevant        bool   `json:"isRelevant"`
-	ThumbnailURL      string `json:"thumbnailUrl,omitempty"`
+	Title             string   `json:"title"`
+	ID                string   `json:"id"`
+	Overview          []string `json:"overview"`
+	Summary           string   `json:"summary"`
+	CommentSummary    string   `json:"commentSummary,omitempty"`
+	ImageSummary      string   `json:"imageDescription,omitempty"`
+	WebContentSummary string   `json:"webContentSummary,omitempty"`
+	Link              string   `json:"link,omitempty"`
+	IsRelevant        bool     `json:"isRelevant"`
+	ThumbnailURL      string   `json:"thumbnailUrl,omitempty"`
 }
 
 type keyDevelopmentExample struct {
