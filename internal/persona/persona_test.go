@@ -162,18 +162,27 @@ func TestLoadActualPersonas(t *testing.T) {
 		t.Fatal("No personas loaded")
 	}
 
-	// Verify all personas have the comment threshold set to 10 (the default)
+	// Verify all personas have the comment threshold set correctly
 	for _, p := range personas {
 		if p.CommentThreshold == nil {
 			t.Errorf("Persona %s does not have comment threshold set", p.Name)
-		} else if *p.CommentThreshold != 10 {
-			t.Errorf("Persona %s has comment threshold %d, expected 10", p.Name, *p.CommentThreshold)
+			continue
+		}
+
+		// Define expected thresholds for specific personas
+		expectedThreshold := 10 // Default for most personas
+		if p.Name == "LLMDevs" {
+			expectedThreshold = 0 // LLMDevs has low traffic, so threshold is 0
+		}
+
+		if *p.CommentThreshold != expectedThreshold {
+			t.Errorf("Persona %s has comment threshold %d, expected %d", p.Name, *p.CommentThreshold, expectedThreshold)
 		}
 
 		// Verify GetCommentThreshold returns the expected value
 		threshold := p.GetCommentThreshold(5) // Use different default to ensure persona value is used
-		if threshold != 10 {
-			t.Errorf("Persona %s GetCommentThreshold returned %d, expected 10", p.Name, threshold)
+		if threshold != expectedThreshold {
+			t.Errorf("Persona %s GetCommentThreshold returned %d, expected %d", p.Name, threshold, expectedThreshold)
 		}
 	}
 }
