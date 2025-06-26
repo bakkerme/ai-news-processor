@@ -295,6 +295,8 @@ func preprocess(response, format string) string {
 	startMarkers := []string{"```" + format, "```\n" + format, "```\r\n" + format}
 	endMarker := "```"
 
+	var content string
+
 	// Try each possible start marker format
 	for _, startMarker := range startMarkers {
 		startIdx := strings.Index(response, startMarker)
@@ -305,37 +307,96 @@ func preprocess(response, format string) string {
 			endIdx := strings.Index(response[contentStart:], endMarker)
 			if endIdx == -1 {
 				// If no end marker found, return from start marker to end
-				return strings.TrimSpace(response[contentStart:])
+				content = strings.TrimSpace(response[contentStart:])
+				break
 			}
 
 			// Extract the content between markers
-			content := response[contentStart : contentStart+endIdx]
-			return strings.TrimSpace(content)
+			content = strings.TrimSpace(response[contentStart : contentStart+endIdx])
+			break
 		}
 	}
 
 	// Handle case where just the format name appears on a line (possibly with whitespace)
-	lines := strings.Split(response, "\n")
-	for i, line := range lines {
-		trimmedLine := strings.TrimSpace(line)
-		if trimmedLine == format && i < len(lines)-1 {
-			// Found a line with just the format name, content starts from next line
-			contentStart := strings.Join(lines[i+1:], "\n")
+	if content == "" {
+		lines := strings.Split(response, "\n")
+		for i, line := range lines {
+			trimmedLine := strings.TrimSpace(line)
+			if trimmedLine == format && i < len(lines)-1 {
+				// Found a line with just the format name, content starts from next line
+				contentStart := strings.Join(lines[i+1:], "\n")
 
-			endIdx := strings.Index(contentStart, endMarker)
-			if endIdx == -1 {
-				// If no end marker found, return everything
-				return strings.TrimSpace(contentStart)
+				endIdx := strings.Index(contentStart, endMarker)
+				if endIdx == -1 {
+					// If no end marker found, return everything
+					content = strings.TrimSpace(contentStart)
+				} else {
+					// Extract content up to the end marker
+					content = strings.TrimSpace(contentStart[:endIdx])
+				}
+				break
 			}
-
-			// Extract content up to the end marker
-			content := contentStart[:endIdx]
-			return strings.TrimSpace(content)
 		}
 	}
 
-	// If no start marker found, return the original string trimmed
-	return strings.TrimSpace(response)
+	// If no start marker found, use the original string trimmed
+	if content == "" {
+		content = strings.TrimSpace(response)
+	}
+
+	// For JSON format, escape unescaped newlines within string values
+	if format == "json" {
+		content = escapeJSONNewlines(content)
+	}
+
+	return content
+}
+
+// escapeJSONNewlines properly escapes unescaped newlines within JSON string values
+func escapeJSONNewlines(jsonStr string) string {
+	var result strings.Builder
+	inString := false
+	escaped := false
+	
+	for _, char := range jsonStr {
+		switch char {
+		case '"':
+			if !escaped {
+				inString = !inString
+			}
+			result.WriteRune(char)
+			escaped = false
+		case '\\':
+			result.WriteRune(char)
+			escaped = !escaped
+		case '\n':
+			if inString && !escaped {
+				result.WriteString("\\n")
+			} else {
+				result.WriteRune(char)
+			}
+			escaped = false
+		case '\r':
+			if inString && !escaped {
+				result.WriteString("\\r")
+			} else {
+				result.WriteRune(char)
+			}
+			escaped = false
+		case '\t':
+			if inString && !escaped {
+				result.WriteString("\\t")
+			} else {
+				result.WriteRune(char)
+			}
+			escaped = false
+		default:
+			result.WriteRune(char)
+			escaped = false
+		}
+	}
+	
+	return result.String()
 }
 
 // SetRetryConfig updates the retry configuration
