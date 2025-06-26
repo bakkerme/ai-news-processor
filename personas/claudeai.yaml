@@ -44,3 +44,6 @@ summary_analysis:
   - "Notable MCP server developments and integrations"
   - "Innovative use cases and implementation strategies"
   - "Community insights and best practices"
+
+# Quality filtering
+comment_threshold: 10

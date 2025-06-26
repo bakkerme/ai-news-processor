@@ -97,8 +97,9 @@ func Run() {
 			entries = entries[:s.DebugMaxEntries]
 		}
 
-		// 2. Filter entries with quality filter
-		entries = qualityfilter.Filter(entries, s.QualityFilterThreshold)
+		// 2. Filter entries with quality filter (use persona-specific threshold)
+		threshold := persona.GetCommentThreshold(s.QualityFilterThreshold)
+		entries = qualityfilter.Filter(entries, threshold)
 
 		// Store all raw inputs for benchmarking
 		var benchmarkData models.RunData

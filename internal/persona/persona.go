@@ -24,6 +24,18 @@ type Persona struct {
 	RelevanceCriteria []string `yaml:"relevance_criteria" json:"relevanceCriteria"` // List of criteria for relevance analysis
 	SummaryAnalysis   []string `yaml:"summary_analysis" json:"summaryAnalysis"`     // Focus areas for summary analysis
 	ExclusionCriteria []string `yaml:"exclusion_criteria" json:"exclusionCriteria"` // List of criteria to explicitly exclude items
+
+	// Quality filtering
+	CommentThreshold *int `yaml:"comment_threshold,omitempty" json:"commentThreshold,omitempty"` // Minimum number of comments for posts (optional, uses global default if not specified)
+}
+
+// GetCommentThreshold returns the effective comment threshold for this persona.
+// If the persona has a specific threshold set, it uses that. Otherwise, it falls back to the provided default.
+func (p *Persona) GetCommentThreshold(defaultThreshold int) int {
+	if p.CommentThreshold != nil {
+		return *p.CommentThreshold
+	}
+	return defaultThreshold
 }
 
 // LoadPersonas loads all persona YAML files from the given directory

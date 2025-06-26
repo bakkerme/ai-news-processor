@@ -38,3 +38,6 @@ summary_analysis:
   - "Trending Cursor features and discussions"
   - "Common user challenges and solutions"
   - "Popular workflows and techniques"
+
+# Quality filtering
+comment_threshold: 10
