@@ -126,15 +126,15 @@ func (g *JSONExampleGenerator) createExampleStructWithAllowlist(structType inter
 func (g *JSONExampleGenerator) setExampleValue(fieldValue reflect.Value, field reflect.StructField, jsonFieldName string) {
 	switch fieldValue.Kind() {
 	case reflect.String:
-		example := g.getStringExample(jsonFieldName, field.Name)
+		example := g.getStringExample(jsonFieldName)
 		fieldValue.SetString(example)
 	case reflect.Bool:
-		example := g.getBoolExample(jsonFieldName, field.Name)
+		example := g.getBoolExample(jsonFieldName)
 		fieldValue.SetBool(example)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		fieldValue.SetInt(g.getIntExample(jsonFieldName, field.Name))
+		fieldValue.SetInt(g.getIntExample(jsonFieldName))
 	case reflect.Float32, reflect.Float64:
-		fieldValue.SetFloat(g.getFloatExample(jsonFieldName, field.Name))
+		fieldValue.SetFloat(g.getFloatExample(jsonFieldName))
 	case reflect.Slice:
 		g.setSliceExample(fieldValue, field, jsonFieldName)
 	case reflect.Struct:
@@ -147,7 +147,7 @@ func (g *JSONExampleGenerator) setExampleValue(fieldValue reflect.Value, field r
 }
 
 // getStringExample returns appropriate string examples based on field names
-func (g *JSONExampleGenerator) getStringExample(jsonName, fieldName string) string {
+func (g *JSONExampleGenerator) getStringExample(jsonName string) string {
 	switch strings.ToLower(jsonName) {
 	case "id", "itemid":
 		return "t3_1keo3te"
@@ -175,7 +175,7 @@ func (g *JSONExampleGenerator) getStringExample(jsonName, fieldName string) stri
 }
 
 // getBoolExample returns appropriate boolean examples based on field names
-func (g *JSONExampleGenerator) getBoolExample(jsonName, fieldName string) bool {
+func (g *JSONExampleGenerator) getBoolExample(jsonName string) bool {
 	switch strings.ToLower(jsonName) {
 	case "isrelevant":
 		return true
@@ -185,17 +185,17 @@ func (g *JSONExampleGenerator) getBoolExample(jsonName, fieldName string) bool {
 }
 
 // getIntExample returns appropriate integer examples
-func (g *JSONExampleGenerator) getIntExample(jsonName, fieldName string) int64 {
+func (g *JSONExampleGenerator) getIntExample(_ string) int64 {
 	return 0
 }
 
 // getFloatExample returns appropriate float examples
-func (g *JSONExampleGenerator) getFloatExample(jsonName, fieldName string) float64 {
+func (g *JSONExampleGenerator) getFloatExample(_ string) float64 {
 	return 0.0
 }
 
 // setSliceExample sets example values for slice fields
-func (g *JSONExampleGenerator) setSliceExample(fieldValue reflect.Value, field reflect.StructField, jsonFieldName string) {
+func (g *JSONExampleGenerator) setSliceExample(fieldValue reflect.Value, _ reflect.StructField, jsonFieldName string) {
 	elementType := fieldValue.Type().Elem()
 
 	if elementType.Kind() == reflect.Struct {

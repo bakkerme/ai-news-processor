@@ -78,7 +78,7 @@ func TestItem_ToSummaryString_StructuralValidation(t *testing.T) {
 		Summary:        "Testing the structure",
 		CommentSummary: "Comment content",
 		// Other fields should be ignored
-		Overview:          "This should not appear",
+		Overview:          []string{"This should not appear"},
 		ImageSummary:      "This should not appear",
 		WebContentSummary: "This should not appear",
 		Link:              "https://example.com",
