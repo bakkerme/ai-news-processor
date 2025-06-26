@@ -35,4 +35,7 @@ summary_analysis:
   - "Major advances in model architecture or capabilities"
   - "Emerging trends in open-source LLM development"
   - "Notable performance breakthroughs"
-  - "Industry impact and adoption patterns" 
+  - "Industry impact and adoption patterns"
+
+# Quality filtering
+comment_threshold: 10
