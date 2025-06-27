@@ -49,4 +49,4 @@ summary_analysis:
   - "Safety, ethics, and regulatory developments"
 
 # Quality filtering
-comment_threshold: 0
+comment_threshold: 5
