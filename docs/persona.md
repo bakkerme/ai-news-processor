@@ -33,6 +33,7 @@ exclusion_criteria:
 summary_analysis:
   - "Trends across posts"
   - "Overall impact"
+comment_threshold: 10  # Minimum comments required (optional, defaults to global setting)
 ```
 
 ---
@@ -58,6 +59,7 @@ Here's how the YAML fields map to these prompts:
 | `RelevanceCriteria`    | Base Item Analysis  | Populates a bulleted list under "An item is not relevant if...", guiding positive filtering criteria.                       |
 | `ExclusionCriteria`    | Base Item Analysis  | Populates a bulleted list under "Exclude items if they match:", explicitly filtering out unwanted items.                    |
 | `SummaryAnalysis`      | Summary             | Populates a bulleted list under "Your analysis should focus on:", guiding the content of the final summary.             |
+| `CommentThreshold`     | Neither             | Sets the minimum number of comments required for posts to be processed (optional, defaults to global `ANP_QUALITY_FILTER_THRESHOLD`). |
 
 Refer to `internal/prompts/prompts.go` for the exact template structures (`basePromptTemplate` and `summaryPromptTemplate`). By carefully crafting the content of each YAML field, you can precisely control the instructions given to the LLM for each persona.
 
