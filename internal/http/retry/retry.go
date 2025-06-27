@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -184,8 +185,20 @@ func IsRateLimitError(resp *http.Response) bool {
 // GetRetryAfterDuration gets the retry after duration from response headers
 func GetRetryAfterDuration(resp *http.Response) time.Duration {
 	if retryAfter := resp.Header.Get("Retry-After"); retryAfter != "" {
-		if seconds, err := time.ParseDuration(retryAfter + "s"); err == nil {
-			return seconds
+		// Try parsing as delay-seconds (numeric format)
+		if seconds, err := strconv.Atoi(retryAfter); err == nil {
+			if seconds >= 0 {
+				return time.Duration(seconds) * time.Second
+			}
+		}
+		
+		// Try parsing as HTTP-date format
+		if date, err := http.ParseTime(retryAfter); err == nil {
+			dur := time.Until(date)
+			if dur < 0 {
+				dur = 0
+			}
+			return dur
 		}
 	}
 	return 0
