@@ -31,6 +31,14 @@ func (m *MockFeedProvider) FetchComments(ctx context.Context, entry Entry) (*Com
 
 // GetMockFeed implements FeedProvider.GetMockFeed
 func (m *MockFeedProvider) GetMockFeed(ctx context.Context, personaName string) (*Feed, error) {
+	// print current working dir
+	dir, err := os.Getwd()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get current working directory: %w", err)
+	}
+
+	fmt.Println("Current working directory:", dir)
+
 	path := filepath.Join("feed_mocks", "rss", personaName, fmt.Sprintf("%s.rss", personaName))
 	b, err := os.ReadFile(path)
 	if err != nil {

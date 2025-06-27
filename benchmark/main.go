@@ -10,12 +10,13 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/bakkerme/ai-news-processor/benchmark/internal/specification"
+
 	"github.com/bakkerme/ai-news-processor/internal/bench"
 	"github.com/bakkerme/ai-news-processor/internal/customerrors"
 	"github.com/bakkerme/ai-news-processor/internal/llm"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
 	"github.com/bakkerme/ai-news-processor/internal/persona"
-	"github.com/bakkerme/ai-news-processor/internal/specification"
 	"github.com/bakkerme/ai-news-processor/models"
 )
 
@@ -288,7 +289,8 @@ func formatSummary(item models.Item) string {
 	summary.WriteString(fmt.Sprintf("ID: %s\n", item.ID))
 	summary.WriteString(fmt.Sprintf("Summary: %s\n", item.Summary))
 	summary.WriteString(fmt.Sprintf("Comment Summary: %s\n", item.CommentSummary))
-	// summary.WriteString(fmt.Sprintf("Relevance: %s\n", item.Relevance))
+	summary.WriteString(fmt.Sprintf("Image Summary: %s\n", item.ImageSummary))
+	summary.WriteString(fmt.Sprintf("Web Summary: %s\n", item.WebContentSummary))
 	summary.WriteString(fmt.Sprintf("IsRelevant: %v\n", item.IsRelevant))
 	return summary.String()
 }

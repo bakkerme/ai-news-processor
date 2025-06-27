@@ -25,9 +25,8 @@
             "envFile": [
                 "${workspaceFolder}/.env",
                 "${workspaceFolder}/.envdebug",
-                "${workspaceFolder}/.env.benchmark"
             ],
-            "cwd": "${workspaceFolder}/bench",
+            "cwd": "${workspaceFolder}",
         }
     ]
 }

@@ -26,7 +26,7 @@ func SerializeRunData(data *models.RunData) ([]byte, error) {
 	return jsonData, nil
 }
 
-var benchmarkDir = "benchmarkresults" // This can remain, as it's about file storage
+var benchmarkDir = "../benchmarkresults"
 
 // WriteRunDataToDisk writes run data to a file and creates a backup if needed
 func WriteRunDataToDisk(data *models.RunData) error {
