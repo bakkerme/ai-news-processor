@@ -10,17 +10,18 @@ import (
 
 // Item represents the structure of the JSON/YAML object
 type Item struct {
-	Title             string    `json:"title"`
-	ID                string    `json:"id"`
-	Overview          []string  `json:"overview"`
-	Summary           string    `json:"summary"`
-	CommentSummary    string    `json:"commentSummary,omitempty"`
-	ImageSummary      string    `json:"imageDescription,omitempty"`
-	WebContentSummary string    `json:"webContentSummary,omitempty"`
-	Link              string    `json:"link,omitempty"`
-	IsRelevant        bool      `json:"isRelevant"`
-	ThumbnailURL      string    `json:"thumbnailUrl,omitempty"`
-	Entry             rss.Entry `json:"entry,omitempty"`
+	Title               string    `json:"title"`
+	ID                  string    `json:"id"`
+	Overview            []string  `json:"overview"`
+	Summary             string    `json:"summary"`
+	CommentSummary      string    `json:"commentSummary,omitempty"`
+	ImageSummary        string    `json:"imageDescription,omitempty"`
+	WebContentSummary   string    `json:"webContentSummary,omitempty"`
+	Link                string    `json:"link,omitempty"`
+	IsRelevant          bool      `json:"isRelevant"`
+	RelevanceToCriteria string    `json:"relevanceToCriteria,omitempty"`
+	ThumbnailURL        string    `json:"thumbnailUrl,omitempty"`
+	Entry               rss.Entry `json:"entry,omitempty"`
 }
 
 // ToSummaryString creates a concise string representation of the Item for summary generation
@@ -37,12 +38,13 @@ func (item *Item) ToSummaryString() string {
 }
 
 type ItemSubset struct {
-	Title          string `json:"title"`
-	ID             string `json:"id"`
-	Overview       []string `json:"overview"`
-	Summary        string `json:"summary"`
-	CommentSummary string `json:"commentSummary,omitempty"`
-	IsRelevant     bool   `json:"isRelevant"`
+	Title               string   `json:"title"`
+	ID                  string   `json:"id"`
+	Overview            []string `json:"overview"`
+	Summary             string   `json:"summary"`
+	CommentSummary      string   `json:"commentSummary,omitempty"`
+	RelevanceToCriteria string   `json:"relevanceToCriteria"`
+	IsRelevant          bool     `json:"isRelevant"`
 }
 
 // KeyDevelopment represents a key development and its referenced item
@@ -65,7 +67,7 @@ func (s *SummaryResponse) UnmarshalJSON(data []byte) error {
 		s.KeyDevelopments = keyDevelopments
 		return nil
 	}
-	
+
 	// If that fails, try to unmarshal as the expected object format
 	type Alias SummaryResponse
 	aux := &struct {

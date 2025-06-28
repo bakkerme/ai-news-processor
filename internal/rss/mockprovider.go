@@ -48,7 +48,7 @@ func (m *MockFeedProvider) GetMockFeed(ctx context.Context, personaName string) 
 	rssFeed := &Feed{}
 	err = processRSSFeed(string(b), rssFeed)
 	if err != nil {
-		return nil, fmt.Errorf("failed to process mock feed: %w", err)
+		return nil, fmt.Errorf("failed to process mock feed with path %s: %w", path, err)
 	}
 
 	return rssFeed, nil

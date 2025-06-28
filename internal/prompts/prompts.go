@@ -41,15 +41,17 @@ For each item, provide a newsletter-style explanation that includes:
 	* Designed to help readers quickly decide if they want to read the full post
 	* Should highlight the most important aspects without going into deep technical detail
 * "Summary"
-	* 1 - 2 paragraphs, extracting key points of interest from the post, image description, factoring in relevant, factual information from the comments
+	* 1 - 2 paragraphs, extracting key points of interest from the post, image description, comments, factoring in relevant, factual information from the comments
+	* The comements may contain critical information that fills in the gaps in the post. If so, take advantage of that.
 	* Extrapolate on the details of these key points of interest
 	* Provide highly detailed technical analysis, if applicable
-	* If this development matters, explain why
 * "CommentSummary"
   * 1 - 2 paragraphs that
     * Captures the community sentiment
     * Highlights interesting discussions
     * Notes any concerns or criticisms
+* "RelevanceToCriteria"
+  * In one sentence, explain if the item meets the relevance criteria or not. Does it match the exclusion criteria?
 * "IsRelevant"
   * A final judgement boolean flag. If the item matches any of the exclusion criteria, IsRelevant should be false.
 

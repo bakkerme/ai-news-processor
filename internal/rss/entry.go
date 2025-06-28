@@ -62,7 +62,7 @@ type MediaThumbnail struct {
 
 func (e *Entry) String(disableTruncation bool) string {
 	var s strings.Builder
-	s.WriteString(fmt.Sprintf("Title: %s\nID: %s\nSummary: %s\nImageDescription: %s\n",
+	s.WriteString(fmt.Sprintf("Title: %s\nID: %s\nContent: %s\nImageDescription: %s\n",
 		strings.Trim(e.Title, " "),
 		e.ID,
 		cleanContent(e.Content, 1200, disableTruncation),
@@ -83,8 +83,9 @@ func (e *Entry) String(disableTruncation bool) string {
 		}
 	}
 
+	s.WriteString("Comments:\n")
 	for _, comment := range e.Comments {
-		s.WriteString(fmt.Sprintf("Comment: %s\n", cleanContent(comment.Content, 600, disableTruncation)))
+		s.WriteString(fmt.Sprintf("- %s\n", cleanContent(comment.Content, 600, disableTruncation)))
 	}
 
 	return s.String()

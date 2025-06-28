@@ -26,7 +26,6 @@ relevance_criteria:
 exclusion_criteria:
   - "Content entirely unrelated to AI/ML technology"
   - "Questions that would be better suited for tech support"
-  - "Duplicate posts of already covered developments"
   - "Random complaints without technical content"
   - "Humor posts"
 

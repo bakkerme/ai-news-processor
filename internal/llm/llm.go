@@ -300,7 +300,8 @@ func (p *Processor) summarizeWebSite(pageTitle string, url *url.URL, content str
 func (p *Processor) processEntryWithRetry(systemPrompt string, entry rss.Entry) (models.Item, error) {
 	entryString := entry.String(true)
 
-	noThink := "/no_thinking"
+	// noThink := "/no_thinking"
+	noThink := ""
 
 	processFn := func() (models.Item, error) {
 		// Process the entry
@@ -320,6 +321,7 @@ func (p *Processor) processEntryWithRetry(systemPrompt string, entry rss.Entry) 
 			return models.Item{}, fmt.Errorf("could not convert llm output to json. %s: %w", processedValue, err)
 		}
 
+		item.Entry = entry // Associate the processed item with the original entry
 		return item, nil
 	}
 

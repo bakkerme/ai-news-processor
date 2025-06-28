@@ -12,7 +12,7 @@ summary_prompt_task: "Your task is to analyze multiple AI Technology and Large L
 # Content focus
 focus_areas:
   - "New LLM models, runners or other infrastructure being released or open sourced"
-  - "Big AI lab news (OpenAI, Anthropic, etc.)"
+  - "Big AI lab news (OpenAI, Anthropic, DeepSeek, Qwen etc.)"
   - "Security news"
 
 # Relevance criteria (positive attributes to look for)
@@ -21,14 +21,18 @@ relevance_criteria:
   - "Explains the significance and impact of the development"
   - "Includes performance metrics, benchmarks, or comparisons"
   - "Discusses novel approaches or techniques"
+  - "Valuable insights into commercial applications of AI technology"
+  - "New model releases or updates from major AI labs"
+  - "Innovative use cases or applications of LLMs"
 
 # Exclusion criteria (what to filter out)
 exclusion_criteria:
   - "Content entirely unrelated to AI/ML technology"
   - "Questions that would be better suited for tech support"
-  - "Duplicate posts of already covered developments"
   - "Random complaints without technical content"
   - "Humor posts"
+  - "Personal blog-style posts"
+  - "Career advice or job postings"
 
 # Summary analysis focus
 summary_analysis:

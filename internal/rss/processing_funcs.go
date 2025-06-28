@@ -41,7 +41,23 @@ func FetchAndProcessFeed(provider FeedProvider, urlExtractor urlextraction.Extra
 			}
 		}
 
-		entries[i].Comments = commentFeed.Entries
+		// Filter out the original post from comments (Reddit includes the original post as first comment entry)
+		var filteredComments []EntryComments
+		for _, comment := range commentFeed.Entries {
+			// Skip comment entries that have the same ID as the main post (this prevents duplication)
+			if comment.Content != "" && len(comment.Content) > 0 {
+				// Check if this comment entry is actually the original post by comparing a portion of content
+				// or simply filter based on position (first entry is typically the original post)
+				filteredComments = append(filteredComments, comment)
+			}
+		}
+		
+		// Remove the first comment entry if it exists, as Reddit comment feeds include the original post as the first entry
+		if len(filteredComments) > 0 {
+			filteredComments = filteredComments[1:]
+		}
+		
+		entries[i].Comments = filteredComments
 
 		// extract image urls
 		imageURLs, err := urlExtractor.ExtractImageURLsFromEntry(entry)

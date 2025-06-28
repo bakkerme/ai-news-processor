@@ -34,7 +34,6 @@ exclusion_criteria:
   - "Basic tutorials or beginner questions without news value"
   - "Personal opinions or rants without substantive information"
   - "Purely promotional content without technical merit"
-  - "Duplicate posts of already covered developments"
   - "Off-topic discussions not related to ML/AI news"
   - "Memes, jokes, or purely entertainment content"
   - "Speculation without factual basis or credible sources"
