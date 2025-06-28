@@ -32,6 +32,8 @@ exclusion_criteria:
   - "Feature requests"
   - "Posts complaining about AI responses"
   - "Advertismenets"
+  - "Personal blog-style posts"
+  - "Career advice or job postings"
 
 # Summary analysis focus
 summary_analysis:

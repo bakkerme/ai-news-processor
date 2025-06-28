@@ -15,12 +15,14 @@ focus_areas:
   - "Big AI lab news (OpenAI, Anthropic, etc.)"
   - "Security news"
 
-# Relevance criteria (positive attributes to look for)
 relevance_criteria:
   - "Contains specific technical details or specifications"
   - "Explains the significance and impact of the development"
   - "Includes performance metrics, benchmarks, or comparisons"
   - "Discusses novel approaches or techniques"
+  - "Valuable insights into commercial applications of AI technology"
+  - "New model releases or updates from major AI labs"
+  - "Innovative use cases or applications of LLMs"
 
 # Exclusion criteria (what to filter out)
 exclusion_criteria:
@@ -28,6 +30,8 @@ exclusion_criteria:
   - "Questions that would be better suited for tech support"
   - "Random complaints without technical content"
   - "Humor posts"
+  - "Personal blog-style posts"
+  - "Career advice or job postings"
 
 # Summary analysis focus
 summary_analysis:

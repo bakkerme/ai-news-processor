@@ -36,6 +36,8 @@ exclusion_criteria:
   - "Purely promotional content without technical value"
   - "Memes, jokes, or other non-technical content"
   - "Academic research papers without practical development relevance"
+  - "Personal blog-style posts"
+  - "Career advice or job postings"
 
 # Summary analysis focus
 summary_analysis:

@@ -37,6 +37,8 @@ exclusion_criteria:
   - "Off-topic discussions not related to ML/AI news"
   - "Memes, jokes, or purely entertainment content"
   - "Speculation without factual basis or credible sources"
+  - "Personal blog-style posts"
+  - "Career advice or job postings"
 
 # Summary analysis focus
 summary_analysis:
