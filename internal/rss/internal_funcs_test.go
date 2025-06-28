@@ -222,7 +222,10 @@ func TestEntryString(t *testing.T) {
 	if !strings.Contains(result, "This is some HTML content") {
 		t.Errorf("Expected cleaned content, got: %s", result)
 	}
-	if !strings.Contains(result, "Comment: Comment 1") {
+	if !strings.Contains(result, "- Comment 1") {
+		t.Errorf("Expected comment in output, got: %s", result)
+	}
+	if !strings.Contains(result, "- Comment 2") {
 		t.Errorf("Expected comment in output, got: %s", result)
 	}
 
