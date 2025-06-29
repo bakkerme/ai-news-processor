@@ -1,0 +1,39 @@
+{
+  "post_id": "1lmranc",
+  "fetched_at": "2025-06-29T12:14:07.353889537+10:00",
+  "comments": [
+    {
+      "id": "n09mbhs",
+      "body": "3n:2b is 5b parameters.\n\n3n:4b is 8b parameters.\n\n[Here’s some more info on them.](https://developers.googleblog.com/en/introducing-gemma-3n-developer-guide/)",
+      "parent_id": "t3_1lmranc",
+      "author": "Fireflykid1",
+      "score": 15,
+      "created": "2025-06-28T16:51:39Z"
+    },
+    {
+      "id": "n09nemp",
+      "body": "[deleted]",
+      "parent_id": "t3_1lmranc",
+      "author": "[deleted]",
+      "score": 2,
+      "created": "2025-06-28T16:57:16Z"
+    },
+    {
+      "id": "n0ae49w",
+      "body": "Gemma3n E4B UD-Q6\\_K\\_XL is only slightly faster than Gemma 3 27B UD-Q4\\_K\\_XL for me on a 4090 with the latest version of llama.cpp.\n\nCPU usage is heavier with E4B.",
+      "parent_id": "t3_1lmranc",
+      "author": "rerri",
+      "score": 2,
+      "created": "2025-06-28T19:15:21Z"
+    },
+    {
+      "id": "n0beyin",
+      "body": "They’re running very very slowly like 3 t/s on my dual 3090 setup in lmstudio… I assume there’s some llama.cpp issue.  ",
+      "parent_id": "t3_1lmranc",
+      "author": "Turbulent_Jump_2000",
+      "score": 1,
+      "created": "2025-06-28T22:41:13Z"
+    }
+  ],
+  "raw_api_url": "/comments/1lmranc"
+}

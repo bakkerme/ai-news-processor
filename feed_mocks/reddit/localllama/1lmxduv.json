@@ -1,0 +1,15 @@
+{
+  "post_id": "1lmxduv",
+  "fetched_at": "2025-06-29T12:14:10.775501867+10:00",
+  "comments": [
+    {
+      "id": "n0bx76n",
+      "body": "For Japanese you want to use models specifically trained on it, Shisa is making some great models for this purpose, they currently are working on adding improved Japanese capabilities to Qwen3\n\n[https://www.reddit.com/r/LocalLLaMA/comments/1jz2lll/shisa\\_v2\\_a\\_family\\_of\\_new\\_jaen\\_bilingual\\_models/](https://www.reddit.com/r/LocalLLaMA/comments/1jz2lll/shisa_v2_a_family_of_new_jaen_bilingual_models/)",
+      "parent_id": "t3_1lmxduv",
+      "author": "MaruluVR",
+      "score": 1,
+      "created": "2025-06-29T00:32:21Z"
+    }
+  ],
+  "raw_api_url": "/comments/1lmxduv"
+}

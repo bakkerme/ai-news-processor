@@ -25,12 +25,12 @@ type Specification struct {
 	EmailUsername string
 	EmailPassword string
 
-	DebugMockRss         bool
+	DebugMockFeeds       bool
 	DebugMockLLM         bool
 	DebugSkipEmail       bool
 	DebugOutputBenchmark bool
 	DebugMaxEntries      int
-	DebugRssDump         bool
+	DebugRedditDump      bool
 
 	QualityFilterThreshold int
 
@@ -41,7 +41,6 @@ type Specification struct {
 	SendBenchmarkToAuditService bool
 
 	// Reddit API configuration
-	UseRedditAPI   bool
 	RedditClientID string
 	RedditSecret   string
 	RedditUsername string
@@ -100,19 +99,19 @@ func (s *Specification) Validate() error {
 		return fmt.Errorf("audit service URL is required when benchmark output is enabled")
 	}
 
-	// Reddit API configuration validation
-	if s.UseRedditAPI {
+	// Reddit API configuration validation (required unless using mock feeds)
+	if !s.DebugMockFeeds {
 		if s.RedditClientID == "" {
-			return fmt.Errorf("Reddit client ID is required when using Reddit API")
+			return fmt.Errorf("Reddit client ID is required")
 		}
 		if s.RedditSecret == "" {
-			return fmt.Errorf("Reddit client secret is required when using Reddit API")
+			return fmt.Errorf("Reddit client secret is required")
 		}
 		if s.RedditUsername == "" {
-			return fmt.Errorf("Reddit username is required when using Reddit API")
+			return fmt.Errorf("Reddit username is required")
 		}
 		if s.RedditPassword == "" {
-			return fmt.Errorf("Reddit password is required when using Reddit API")
+			return fmt.Errorf("Reddit password is required")
 		}
 	}
 
@@ -141,12 +140,12 @@ func GetConfig() (*Specification, error) {
 		EmailUsername: os.Getenv("ANP_EMAIL_USERNAME"),
 		EmailPassword: os.Getenv("ANP_EMAIL_PASSWORD"),
 
-		DebugMockRss:         getBoolEnv("ANP_DEBUG_MOCK_RSS", false),
+		DebugMockFeeds:       getBoolEnv("ANP_DEBUG_MOCK_FEEDS", false),
 		DebugMockLLM:         getBoolEnv("ANP_DEBUG_MOCK_LLM", false),
 		DebugSkipEmail:       getBoolEnv("ANP_DEBUG_SKIP_EMAIL", false),
 		DebugOutputBenchmark: getBoolEnv("ANP_DEBUG_OUTPUT_BENCHMARK", false),
 		DebugMaxEntries:      getIntEnv("ANP_DEBUG_MAX_ENTRIES", 0),
-		DebugRssDump:         getBoolEnv("ANP_DEBUG_RSS_DUMP", false),
+		DebugRedditDump:      getBoolEnv("ANP_DEBUG_REDDIT_DUMP", false),
 
 		QualityFilterThreshold: getIntEnv("ANP_QUALITY_FILTER_THRESHOLD", 10),
 
@@ -157,7 +156,6 @@ func GetConfig() (*Specification, error) {
 		SendBenchmarkToAuditService: getBoolEnv("ANP_SEND_BENCHMARK_TO_AUDIT_SERVICE", false),
 
 		// Reddit API configuration
-		UseRedditAPI:   getBoolEnv("ANP_USE_REDDIT_API", false),
 		RedditClientID: os.Getenv("ANP_REDDIT_CLIENT_ID"),
 		RedditSecret:   os.Getenv("ANP_REDDIT_CLIENT_SECRET"),
 		RedditUsername: os.Getenv("ANP_REDDIT_USERNAME"),

@@ -1,5 +1,5 @@
 name: "Cursor"
-feed_url: "https://reddit.com/r/cursor.rss"
+subreddit: "cursor"
 topic: "Cursor AI IDE"
 
 # Core identity (who the persona is)

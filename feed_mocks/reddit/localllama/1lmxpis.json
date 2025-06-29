@@ -1,0 +1,15 @@
+{
+  "post_id": "1lmxpis",
+  "fetched_at": "2025-06-29T12:14:09.059800965+10:00",
+  "comments": [
+    {
+      "id": "n0b7qbe",
+      "body": "Are you asking for voice to voice model? Most straightforward setup I know is for MNN app, which has Qwen Omni 3B model.  (You need to have more than 8gb ram to run that model).\n\n\nhttps://github.com/alibaba/MNN/blob/master/apps%2FAndroid%2FMnnLlmChat%2FREADME.md\n\n\nAlso, you can take a look at this, works fine on my entry level android. (most likely because it doesn't send context, each input is a standalone query to the llm, so no conversation, just a one time voice query) \n\n\nhttps://github.com/alibaba/MNN/blob/master/apps%2FAndroid%2FMnnTaoAvatar%2FREADME.md",
+      "parent_id": "t3_1lmxpis",
+      "author": "jamaalwakamaal",
+      "score": 1,
+      "created": "2025-06-28T21:58:03Z"
+    }
+  ],
+  "raw_api_url": "/comments/1lmxpis"
+}

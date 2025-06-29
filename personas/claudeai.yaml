@@ -1,5 +1,5 @@
 name: "ClaudeAI"
-feed_url: "https://reddit.com/r/claudeai.rss"
+subreddit: "claudeai"
 topic: "Claude AI and AI-Assisted Development"
 
 # Core identity (who the persona is)

@@ -3,23 +3,23 @@ package qualityfilter
 import (
 	"testing"
 
-	"github.com/bakkerme/ai-news-processor/internal/rss"
+	"github.com/bakkerme/ai-news-processor/internal/feeds"
 )
 
 func TestFilter(t *testing.T) {
 	tests := []struct {
 		name           string
-		entries        []rss.Entry
+		entries        []feeds.Entry
 		threshold      int
 		expectedLength int
 		expectedTitles []string
 	}{
 		{
 			name: "filters entries below threshold",
-			entries: []rss.Entry{
-				{Title: "Entry1", Comments: make([]rss.EntryComments, 5)},
-				{Title: "Entry2", Comments: make([]rss.EntryComments, 15)},
-				{Title: "Entry3", Comments: make([]rss.EntryComments, 8)},
+			entries: []feeds.Entry{
+				{Title: "Entry1", Comments: make([]feeds.EntryComments, 5)},
+				{Title: "Entry2", Comments: make([]feeds.EntryComments, 15)},
+				{Title: "Entry3", Comments: make([]feeds.EntryComments, 8)},
 			},
 			threshold:      10,
 			expectedLength: 1,
@@ -27,10 +27,10 @@ func TestFilter(t *testing.T) {
 		},
 		{
 			name: "custom threshold",
-			entries: []rss.Entry{
-				{Title: "Entry1", Comments: make([]rss.EntryComments, 5)},
-				{Title: "Entry2", Comments: make([]rss.EntryComments, 15)},
-				{Title: "Entry3", Comments: make([]rss.EntryComments, 8)},
+			entries: []feeds.Entry{
+				{Title: "Entry1", Comments: make([]feeds.EntryComments, 5)},
+				{Title: "Entry2", Comments: make([]feeds.EntryComments, 15)},
+				{Title: "Entry3", Comments: make([]feeds.EntryComments, 8)},
 			},
 			threshold:      7,
 			expectedLength: 2,
@@ -38,9 +38,9 @@ func TestFilter(t *testing.T) {
 		},
 		{
 			name: "no entries above threshold",
-			entries: []rss.Entry{
-				{Title: "Entry1", Comments: make([]rss.EntryComments, 5)},
-				{Title: "Entry2", Comments: make([]rss.EntryComments, 3)},
+			entries: []feeds.Entry{
+				{Title: "Entry1", Comments: make([]feeds.EntryComments, 5)},
+				{Title: "Entry2", Comments: make([]feeds.EntryComments, 3)},
 			},
 			threshold:      10,
 			expectedLength: 0,
