@@ -12,6 +12,7 @@ on:
 
 jobs:
   claude-review:
+    if: github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude_review')
     # Optional: Filter by PR author
     # if: |
     #   github.event.pull_request.user.login == 'external-contributor' ||
