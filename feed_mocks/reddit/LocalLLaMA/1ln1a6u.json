@@ -1,0 +1,47 @@
+{
+  "post_id": "1ln1a6u",
+  "fetched_at": "2025-06-29T11:05:48.561113494+10:00",
+  "comments": [
+    {
+      "id": "n0bync2",
+      "body": "You have asked a very vague question here. What cards, what programs, what models, what operating system?\n\nIf you don't know the answer because you are just starting out and want to play around then the answer is support is good and performance is good.\n\nI can fully load 32 billon parameter models on my 7900XTX and get 25tokens/second and have no problem with image generation, voice detection, text 2 speech, etc etc. \n\nIf you are starting out then just grab LM Studio and Amuse AI and enjoy. \n\nIf you are getting more advanced you can run any model with AMD cards and on linux you can use Comfy UI, host local models, and build custom applications with python. \n\nIn the past some software has been finnicky because developers have only focused on NVIDIA's software stack but things have changed dramatically in the past year and are still improving all the time.",
+      "parent_id": "t3_1ln1a6u",
+      "author": "CatalyticDragon",
+      "score": 1,
+      "created": "2025-06-29T00:41:35Z"
+    },
+    {
+      "id": "n0bzi3s",
+      "body": "I use a 7900XTX on windows with lmstudio. No perf loss, works fine.",
+      "parent_id": "t3_1ln1a6u",
+      "author": "NNN_Throwaway2",
+      "score": 1,
+      "created": "2025-06-29T00:47:04Z"
+    },
+    {
+      "id": "n0bv35i",
+      "body": "I have a 4090 and a 7900xt. \nI can use both cards together if I use the vulkan back end but that comes with a big performance hit.\n \nI generally stick to just the 4090 unless I want to try bigger models with both cards.\n\nFor backend i had to recompile  llama.cpp inside ollama to get the rocm drivers to work with the 7900.  Not sure if it’s better now but what I ended up liking the best was LM studio where you can select you backend being the ROCM vs Vulkan vs cuda  vs openblas super easily. \n\nRecommend that path if you continue down the amd road",
+      "parent_id": "t3_1ln1a6u",
+      "author": "No-Manufacturer-3315",
+      "score": 2,
+      "created": "2025-06-29T00:19:05Z"
+    },
+    {
+      "id": "n0butvc",
+      "body": "AMD’s come a long way but LLM stuff still leans NVIDIA. You’ll probably need to mess with configs more and it won’t be as plug and play",
+      "parent_id": "t3_1ln1a6u",
+      "author": "Melting735",
+      "score": 0,
+      "created": "2025-06-29T00:17:30Z"
+    },
+    {
+      "id": "n0bxlf3",
+      "body": "For LLMs, it's no harder for AMD than it is Nvidia. Just use Vulkan. Which is what I do by default anyways even on my Nvidia GPUs. Vulkan is just as fast if not faster depending on the GPU.\n\nNow for video gen...... Nvidia is still faster. Mainly because of the lack of official support for Triton and thus sage. Officially it's Nvidia only but it an be possible to get it to work on AMD. I'm trying to get it to run on my Max+ as we speak.",
+      "parent_id": "t3_1ln1a6u",
+      "author": "fallingdowndizzyvr",
+      "score": -2,
+      "created": "2025-06-29T00:34:50Z"
+    }
+  ],
+  "raw_api_url": "/comments/1ln1a6u"
+}

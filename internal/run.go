@@ -73,10 +73,15 @@ func Run() {
 	// Create appropriate feed provider based on configuration
 	var feedProvider rss.FeedProvider
 	if s.DebugMockRss {
-		log.Println("Using mock feed provider")
+		log.Println("Using RSS mock feed provider")
 		// Use the persona name from the first selected persona for mock data
 		// Each persona will still use its own mock data in processing
 		feedProvider = rss.NewMockFeedProvider(selectedPersonas[0].Name)
+	} else if s.DebugMockReddit {
+		log.Println("Using Reddit mock feed provider")
+		// Use the persona name from the first selected persona for mock data
+		// Each persona will still use its own mock data in processing
+		feedProvider = reddit.NewRedditMockProvider(selectedPersonas[0].Name)
 	} else if s.UseRedditAPI {
 		log.Println("Using Reddit API provider")
 		var err error
@@ -85,6 +90,7 @@ func Run() {
 			s.RedditSecret,
 			s.RedditUsername,
 			s.RedditPassword,
+			s.DebugRedditDump,
 		)
 		if err != nil {
 			log.Fatalf("Failed to create Reddit API provider: %v", err)

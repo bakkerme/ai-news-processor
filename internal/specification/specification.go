@@ -26,11 +26,13 @@ type Specification struct {
 	EmailPassword string
 
 	DebugMockRss         bool
+	DebugMockReddit      bool
 	DebugMockLLM         bool
 	DebugSkipEmail       bool
 	DebugOutputBenchmark bool
 	DebugMaxEntries      int
 	DebugRssDump         bool
+	DebugRedditDump      bool
 
 	QualityFilterThreshold int
 
@@ -142,11 +144,13 @@ func GetConfig() (*Specification, error) {
 		EmailPassword: os.Getenv("ANP_EMAIL_PASSWORD"),
 
 		DebugMockRss:         getBoolEnv("ANP_DEBUG_MOCK_RSS", false),
+		DebugMockReddit:      getBoolEnv("ANP_DEBUG_MOCK_REDDIT", false),
 		DebugMockLLM:         getBoolEnv("ANP_DEBUG_MOCK_LLM", false),
 		DebugSkipEmail:       getBoolEnv("ANP_DEBUG_SKIP_EMAIL", false),
 		DebugOutputBenchmark: getBoolEnv("ANP_DEBUG_OUTPUT_BENCHMARK", false),
 		DebugMaxEntries:      getIntEnv("ANP_DEBUG_MAX_ENTRIES", 0),
 		DebugRssDump:         getBoolEnv("ANP_DEBUG_RSS_DUMP", false),
+		DebugRedditDump:      getBoolEnv("ANP_DEBUG_REDDIT_DUMP", false),
 
 		QualityFilterThreshold: getIntEnv("ANP_QUALITY_FILTER_THRESHOLD", 10),
 

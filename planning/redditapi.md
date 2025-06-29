@@ -249,15 +249,20 @@ SubredditName   *string   `json:"subredditName,omitempty"`
 - **Configuration integration** - Added Reddit config to `specification.go`
 - **Provider selection logic** - Integrated into `internal/run.go`
 - **Dependencies** - Added `vartanbeno/go-reddit/v2` library
-- **Basic tests** - Unit tests for URL extraction and image detection
+- **Reddit API dump functionality** (`internal/reddit/dump.go`) - JSON dumping for debugging
+- **Reddit mock provider** (`internal/reddit/mockprovider.go`) - JSON-based mock system
+- **Comprehensive tests** - Unit tests for all core functionality
 
 ### 📁 File Structure Created
 ```
 internal/reddit/
-├── provider.go      # RedditAPIProvider implementing FeedProvider interface
-├── mapping.go       # Data structure mapping functions  
-├── factory.go       # Provider factory function
-└── provider_test.go # Unit tests
+├── provider.go         # RedditAPIProvider implementing FeedProvider interface
+├── mapping.go          # Data structure mapping functions  
+├── factory.go          # Provider factory function
+├── dump.go             # JSON dump functionality for debugging
+├── mockprovider.go     # Reddit mock provider using JSON data
+├── provider_test.go    # Unit tests for core functionality
+└── mockprovider_test.go # Unit tests for mock provider
 ```
 
 ## Usage Instructions
@@ -279,6 +284,12 @@ ANP_REDDIT_CLIENT_ID=your_client_id_here
 ANP_REDDIT_CLIENT_SECRET=your_client_secret_here  
 ANP_REDDIT_USERNAME=your_reddit_username
 ANP_REDDIT_PASSWORD=your_reddit_password
+
+# Optional: Enable Reddit API data dumping for debugging
+ANP_DEBUG_REDDIT_DUMP=true
+
+# Optional: Use Reddit mock data instead of real API calls
+ANP_DEBUG_MOCK_REDDIT=true
 ```
 
 ### 3. Running with Reddit API
@@ -289,6 +300,12 @@ ANP_USE_REDDIT_API=true go run main.go --persona=LocalLLaMA
 # Run all personas with Reddit API
 ANP_USE_REDDIT_API=true go run main.go --persona=all
 
+# Run with Reddit API and dump JSON data for debugging
+ANP_USE_REDDIT_API=true ANP_DEBUG_REDDIT_DUMP=true go run main.go --persona=LocalLLaMA
+
+# Run with Reddit mock data (uses previously dumped JSON files)
+ANP_DEBUG_MOCK_REDDIT=true go run main.go --persona=LocalLLaMA
+
 # Fallback to RSS (default behavior)
 ANP_USE_REDDIT_API=false go run main.go --persona=all
 ```
@@ -296,8 +313,23 @@ ANP_USE_REDDIT_API=false go run main.go --persona=all
 ### 4. Verification
 The application will log which provider is being used:
 - `"Using Reddit API provider"` - Reddit API active
-- `"Using RSS feed provider"` - RSS fallback active  
-- `"Using mock feed provider"` - Debug mode active
+- `"Using Reddit mock feed provider"` - Reddit mock data active
+- `"Using RSS mock feed provider"` - RSS mock data active  
+- `"Using RSS feed provider"` - RSS fallback active
+
+### 5. Debug/Mock Data Management
+
+**JSON Dump Structure:**
+```
+feed_mocks/reddit/{persona}/
+├── {persona}.json     # Main feed data (posts)
+└── {post_id}.json     # Comment data for each post
+```
+
+**Workflow:**
+1. **Generate mock data**: Run with `ANP_DEBUG_REDDIT_DUMP=true` to capture real API responses
+2. **Use mock data**: Run with `ANP_DEBUG_MOCK_REDDIT=true` to replay captured data
+3. **Benefits**: Faster testing, no API rate limits, reproducible results
 
 ## Technical Implementation Details
 

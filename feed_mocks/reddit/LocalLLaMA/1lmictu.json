@@ -1,0 +1,198 @@
+{
+  "post_id": "1lmictu",
+  "fetched_at": "2025-06-29T11:05:46.637607541+10:00",
+  "comments": [
+    {
+      "id": "n07sqt4",
+      "body": "Makes sense when there are several alternatives. Traditional reasoning brings a bunch of favorable tokens together in close proximity for answer generation. When there are multiple possible answers it mixes them all in a big reasoning chunk. With your split approach the answer is always close to the short, focused reasoning for it. I wonder about the order though: When taking the existing response and switching reasoning block 1 and 2, would the one that was previously answered first get a slightly worse answer when answered second, due to the [multi-turn effect](https://www.reddit.com/r/LocalLLaMA/comments/1kn2mv9/llms_get_lost_in_multiturn_conversation/)?",
+      "parent_id": "t3_1lmictu",
+      "author": "Chromix_",
+      "score": 28,
+      "created": "2025-06-28T09:46:57Z"
+    },
+    {
+      "id": "n07s5te",
+      "body": "What is up with that graphic? Overlapping text, highlighted Claude... Level of care not inspiring confidence. Cool idea, but even looking at the shown example, this didn't feel like a proper reasoning block in the middle.\n\nEDIT: Also not local. Straight up an ad for a service, and a poor one",
+      "parent_id": "t3_1lmictu",
+      "author": "Pokora22",
+      "score": 114,
+      "created": "2025-06-28T09:41:10Z"
+    },
+    {
+      "id": "n07s31d",
+      "body": "The reasoning that you posted makes no sense whatsoever. V cut through the middle doesn't give IV. The other one about the letters doesn't make any sense either. \n\nDeepseek got it right.",
+      "parent_id": "t3_1lmictu",
+      "author": "ResidentPositive4122",
+      "score": 37,
+      "created": "2025-06-28T09:40:25Z"
+    },
+    {
+      "id": "n0868bb",
+      "body": "https://arxiv.org/abs/2506.10947\n\nDid you validate your method with other models?",
+      "parent_id": "t3_1lmictu",
+      "author": "Pvt_Twinkietoes",
+      "score": 7,
+      "created": "2025-06-28T11:46:23Z"
+    },
+    {
+      "id": "n07tpxf",
+      "body": "I think this could also give higher quality responses in general, not just better performance (in terms of token count). especially with long and complex reasoning, it's quite easy for models to \"get lost in the sauce\". It's not too uncommon for the reasoning trace to say one thing, but the output to say another. if it's just a bit of thinking to figure out the next paragraph, then i think it would be much more coherent and it would be easier for the model to align output to match the thoughts.",
+      "parent_id": "t3_1lmictu",
+      "author": "LagOps91",
+      "score": 8,
+      "created": "2025-06-28T09:56:31Z"
+    },
+    {
+      "id": "n08ya67",
+      "body": "- Annouhces a model.\n- It's super awesome super duper omega in Math and stuff.\n- Apparently, it can't spell out a simple title.\n\nNeat.",
+      "parent_id": "t3_1lmictu",
+      "author": "IngwiePhoenix",
+      "score": 9,
+      "created": "2025-06-28T14:44:24Z"
+    },
+    {
+      "id": "n07sqzl",
+      "body": "Heyo, I was tinkering with this kind of intermediate reasoning in my mind for a while now (especially in the context of small roleplaying models). Are you going to share any details on how you generated the training dataset? Did you use anything similar to the GRPO, or did you ask other bigger models to generate intermediate COT traces and trained on that?",
+      "parent_id": "t3_1lmictu",
+      "author": "AdministrationOk9523",
+      "score": 7,
+      "created": "2025-06-28T09:47:00Z"
+    },
+    {
+      "id": "n07tlxs",
+      "body": "Sorry if i don't understand it correctly, but how different is it than asking \"any\" model to put \u0026lt;think\u0026gt; blocks in between the paragraphs?\n\nhttps://preview.redd.it/24rfwpmr4n9f1.png?width=2268\u0026amp;format=png\u0026amp;auto=webp\u0026amp;s=dc72e74a5a1442747aa9477fc04e6aedacf3531a",
+      "parent_id": "t3_1lmictu",
+      "author": "Repulsive_Educator61",
+      "score": 6,
+      "created": "2025-06-28T09:55:26Z"
+    },
+    {
+      "id": "n07osil",
+      "body": "Doesn't 0605/release Gemini pro do this? ",
+      "parent_id": "t3_1lmictu",
+      "author": "Linkpharm2",
+      "score": 9,
+      "created": "2025-06-28T09:07:17Z"
+    },
+    {
+      "id": "n07s4ke",
+      "body": "Simply but effective idea",
+      "parent_id": "t3_1lmictu",
+      "author": "Yes_but_I_think",
+      "score": 5,
+      "created": "2025-06-28T09:40:51Z"
+    },
+    {
+      "id": "n0824nc",
+      "body": "Smaller and smarter, that is the right direction.",
+      "parent_id": "t3_1lmictu",
+      "author": "Lifeisshort555",
+      "score": 2,
+      "created": "2025-06-28T11:13:09Z"
+    },
+    {
+      "id": "n086jua",
+      "body": "I think phind already does that",
+      "parent_id": "t3_1lmictu",
+      "author": "F1amy",
+      "score": 3,
+      "created": "2025-06-28T11:48:52Z"
+    },
+    {
+      "id": "n07pnkt",
+      "body": "Any model can do this with the think tool.",
+      "parent_id": "t3_1lmictu",
+      "author": "RubSomeJSOnIt",
+      "score": 2,
+      "created": "2025-06-28T09:15:59Z",
+      "controversiality": 1
+    },
+    {
+      "id": "n09hard",
+      "body": "Phishing scheme and everyone here knows it.",
+      "parent_id": "t3_1lmictu",
+      "author": "medialoungeguy",
+      "score": 3,
+      "created": "2025-06-28T16:24:51Z",
+      "controversiality": 1
+    },
+    {
+      "id": "n0blqxe",
+      "body": "Looks like o3! Cool stuff!",
+      "parent_id": "t3_1lmictu",
+      "author": "Suspicious_Demand_26",
+      "score": 1,
+      "created": "2025-06-28T23:22:14Z"
+    },
+    {
+      "id": "n0bm4rd",
+      "body": "Thinking budgets and this type of orchestration is how models and even local models will surpass cloud ones in performance with less juice",
+      "parent_id": "t3_1lmictu",
+      "author": "Suspicious_Demand_26",
+      "score": 1,
+      "created": "2025-06-28T23:24:34Z"
+    },
+    {
+      "id": "n07rdgj",
+      "body": "Cool. Thanks!",
+      "parent_id": "t3_1lmictu",
+      "author": "JLeonsarmiento",
+      "score": 1,
+      "created": "2025-06-28T09:33:20Z",
+      "controversiality": 1
+    },
+    {
+      "id": "n07rr96",
+      "body": "Interesting, good to see to innovations!",
+      "parent_id": "t3_1lmictu",
+      "author": "Leflakk",
+      "score": 0,
+      "created": "2025-06-28T09:37:10Z",
+      "controversiality": 1
+    },
+    {
+      "id": "n07w31n",
+      "body": "Great a new and novel approach to benchmaxxing just what the world needs.\nYour example is not a good answer, it is 2 short answers thereby doubling the chance to get a high score as the benchmarks are not made for multiple answers.\nBy inserting the text other alternatives you are basically making the model create the second answer in a totally different direction so basically maximizing the chance for a high score.\n\nJust do your “thinking” 10.000 times and you probably get a 100% on every benchmark because your answer contains 10.000 possibilities, totally useless to humans but nice for benchmaxxing.",
+      "parent_id": "t3_1lmictu",
+      "author": "Former-Ad-5757",
+      "score": -1,
+      "created": "2025-06-28T10:19:05Z",
+      "controversiality": 1
+    },
+    {
+      "id": "n089h9d",
+      "body": "Nice idea, sounds completely legit. Looking forward to your final punch!",
+      "parent_id": "t3_1lmictu",
+      "author": "Ok_Cow1976",
+      "score": 0,
+      "created": "2025-06-28T12:10:46Z",
+      "controversiality": 1
+    },
+    {
+      "id": "n09j6f5",
+      "body": "Nice to see startups from INDIA coming up with new ideas! Looking forward to the model release!",
+      "parent_id": "t3_1lmictu",
+      "author": "pallavnawani",
+      "score": 0,
+      "created": "2025-06-28T16:35:03Z",
+      "controversiality": 1
+    },
+    {
+      "id": "n0a50ou",
+      "body": "Damn you guys are up your asses all right. Just because the model outputs \u0026lt;think\u0026gt; tokens inbetween the response doesnt mean it does anything different. Why would there be a need to split reasoning instead of having hypothesis answers in one think block and the final correct answer at the end. You are acting as if the model is fundamentally working differently just because some think tokes show up. You guys are ascam and should start real work.",
+      "parent_id": "t3_1lmictu",
+      "author": "generalDevelopmentAc",
+      "score": 0,
+      "created": "2025-06-28T18:27:13Z"
+    },
+    {
+      "id": "n09t0rq",
+      "body": "It is not good and mix english and portuguese when I used this prompt:\n\nVocê é um Advogado especializado em Direito Civil e sua tarefa é redigir uma uma petição inicial para uma ação de cobrança, utilizando apenas as informações factuais fornecidas a seguir. Apoie-se em seus conhecimentos jurídicos, aplicando fundamentos técnicos e normas pertinentes ao caso, e apresente a minuta com linguagem formal e estruturada, com os capítulos dos fatos e do direito redigidos em texto corrido.\nInformações do Caso:\n\nAutor: Carlos Almeida, brasileiro, engenheiro, CPF 123.456.789-01, residente na Rua das Palmeiras, nº 123, Salvador/BA.\nRé: Construtora Beta Ltda., CNPJ 98.765.432/0001-09, com sede na Av. das Torres, nº 456, Salvador/BA.\nO autor é um prestador de serviços que realizou um contrato com a ré em 01/09/2023 para a execução de serviços de consultoria técnica no valor total de R$ 50.000,00.O serviço foi devidamente executado e finalizado em 15/09/2023, conforme o relatório técnico emitido.\nA ré deveria ter efetuado o pagamento até 15/10/2023, conforme o contrato firmado entre as partes. Apesar de várias notificações extrajudiciais enviadas entre 01/11/2023 e 15/11/2023, a ré permaneceu inadimplente, não apresentando justificativas para o não pagamento.\nPedidos:\nCobrança do valor de R$ 50.000,00, acrescido de:\nJuros de mora de 1% ao mês desde o vencimento.\nMulta contratual de 2% e correção monetária conforme índice oficial.\nCondenação da ré ao pagamento das custas processuais e honorários advocatícios de 10% do valor da causa.\nForo Competente: Comarca de Salvador/BA, Vara Cível.",
+      "parent_id": "t3_1lmictu",
+      "author": "celsowm",
+      "score": -2,
+      "created": "2025-06-28T17:25:50Z"
+    }
+  ],
+  "raw_api_url": "/comments/1lmictu"
+}

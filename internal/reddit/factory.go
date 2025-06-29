@@ -23,6 +23,7 @@ func CreateFeedProvider(spec *specification.Specification, selectedPersonas []in
 			spec.RedditSecret,
 			spec.RedditUsername,
 			spec.RedditPassword,
+			spec.DebugRedditDump,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create Reddit API provider: %w", err)

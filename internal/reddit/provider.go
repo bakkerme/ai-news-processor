@@ -14,11 +14,12 @@ import (
 
 // RedditAPIProvider implements the rss.FeedProvider interface using Reddit API
 type RedditAPIProvider struct {
-	client *reddit.Client
+	client       *reddit.Client
+	enableDump   bool
 }
 
 // NewRedditAPIProvider creates a new Reddit API provider
-func NewRedditAPIProvider(clientID, clientSecret, username, password string) (*RedditAPIProvider, error) {
+func NewRedditAPIProvider(clientID, clientSecret, username, password string, enableDump bool) (*RedditAPIProvider, error) {
 	credentials := reddit.Credentials{
 		ID:       clientID,
 		Secret:   clientSecret,
@@ -32,7 +33,8 @@ func NewRedditAPIProvider(clientID, clientSecret, username, password string) (*R
 	}
 
 	return &RedditAPIProvider{
-		client: client,
+		client:     client,
+		enableDump: enableDump,
 	}, nil
 }
 
@@ -52,6 +54,13 @@ func (r *RedditAPIProvider) FetchFeed(ctx context.Context, url string) (*rss.Fee
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch posts from r/%s: %w", subreddit, err)
+	}
+
+	// Dump Reddit API data if enabled
+	if r.enableDump {
+		if err := dumpRedditFeed(subreddit, posts, subreddit); err != nil {
+			log.Printf("Warning: Failed to dump Reddit feed: %v", err)
+		}
 	}
 
 	// Convert Reddit posts to RSS entries
@@ -76,6 +85,19 @@ func (r *RedditAPIProvider) FetchComments(ctx context.Context, entry rss.Entry) 
 	postAndComments, _, err := r.client.Post.Get(ctx, entry.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch comments for post %s: %w", entry.ID, err)
+	}
+
+	// Dump Reddit API comment data if enabled
+	if r.enableDump && postAndComments != nil {
+		// Extract subreddit for dump organization
+		subreddit, err := extractSubredditFromPermalink(entry.Link.Href)
+		if err != nil {
+			log.Printf("Warning: Could not extract subreddit for dump: %v", err)
+		} else {
+			if err := dumpRedditComments(entry.ID, postAndComments.Comments, subreddit); err != nil {
+				log.Printf("Warning: Failed to dump Reddit comments: %v", err)
+			}
+		}
 	}
 
 	// Convert Reddit comments to RSS comment entries (top-level only to match RSS depth=1)

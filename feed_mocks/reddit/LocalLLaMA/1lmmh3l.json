@@ -1,0 +1,95 @@
+{
+  "post_id": "1lmmh3l",
+  "fetched_at": "2025-06-29T11:05:48.154370643+10:00",
+  "comments": [
+    {
+      "id": "n08mw53",
+      "body": "the new deepseek R1 update also comes with \"multi token prediction\", effectively a built in draft model. i wonder if that could make it usable for 256gb ddr5 setups with only dual channel consumer hardware.",
+      "parent_id": "t3_1lmmh3l",
+      "author": "LagOps91",
+      "score": 16,
+      "created": "2025-06-28T13:39:49Z"
+    },
+    {
+      "id": "n08qhau",
+      "body": "I guess it depends on your location. It was cheaper for me to get two brand new 7900XTX’s than to go with two used 3090’s.\n\nAnd with the recent ROCm releases and the upcoming ROCm 7.0 it’s getting easier to run pretty much anything.",
+      "parent_id": "t3_1lmmh3l",
+      "author": "StupidityCanFly",
+      "score": 11,
+      "created": "2025-06-28T14:01:18Z"
+    },
+    {
+      "id": "n09acfj",
+      "body": "My thoughts:\n\n* Those considering spending thousands of dollars on inference computers (including on either DGX Spark, Strix Halo, or Mac of some sort) should consider a used or new dual-core EPYC 9004 or 9005 system, especially if your goal is to very large (400B+ parameter) MoEs. Spend $2-5K on a system with 400GB/s+ of theoretical system MBW and 768GB-1TB of RAM, and a beefy GPU or two for prefill and shared experts.\n* While I generally agree that the 3090 remains the best bang/buck generally, the 4090 has a lot of additional compute that makes it useful for certain cases - while my 4090's token generation is only about 15% better than my 3090s, across every model size, the prefill/prompt processing is \u0026gt;2X faster. For batch or long context there can be noticeable improvements. There's also FP8 support. Especially if you're doing any batch processing ,image/video gen, or training, it could be worth it. Although I think if you're seriously considering a 4090, then you should serious consider the 5090, which even at $2500 would probably be a better deal.\n* A sufficiently cheap Radeon W9700 could be interesting, but I feel like it'd need to be $1000-1500 considering the low memory bandwidth and less effective compute, and tbt, I don't think AMD is going to price anywhere near aggressive enough. With the current quality of IPEX, I think that the Arc Pro B60 (especially the dual chip versions) would are actually a lot more interesting for inference, again, assuming that pricing was aggressive.",
+      "parent_id": "t3_1lmmh3l",
+      "author": "randomfoo2",
+      "score": 6,
+      "created": "2025-06-28T15:47:58Z"
+    },
+    {
+      "id": "n08s2wh",
+      "body": "I think you overlooked the upcoming Intel B60... It's 450GBps so half the BW of a 3090 but if it launches at $500 it's a pretty interesting option, esp versus the non-x090 cards.  The rumored dual B60 (2x GPU with 2x 24GB) is also really interesting for users with less I/O (normal desktops) but it does _need_ an x16 slot.\n\n\nWhile the price/performance of the 4090 is dubious, I don't think you can discount the ~2x compute performance it offers.  Especially if you also run stuff like stable diffusion where it's really just 2x faster.  But for LLMs it has a noticeable benefit.  Not game changing but the prompt processing speed is noticable.\n\n\nI think for the most part the APU space is crap.  While the Apple Ultra's 512GB at ~800GBps is actually interesting, the Strix and Spark are just sad at ~256GBps and ~96GB with mediocre compute and huge cost.  Don't get me wrong, there's a market segment there... If you aren't an enthusiast getting 96GB of vram is either tricky (3x 3090 that don't fit in a case) or expensive (6000 pro).  But IDK, I can't imagine spending ~$3000 on a system that _will_ be disappointing.",
+      "parent_id": "t3_1lmmh3l",
+      "author": "eloquentemu",
+      "score": 6,
+      "created": "2025-06-28T14:10:26Z"
+    },
+    {
+      "id": "n08jrk2",
+      "body": "I may regret it but I'm going to buy a spark the instant that I can.   And it will be hard to restrain myself from buying two.",
+      "parent_id": "t3_1lmmh3l",
+      "author": "Simusid",
+      "score": 2,
+      "created": "2025-06-28T13:20:18Z"
+    },
+    {
+      "id": "n0a35ms",
+      "body": "Am I right in thinking ram is the main price bottleneck and slapping 256 gb of memory on a card with fast enough memory speed and processor is doable for \u0026lt;1000$ if you're Nvidia, Intel or Apple?",
+      "parent_id": "t3_1lmmh3l",
+      "author": "JollyJoker3",
+      "score": 1,
+      "created": "2025-06-28T18:17:20Z"
+    },
+    {
+      "id": "n0bi169",
+      "body": "Thank you for this post, it answers a lot of my question. I've only recently started to dabble in this stuff when I bought a 5090 for gaming.\n\nI don't want to take over my PC though, so I plan on buying a GPU for my server (EPYC 7302P 128GB DDR4 3200Mhz). I was going to get a P40, but I've read a lot of stuff here and discovered it wouldn't work due to the lack of resizeable bar on Rome Epycs.\n\nI don't want to spend £650~ on a 3090 though, so I guess like the other OP, I too am looking for a budget 16GB GPU!",
+      "parent_id": "t3_1lmmh3l",
+      "author": "Ev0kes",
+      "score": 1,
+      "created": "2025-06-28T22:59:53Z"
+    },
+    {
+      "id": "n0btgpp",
+      "body": "\u0026gt; Apple Silicon kind of already offers what the AMD APUs (eventually) may deliver in terms of memory bandwidth and size, but tied to OSX and the Apple universe. And the famous Apple tax. Software support appears to be decent.\n\nUnderstatement of the century! Apple software is incredible for LLMs. You've got MLX that runs ~40% faster than ollama and has [qwen3:32b-q4 by Alibaba themselves](https://huggingface.co/Qwen/Qwen3-32B-MLX-4bit) and full support for fine tuning and adapters etc. and, best of all, it is rock solid. I've had zero crashes on my Macs vs constant crashing with my 12GB RTX 3060.",
+      "parent_id": "t3_1lmmh3l",
+      "author": "PurpleUpbeat2820",
+      "score": 1,
+      "created": "2025-06-29T00:08:59Z"
+    },
+    {
+      "id": "n08x3ms",
+      "body": "5060ti 16g for $400 should be a consideration, if you dont need 24g mem or legacy support. Its faster than its pure specs suggest…",
+      "parent_id": "t3_1lmmh3l",
+      "author": "loadsamuny",
+      "score": 1,
+      "created": "2025-06-28T14:38:04Z"
+    },
+    {
+      "id": "n08n7n5",
+      "body": "If 3090 is not available (didn't see even used), and 4090 is too expensive, would it worth upgrading from 3060 12gb to 4070ti super 16GB? I see significant performance difference, but does it translate to LLMs well?",
+      "parent_id": "t3_1lmmh3l",
+      "author": "dobomex761604",
+      "score": 0,
+      "created": "2025-06-28T13:41:47Z"
+    },
+    {
+      "id": "n08km0f",
+      "body": "I think there are two, more and more distinct ways of using LLMs. The first one is using a small, but very clever LLM, the second one is using a large LLM with very specific knowledge or for a very simple task. I think speed is getting more and more important than VRAM. I'm not sure that I need 10x VRAM or 10x speed with only 24GB VRAM.",
+      "parent_id": "t3_1lmmh3l",
+      "author": "custodiam99",
+      "score": -2,
+      "created": "2025-06-28T13:25:37Z"
+    }
+  ],
+  "raw_api_url": "/comments/1lmmh3l"
+}
