@@ -17,6 +17,7 @@ import (
 	"github.com/bakkerme/ai-news-processor/internal/persona"
 	"github.com/bakkerme/ai-news-processor/internal/prompts"
 	"github.com/bakkerme/ai-news-processor/internal/qualityfilter"
+	"github.com/bakkerme/ai-news-processor/internal/reddit"
 	"github.com/bakkerme/ai-news-processor/internal/rss"
 	"github.com/bakkerme/ai-news-processor/internal/specification"
 	"github.com/bakkerme/ai-news-processor/internal/urlextraction"
@@ -69,14 +70,27 @@ func Run() {
 		panic(err)
 	}
 
-	// Create appropriate feed provider based on debug settings
+	// Create appropriate feed provider based on configuration
 	var feedProvider rss.FeedProvider
 	if s.DebugMockRss {
 		log.Println("Using mock feed provider")
 		// Use the persona name from the first selected persona for mock data
 		// Each persona will still use its own mock data in processing
 		feedProvider = rss.NewMockFeedProvider(selectedPersonas[0].Name)
+	} else if s.UseRedditAPI {
+		log.Println("Using Reddit API provider")
+		var err error
+		feedProvider, err = reddit.NewRedditAPIProvider(
+			s.RedditClientID,
+			s.RedditSecret,
+			s.RedditUsername,
+			s.RedditPassword,
+		)
+		if err != nil {
+			log.Fatalf("Failed to create Reddit API provider: %v", err)
+		}
 	} else {
+		log.Println("Using RSS feed provider")
 		feedProvider = rss.NewFeedProvider()
 	}
 

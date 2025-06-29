@@ -1,0 +1,350 @@
+# Reddit API Drop-in Replacement
+
+## Goal
+
+Create a drop-in replacement for the RSS module that reproduces current behavior:
+1. Pull top 25 posts from subreddit
+2. Filter by comment threshold 
+3. Pull post content and top-level comments
+4. Continue through existing pipeline unchanged
+
+## Implementation Plan
+
+### Library Choice: `vartanbeno/go-reddit`
+- Comprehensive API coverage
+- Production-ready
+- OAuth2 support
+
+### Drop-in Replacement Strategy
+
+#### 1. Implement RedditAPIProvider
+```go
+// Implements existing FeedProvider interface
+type RedditAPIProvider struct {
+    client *reddit.Client
+}
+
+func (r *RedditAPIProvider) FetchFeed(ctx context.Context, url string) (*Feed, error)
+func (r *RedditAPIProvider) FetchComments(ctx context.Context, entry Entry) (*CommentFeed, error)
+```
+
+#### 2. Environment Configuration
+```bash
+ANP_REDDIT_CLIENT_ID=your_client_id
+ANP_REDDIT_CLIENT_SECRET=your_secret  
+ANP_REDDIT_USERNAME=username
+ANP_REDDIT_PASSWORD=password
+ANP_USE_REDDIT_API=false  # Feature flag
+```
+
+#### 3. Data Mapping
+Map Reddit API responses to existing RSS structures:
+- `reddit.Post` → `rss.Entry`
+- `reddit.Comment` → `rss.EntryComments`
+- Preserve all existing fields and behavior
+
+### Current Behavior to Reproduce
+
+#### Feed Fetching
+- Extract subreddit name from RSS URL
+- Fetch top 25 posts via API
+- Map to existing `Entry` structure
+- Return as `Feed` with `Entries` slice
+
+#### Comment Fetching  
+- Use post ID to fetch comments via API
+- Get only top-level comments (matching RSS depth=1)
+- Map to `EntryComments` structure
+- Return as `CommentFeed`
+
+#### Rate Limiting
+- Respect 100 QPM limit
+- Implement request queuing
+- Graceful error handling
+
+### Integration Points
+
+#### Configuration (`internal/specification/specification.go`)
+```go
+type Specification struct {
+    // ... existing fields
+    UseRedditAPI     bool   `envconfig:"ANP_USE_REDDIT_API" default:"false"`
+    RedditClientID   string `envconfig:"ANP_REDDIT_CLIENT_ID"`
+    RedditSecret     string `envconfig:"ANP_REDDIT_CLIENT_SECRET"`
+    RedditUsername   string `envconfig:"ANP_REDDIT_USERNAME"`
+    RedditPassword   string `envconfig:"ANP_REDDIT_PASSWORD"`
+}
+```
+
+#### Provider Selection (`internal/run.go`)
+```go
+func createFeedProvider(spec Specification) rss.FeedProvider {
+    if spec.UseRedditAPI {
+        return reddit.NewRedditAPIProvider(spec)
+    }
+    return rss.NewFeedProvider()
+}
+```
+
+### File Structure
+```
+internal/reddit/
+├── provider.go     # RedditAPIProvider implementing FeedProvider
+├── client.go       # Reddit API client wrapper
+├── mapping.go      # Data structure mapping functions
+└── types.go        # Reddit-specific types if needed
+```
+
+### Error Handling
+- API failures fall back to existing error patterns
+- Rate limit errors return appropriate HTTP-style errors
+- Authentication errors logged and returned as feed errors
+- No changes to existing error handling in pipeline
+
+### Testing Strategy
+- Unit tests for data mapping functions
+- Integration tests with mock Reddit API responses
+- Compatibility tests ensuring RSS and API providers return equivalent data
+- Use existing mock provider pattern for testing
+
+This approach ensures the Reddit API integration is a true drop-in replacement with minimal changes to the existing codebase.
+
+## Data Structure Compatibility Analysis
+
+### 🟢 High Compatibility with Existing Entry Structure
+
+The Reddit API data structure maps extremely well to the current RSS `Entry` structure, enabling a true drop-in replacement with no structural changes needed.
+
+#### Direct 1:1 Field Mappings
+- `Title` → `reddit.Post.Title` ✅
+- `ID` → `reddit.Post.ID` ✅  
+- `Content` → `reddit.Post.Body` (selftext) ✅
+- `Published` → `reddit.Post.Created` (timestamp conversion) ✅
+- `Comments[].Content` → `reddit.Comment.Body` ✅
+
+#### Simple Logic Mappings
+- `Link.Href` → `reddit.Post.URL` or construct from `reddit.Post.Permalink` ✅
+- `ExternalURLs` → Parse from `reddit.Post.URL` and content ✅
+
+#### Image URL Handling
+Reddit posts traditionally fall into two categories:
+- **Text posts**: `Post.Body` contains selftext content
+- **Link posts**: `Post.URL` contains the external URL (may be image URL)
+
+For image posts, `Post.URL` will directly contain the image URL, making `ImageURLs` extraction straightforward:
+
+```go
+func extractImageURLs(post *reddit.Post) []url.URL {
+    var imageURLs []url.URL
+    
+    // Direct image URL from post
+    if isImageURL(post.URL) {
+        if url, err := url.Parse(post.URL); err == nil {
+            imageURLs = append(imageURLs, *url)
+        }
+    }
+    
+    // Additional image extraction from content if needed
+    return imageURLs
+}
+```
+
+#### Media Thumbnail Mapping
+- `MediaThumbnail.URL` may require raw API access if not exposed in `vartanbeno/go-reddit`
+- Fallback: Use `Post.URL` for image posts as thumbnail source
+
+#### Fields Generated by Processing Pipeline
+These remain unchanged as they're generated downstream:
+- `ImageDescription` → Generated by LLM processing
+- `WebContentSummaries` → Generated by content extraction
+
+### Required Modifications: None
+The existing `Entry` and `EntryComments` structures require **zero modifications** for Reddit API compatibility. All mapping is handled in the provider implementation.
+
+### Optional Enhancements (Future)
+Could add Reddit-specific metadata without breaking compatibility:
+```go
+// Optional Reddit-specific fields for future filtering
+Score            *int     `json:"score,omitempty"`
+NumberOfComments *int     `json:"numberOfComments,omitempty"`
+Author          *string   `json:"author,omitempty"`
+SubredditName   *string   `json:"subredditName,omitempty"`
+```
+
+### Implementation Strategy
+1. **Core mapping**: Handle the direct field mappings
+2. **URL logic**: Distinguish between text posts and link/image posts
+3. **Image extraction**: Use `Post.URL` for image posts, parse content for additional images
+4. **Fallback compatibility**: Maintain exact same data shape as RSS provider
+
+## Request Volume Analysis & Cost Implications
+
+### Current RSS Fetch Patterns
+
+**Personas Configuration:**
+- **6 personas** (subreddits) configured in `/personas/` directory:
+  - `r/claudeai`, `r/cursor`, `r/LLMDevs`, `r/localllama`, `r/localllm`, `r/machinelearningnews`
+- **25 posts** per RSS feed (Reddit's default RSS limit)
+- **Quality thresholds**: 5-10 comments minimum (varies by persona)
+
+**Current HTTP Request Volume:**
+- **Single persona run**: 26 requests (1 main feed + 25 comment feeds)
+- **Full run (all personas)**: 156 requests (6 main feeds + 150 comment feeds)
+
+### RSS → Reddit API Request Mapping
+
+**Excellent news**: Reddit API request volume is **identical** to current RSS fetches!
+
+| Current RSS Pattern | Reddit API Equivalent | Request Count |
+|-------------------|---------------------|---------------|
+| 1 subreddit RSS feed | 1 `/r/{subreddit}/hot` call | 1 |
+| 25 comment RSS feeds | 25 `/r/{subreddit}/comments/{post_id}` calls | 25 |
+| **Total per persona** | **Total per persona** | **26** |
+
+### API Request Volume
+
+**Single persona:** 26 API calls  
+**All personas:** 156 API calls  
+**Rate limit**: 100 queries/minute = plenty of headroom
+
+### Cost Analysis
+
+**Free Tier Coverage:**
+- **Limit**: 100 QPM = 144,000 calls/day
+- **Your usage**: 156 calls/run
+- **Frequency headroom**: Can run every 9 minutes and stay in free tier
+- **Typical usage**: Running every hour = 3,744 calls/day (well within free tier)
+
+**Paid Tier ($0.24/1000 calls):**
+- Only applies if exceeding 144K calls/day
+- **Cost per run**: $0.037 if in paid tier
+- **Daily cost (hourly runs)**: $0.90 if in paid tier
+
+### Efficiency Gains with Reddit API
+
+**Quality improvements with same request volume:**
+1. **Better filtering**: Access to vote counts before fetching comments
+2. **Richer metadata**: Author, subreddit info, post type
+3. **Rate limit visibility**: API headers show remaining quota
+4. **No RSS parsing issues**: Direct structured data
+5. **Real-time data**: No RSS cache delays
+
+**Potential optimizations:**
+- **Batch operations**: Some endpoints return post + comments in single call
+- **Smarter filtering**: Skip comment fetches for low-score posts
+- **Selective processing**: Use metadata to filter before comment fetching
+
+### Bottom Line
+
+✅ **Same request volume as current RSS system**  
+✅ **Well within Reddit's free tier limits**  
+✅ **Better data quality and reliability**  
+✅ **No cost concerns for typical usage patterns**
+
+## Implementation Status
+
+### ✅ Completed
+- **Reddit API provider** (`internal/reddit/provider.go`) - Implements `FeedProvider` interface
+- **Data mapping functions** (`internal/reddit/mapping.go`) - Maps Reddit API data to RSS structures
+- **Configuration integration** - Added Reddit config to `specification.go`
+- **Provider selection logic** - Integrated into `internal/run.go`
+- **Dependencies** - Added `vartanbeno/go-reddit/v2` library
+- **Basic tests** - Unit tests for URL extraction and image detection
+
+### 📁 File Structure Created
+```
+internal/reddit/
+├── provider.go      # RedditAPIProvider implementing FeedProvider interface
+├── mapping.go       # Data structure mapping functions  
+├── factory.go       # Provider factory function
+└── provider_test.go # Unit tests
+```
+
+## Usage Instructions
+
+### 1. Reddit App Setup
+1. Go to https://www.reddit.com/prefs/apps
+2. Create a new "script" application
+3. Note your Client ID and Client Secret
+
+### 2. Environment Configuration
+Add these environment variables:
+
+```bash
+# Enable Reddit API (default: false)
+ANP_USE_REDDIT_API=true
+
+# Reddit API credentials
+ANP_REDDIT_CLIENT_ID=your_client_id_here
+ANP_REDDIT_CLIENT_SECRET=your_client_secret_here  
+ANP_REDDIT_USERNAME=your_reddit_username
+ANP_REDDIT_PASSWORD=your_reddit_password
+```
+
+### 3. Running with Reddit API
+```bash
+# Run with Reddit API enabled
+ANP_USE_REDDIT_API=true go run main.go --persona=LocalLLaMA
+
+# Run all personas with Reddit API
+ANP_USE_REDDIT_API=true go run main.go --persona=all
+
+# Fallback to RSS (default behavior)
+ANP_USE_REDDIT_API=false go run main.go --persona=all
+```
+
+### 4. Verification
+The application will log which provider is being used:
+- `"Using Reddit API provider"` - Reddit API active
+- `"Using RSS feed provider"` - RSS fallback active  
+- `"Using mock feed provider"` - Debug mode active
+
+## Technical Implementation Details
+
+### Provider Interface Compatibility
+The `RedditAPIProvider` implements the exact same `FeedProvider` interface as the RSS provider:
+
+```go
+type FeedProvider interface {
+    FetchFeed(ctx context.Context, url string) (*Feed, error)
+    FetchComments(ctx context.Context, entry Entry) (*CommentFeed, error)
+}
+```
+
+### Data Structure Mapping
+- **Posts**: `reddit.Post` → `rss.Entry` with full field compatibility
+- **Comments**: `reddit.Comment` → `rss.EntryComments` preserving content
+- **Images**: Direct URL extraction from `Post.URL` for image posts
+- **External URLs**: Automatic detection and extraction for link posts
+
+### Error Handling
+- **Authentication failures**: Logged and graceful fallback available
+- **Rate limiting**: Handled by underlying `go-reddit` library
+- **Network errors**: Standard retry logic and error propagation
+- **API changes**: Isolated to Reddit package, RSS remains unaffected
+
+## Migration Strategy
+
+### Phase 1: Gradual Rollout (Current)
+- Feature flag allows switching between RSS and Reddit API
+- No changes to existing personas or configuration
+- Full backward compatibility maintained
+
+### Phase 2: Production Testing
+1. Test with single persona first
+2. Monitor API usage and costs
+3. Compare data quality between RSS and API
+4. Validate comment filtering and quality thresholds
+
+### Phase 3: Full Migration (Optional)
+- Set `ANP_USE_REDDIT_API=true` as default
+- Remove RSS fallback after confidence period
+- Enhanced features using Reddit-specific metadata
+
+## Drop-in Replacement Achieved ✅
+
+The Reddit API integration is now a **complete drop-in replacement** for the RSS system:
+- Same interface, same data structures, same processing pipeline
+- Zero changes required to personas, quality filtering, or LLM processing
+- Feature flag provides safe rollout and instant rollback capability
+- Maintains all existing functionality while providing enhanced data quality

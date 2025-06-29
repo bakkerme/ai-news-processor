@@ -39,6 +39,13 @@ type Specification struct {
 	AuditServiceUrl string
 
 	SendBenchmarkToAuditService bool
+
+	// Reddit API configuration
+	UseRedditAPI   bool
+	RedditClientID string
+	RedditSecret   string
+	RedditUsername string
+	RedditPassword string
 }
 
 // Validate checks if the specification is valid
@@ -93,6 +100,22 @@ func (s *Specification) Validate() error {
 		return fmt.Errorf("audit service URL is required when benchmark output is enabled")
 	}
 
+	// Reddit API configuration validation
+	if s.UseRedditAPI {
+		if s.RedditClientID == "" {
+			return fmt.Errorf("Reddit client ID is required when using Reddit API")
+		}
+		if s.RedditSecret == "" {
+			return fmt.Errorf("Reddit client secret is required when using Reddit API")
+		}
+		if s.RedditUsername == "" {
+			return fmt.Errorf("Reddit username is required when using Reddit API")
+		}
+		if s.RedditPassword == "" {
+			return fmt.Errorf("Reddit password is required when using Reddit API")
+		}
+	}
+
 	return nil
 }
 
@@ -132,6 +155,13 @@ func GetConfig() (*Specification, error) {
 		AuditServiceUrl: os.Getenv("ANP_AUDIT_SERVICE_URL"),
 
 		SendBenchmarkToAuditService: getBoolEnv("ANP_SEND_BENCHMARK_TO_AUDIT_SERVICE", false),
+
+		// Reddit API configuration
+		UseRedditAPI:   getBoolEnv("ANP_USE_REDDIT_API", false),
+		RedditClientID: os.Getenv("ANP_REDDIT_CLIENT_ID"),
+		RedditSecret:   os.Getenv("ANP_REDDIT_CLIENT_SECRET"),
+		RedditUsername: os.Getenv("ANP_REDDIT_USERNAME"),
+		RedditPassword: os.Getenv("ANP_REDDIT_PASSWORD"),
 	}
 
 	// Validate the configuration
