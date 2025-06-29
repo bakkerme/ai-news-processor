@@ -18,7 +18,7 @@ import (
 	"github.com/bakkerme/ai-news-processor/internal/openai"
 	"github.com/bakkerme/ai-news-processor/internal/persona"
 	"github.com/bakkerme/ai-news-processor/internal/prompts"
-	"github.com/bakkerme/ai-news-processor/internal/rss"
+	"github.com/bakkerme/ai-news-processor/internal/feeds"
 	"github.com/bakkerme/ai-news-processor/internal/urlextraction"
 	"github.com/bakkerme/ai-news-processor/models"
 )
@@ -42,7 +42,7 @@ func NewProcessor(client openai.OpenAIClient, imageClient openai.OpenAIClient, c
 }
 
 // ProcessEntries takes RSS entries, processes them through an LLM, and returns processed items
-func (p *Processor) ProcessEntries(systemPrompt string, entries []rss.Entry, persona persona.Persona) ([]models.Item, models.RunData, error) {
+func (p *Processor) ProcessEntries(systemPrompt string, entries []feeds.Entry, persona persona.Persona) ([]models.Item, models.RunData, error) {
 	var items []models.Item
 	var processingErrors []error
 
@@ -186,7 +186,7 @@ func (p *Processor) ProcessEntries(systemPrompt string, entries []rss.Entry, per
 }
 
 // processExternalURLs extracts and processes external URLs from an entry
-func (p *Processor) processExternalURLs(entry *rss.Entry, persona persona.Persona, benchmarkData *models.RunData) (map[string]string, error) {
+func (p *Processor) processExternalURLs(entry *feeds.Entry, persona persona.Persona, benchmarkData *models.RunData) (map[string]string, error) {
 	// 1. Extract external URLs
 	extractedURLs, err := p.urlExtractor.ExtractExternalURLsFromEntry(*entry)
 	if err != nil {
@@ -297,7 +297,7 @@ func (p *Processor) summarizeWebSite(pageTitle string, url *url.URL, content str
 }
 
 // processEntryWithRetry processes a single entry with retry support
-func (p *Processor) processEntryWithRetry(systemPrompt string, entry rss.Entry) (models.Item, error) {
+func (p *Processor) processEntryWithRetry(systemPrompt string, entry feeds.Entry) (models.Item, error) {
 	entryString := entry.String(true)
 
 	// noThink := "/no_thinking"
@@ -329,7 +329,7 @@ func (p *Processor) processEntryWithRetry(systemPrompt string, entry rss.Entry) 
 }
 
 // processImageWithRetry processes an image with retry support
-func (p *Processor) processImageWithRetry(entry rss.Entry, imagePrompt string) (string, error) {
+func (p *Processor) processImageWithRetry(entry feeds.Entry, imagePrompt string) (string, error) {
 	if len(entry.ImageURLs) == 0 {
 		return "", nil // No image to process
 	}
@@ -483,7 +483,7 @@ func (p *Processor) retrySummaryFunc(processFn func() (*models.SummaryResponse, 
 }
 
 // EnrichItems adds links from RSS entries to items based on item ID
-func EnrichItems(items []models.Item, entries []rss.Entry) []models.Item {
+func EnrichItems(items []models.Item, entries []feeds.Entry) []models.Item {
 	enrichedItems := make([]models.Item, len(items))
 	copy(enrichedItems, items)
 
@@ -493,7 +493,7 @@ func EnrichItems(items []models.Item, entries []rss.Entry) []models.Item {
 			continue
 		}
 
-		entry := rss.FindEntryByID(id, entries)
+		entry := feeds.FindEntryByID(id, entries)
 		if entry == nil {
 			log.Printf("could not find item with ID %s in RSS entry\n", id)
 			continue

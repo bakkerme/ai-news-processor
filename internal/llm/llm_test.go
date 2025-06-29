@@ -13,7 +13,7 @@ import (
 	"github.com/bakkerme/ai-news-processor/internal/customerrors"
 	"github.com/bakkerme/ai-news-processor/internal/http/retry"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
-	"github.com/bakkerme/ai-news-processor/internal/rss"
+	"github.com/bakkerme/ai-news-processor/internal/feeds"
 	"github.com/bakkerme/ai-news-processor/internal/urlextraction"
 	"github.com/bakkerme/ai-news-processor/models"
 )
@@ -130,15 +130,15 @@ func TestEnrichItems(t *testing.T) {
 		{ID: "2", Title: "Item 2"},
 		{ID: "3", Title: "Item 3"}, // No corresponding entry
 	}
-	entries := []rss.Entry{
-		{ID: "1", Link: rss.Link{Href: "http://example.com/1"}},
-		{ID: "2", Link: rss.Link{Href: "http://example.com/2"}},
-		{ID: "nonexistent", Link: rss.Link{Href: "http://example.com/nonexistent"}},
+	entries := []feeds.Entry{
+		{ID: "1", Link: feeds.Link{Href: "http://example.com/1"}},
+		{ID: "2", Link: feeds.Link{Href: "http://example.com/2"}},
+		{ID: "nonexistent", Link: feeds.Link{Href: "http://example.com/nonexistent"}},
 	}
 
 	expectedItems := []models.Item{
-		{ID: "1", Title: "Item 1", Link: "http://example.com/1", Entry: rss.Entry{ID: "1", Link: rss.Link{Href: "http://example.com/1"}}},
-		{ID: "2", Title: "Item 2", Link: "http://example.com/2", Entry: rss.Entry{ID: "2", Link: rss.Link{Href: "http://example.com/2"}}},
+		{ID: "1", Title: "Item 1", Link: "http://example.com/1", Entry: feeds.Entry{ID: "1", Link: feeds.Link{Href: "http://example.com/1"}}},
+		{ID: "2", Title: "Item 2", Link: "http://example.com/2", Entry: feeds.Entry{ID: "2", Link: feeds.Link{Href: "http://example.com/2"}}},
 		{ID: "3", Title: "Item 3"},
 	}
 
@@ -155,7 +155,7 @@ func TestEnrichItems(t *testing.T) {
 	}
 	expectedWithNoID := []models.Item{
 		{Title: "Item No ID"},
-		{ID: "1", Title: "Item 1", Link: "http://example.com/1", Entry: rss.Entry{ID: "1", Link: rss.Link{Href: "http://example.com/1"}}},
+		{ID: "1", Title: "Item 1", Link: "http://example.com/1", Entry: feeds.Entry{ID: "1", Link: feeds.Link{Href: "http://example.com/1"}}},
 	}
 	enrichedNoID := EnrichItems(itemsWithNoID, entries)
 	if !reflect.DeepEqual(enrichedNoID, expectedWithNoID) {
@@ -171,7 +171,7 @@ func TestEnrichItems(t *testing.T) {
 	}
 
 	// Test with empty entries
-	emptyEntries := []rss.Entry{}
+	emptyEntries := []feeds.Entry{}
 	expectedEmptyEntries := []models.Item{
 		{ID: "1", Title: "Item 1"},
 		{ID: "2", Title: "Item 2"},

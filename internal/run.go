@@ -9,6 +9,7 @@ import (
 	"github.com/bakkerme/ai-news-processor/internal/bench"
 	"github.com/bakkerme/ai-news-processor/internal/contentextractor"
 	"github.com/bakkerme/ai-news-processor/internal/email"
+	"github.com/bakkerme/ai-news-processor/internal/feeds"
 	"github.com/bakkerme/ai-news-processor/internal/fetcher"
 	httputil "github.com/bakkerme/ai-news-processor/internal/http"
 	"github.com/bakkerme/ai-news-processor/internal/http/retry"
@@ -16,9 +17,8 @@ import (
 	"github.com/bakkerme/ai-news-processor/internal/openai"
 	"github.com/bakkerme/ai-news-processor/internal/persona"
 	"github.com/bakkerme/ai-news-processor/internal/prompts"
+	"github.com/bakkerme/ai-news-processor/internal/providers"
 	"github.com/bakkerme/ai-news-processor/internal/qualityfilter"
-	"github.com/bakkerme/ai-news-processor/internal/reddit"
-	"github.com/bakkerme/ai-news-processor/internal/rss"
 	"github.com/bakkerme/ai-news-processor/internal/specification"
 	"github.com/bakkerme/ai-news-processor/internal/urlextraction"
 	"github.com/bakkerme/ai-news-processor/models"
@@ -71,21 +71,16 @@ func Run() {
 	}
 
 	// Create appropriate feed provider based on configuration
-	var feedProvider rss.FeedProvider
-	if s.DebugMockRss {
-		log.Println("Using RSS mock feed provider")
+	var feedProvider feeds.FeedProvider
+	if s.DebugMockFeeds {
+		log.Println("Using mock feed provider")
 		// Use the persona name from the first selected persona for mock data
 		// Each persona will still use its own mock data in processing
-		feedProvider = rss.NewMockFeedProvider(selectedPersonas[0].Name)
-	} else if s.DebugMockReddit {
-		log.Println("Using Reddit mock feed provider")
-		// Use the persona name from the first selected persona for mock data
-		// Each persona will still use its own mock data in processing
-		feedProvider = reddit.NewRedditMockProvider(selectedPersonas[0].Name)
-	} else if s.UseRedditAPI {
+		feedProvider = providers.NewMockProvider(selectedPersonas[0].Name)
+	} else {
 		log.Println("Using Reddit API provider")
 		var err error
-		feedProvider, err = reddit.NewRedditAPIProvider(
+		feedProvider, err = providers.NewRedditProvider(
 			s.RedditClientID,
 			s.RedditSecret,
 			s.RedditUsername,
@@ -95,9 +90,6 @@ func Run() {
 		if err != nil {
 			log.Fatalf("Failed to create Reddit API provider: %v", err)
 		}
-	} else {
-		log.Println("Using RSS feed provider")
-		feedProvider = rss.NewFeedProvider()
 	}
 
 	// Process each persona
@@ -105,10 +97,10 @@ func Run() {
 		log.Printf("Processing persona: %s\n", persona.Name)
 		urlExtractor := urlextraction.NewRedditExtractor()
 
-		// 1. Fetch and process RSS feed using FeedProvider
-		entries, err := rss.FetchAndProcessFeed(feedProvider, urlExtractor, persona.FeedURL, s.DebugRssDump, persona.Name)
+		// 1. Fetch and process feed using FeedProvider
+		entries, err := feeds.FetchAndProcessFeed(feedProvider, urlExtractor, persona.Subreddit, s.DebugRedditDump, persona.Name)
 		if err != nil {
-			log.Printf("Failed to process RSS feed for persona %s: %v\n", persona.Name, err)
+			log.Printf("Failed to process feed for persona %s: %v\n", persona.Name, err)
 			continue
 		}
 

@@ -8,9 +8,9 @@ import (
 )
 
 type Persona struct {
-	Name    string `yaml:"name" json:"name"`        // Unique name for the persona (e.g., "LocalLLaMA")
-	FeedURL string `yaml:"feed_url" json:"feedUrl"` // URL of the RSS feed (e.g., "https://reddit.com/r/localllama.rss")
-	Topic   string `yaml:"topic" json:"topic"`      // Main subject area (e.g., "AI Technology", "Gardening")
+	Name      string `yaml:"name" json:"name"`           // Unique name for the persona (e.g., "LocalLLaMA")
+	Subreddit string `yaml:"subreddit" json:"subreddit"` // Subreddit name (e.g., "localllama")
+	Topic     string `yaml:"topic" json:"topic"`         // Main subject area (e.g., "AI Technology", "Gardening")
 
 	// Persona identity (separated from specific task instructions)
 	PersonaIdentity string `yaml:"persona_identity" json:"personaIdentity"` // Core identity and expertise of the persona

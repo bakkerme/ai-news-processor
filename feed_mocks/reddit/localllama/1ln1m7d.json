@@ -1,0 +1,47 @@
+{
+  "post_id": "1ln1m7d",
+  "fetched_at": "2025-06-29T12:14:05.955717837+10:00",
+  "comments": [
+    {
+      "id": "n0bz6u1",
+      "body": "There isn’t really a single open source model that does all that natively. But you can kind of build your own pipeline. Use Whisper for transcription. Then feed that into something like Parselmouth or Gentle for prosody and timing. From there you could send it into a local LLM like Mistral. It's a bit of a DIY setup but totally doable if you're okay with some tweaking.",
+      "parent_id": "t3_1ln1m7d",
+      "author": "Melting735",
+      "score": 4,
+      "created": "2025-06-29T00:45:03Z"
+    },
+    {
+      "id": "n0c0b48",
+      "body": "Gemma 3n supports audio, image, video input. You could try that.",
+      "parent_id": "t3_1ln1m7d",
+      "author": "TheRealMasonMac",
+      "score": 2,
+      "created": "2025-06-29T00:52:16Z"
+    },
+    {
+      "id": "n0c3ex6",
+      "body": "Gemma 3n and Qwen 2.5 Omni. Omni does voice out but you can always omit that from the response.",
+      "parent_id": "t3_1ln1m7d",
+      "author": "Icy-Corgi4757",
+      "score": 2,
+      "created": "2025-06-29T01:12:21Z"
+    },
+    {
+      "id": "n0c7b7d",
+      "body": "https://developers.googleblog.com/en/introducing-gemma-3n-developer-guide/",
+      "parent_id": "t3_1ln1m7d",
+      "author": "chibop1",
+      "score": 1,
+      "created": "2025-06-29T01:38:05Z"
+    },
+    {
+      "id": "n0cbezu",
+      "body": "[https://huggingface.co/nvidia/audio-flamingo-2](https://huggingface.co/nvidia/audio-flamingo-2)",
+      "parent_id": "t3_1ln1m7d",
+      "author": "teachersecret",
+      "score": 1,
+      "created": "2025-06-29T02:05:17Z"
+    }
+  ],
+  "raw_api_url": "/comments/1ln1m7d"
+}

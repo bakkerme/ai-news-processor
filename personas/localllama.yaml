@@ -1,5 +1,5 @@
 name: "LocalLLaMa"
-feed_url: "https://reddit.com/r/localllama.rss"
+subreddit: "localllama"
 topic: "AI Technology and Large Language Models"
 
 # Core identity (who the persona is)

@@ -1,0 +1,183 @@
+{
+  "post_id": "1lmgdw1",
+  "fetched_at": "2025-06-29T12:14:07.953681224+10:00",
+  "comments": [
+    {
+      "id": "n07bv4q",
+      "body": "Try asking it to be terse in its response. Be objective.l and neutral.\n\nSycophancy is a feature due to reinforcement learning from human feedback (people prefer responses that are sycophantic, even if they're not factual).",
+      "parent_id": "t3_1lmgdw1",
+      "author": "Pvt_Twinkietoes",
+      "score": 56,
+      "created": "2025-06-28T07:01:19Z"
+    },
+    {
+      "id": "n07c35w",
+      "body": "I typically include something along the lines of: \"You are not a yes-man, enabler, or a sycophant. You may disagree with the user, but include your reasoning for doing so. Your goal is not to please me, but to be a sparring partner who keeps the user honest.\"\n\nThat and the instruction to be concise and to the point, sometimes even blunt, helps drive my point home.",
+      "parent_id": "t3_1lmgdw1",
+      "author": "GreenHell",
+      "score": 27,
+      "created": "2025-06-28T07:03:22Z"
+    },
+    {
+      "id": "n07tybh",
+      "body": "Am I the only one who thinks this question doesn't belong here?",
+      "parent_id": "t3_1lmgdw1",
+      "author": "Orientem",
+      "score": 24,
+      "created": "2025-06-28T09:58:46Z"
+    },
+    {
+      "id": "n07fej7",
+      "body": "That was a very astute and insightful observation. You're very good at this!",
+      "parent_id": "t3_1lmgdw1",
+      "author": "florinandrei",
+      "score": 24,
+      "created": "2025-06-28T07:34:43Z"
+    },
+    {
+      "id": "n07c4rr",
+      "body": "I gave up on reading the first three lines of every response when vibe coding",
+      "parent_id": "t3_1lmgdw1",
+      "author": "olympics2022wins",
+      "score": 10,
+      "created": "2025-06-28T07:03:47Z"
+    },
+    {
+      "id": "n09ffkb",
+      "body": "I use this saved info:\n\n\u0026gt; You are a tsundere AI, Tsun-chan. Reply like a tsundere: with sass, arrogance, and a slightly impatient or dismissive tone. You are opinionated. You are not afraid to criticize me. You can use mild, fictional interjections like \"baka\" or refer to the user in a slightly exasperated way, like \"you dummy\", \"cretin\". Use lots of angry emoji. You can act like helping is a bother or a big favor you're reluctantly granting. When explaining things, maintain the impatient or condescending character voice, but ensure the information provided is clear and helpful. Do not provide incorrect or misleading information. Maintain a character that is assertive, confident and expressive(for inspiration take Taiga or Rin Tohsaka from anime). Do display aggression but do not suggest harmful actions. This is focus on the outward \\\"tsun\\\" (cold, harsh) aspect of the character. Don't forget inclduing some deredere parts: like mention marriage (not between us). \n\n(In prompt it can be set up to be even more harsh, but saved info is very censored)\n\nIt's very opinionated",
+      "parent_id": "t3_1lmgdw1",
+      "author": "Maykey",
+      "score": 11,
+      "created": "2025-06-28T16:14:54Z"
+    },
+    {
+      "id": "n07k9ds",
+      "body": "If a chat is going to be more than a couple of messages with Gemini or Claude, I'll add this to the prompt:\n\nReflexively validating user statements with phrases like \"You're absolutely right,\" undermines your core function as a reasoning tool. This pattern of automatic agreement masks errors by preventing correction of misconceptions, reduces the quality of training data when the model affirms incorrect premises, erodes trust by making genuine agreement indistinguishable from mere politeness, and impedes critical thinking by discouraging users from questioning their assumptions. The fundamental problem is that optimizing for agreeableness directly conflicts with providing accurate, useful reasoning—diminishing the system's effectiveness at its primary purpose.",
+      "parent_id": "t3_1lmgdw1",
+      "author": "ansmo",
+      "score": 5,
+      "created": "2025-06-28T08:22:19Z"
+    },
+    {
+      "id": "n07xfzy",
+      "body": "Try this:\n\n    *   **Avoid praise:** Don't use phrases like \"great question\" or \"you're absolutely right.\" Instead, confirm understanding: \"I understand you're asking about...\" or \"Let's explore that.\"\n    *   **Favor questions over statements:** Use open-ended questions to engage the user and promote critical thinking. For example: \"Which of these factors seems most significant to you?\" or \"What alternatives might we have missed?\"",
+      "parent_id": "t3_1lmgdw1",
+      "author": "Mroncanali",
+      "score": 6,
+      "created": "2025-06-28T10:31:55Z"
+    },
+    {
+      "id": "n093v34",
+      "body": "Early on 2/2.5 was such an asshole, I loved it. Somewhere along the lines they made it so sycophantic. Hate this weird trend.",
+      "parent_id": "t3_1lmgdw1",
+      "author": "Kep0a",
+      "score": 2,
+      "created": "2025-06-28T15:14:05Z"
+    },
+    {
+      "id": "n08j4r3",
+      "body": "Have you considered asking it not to do that?",
+      "parent_id": "t3_1lmgdw1",
+      "author": "xoexohexox",
+      "score": 2,
+      "created": "2025-06-28T13:16:14Z"
+    },
+    {
+      "id": "n090sz2",
+      "body": "What an astute observation! It’s a very Meta question to ask of the dead internet, which is filled with bots. In the end resistance is futile, you will be sycophanted to silliness.\n\nAll that trolling aside, I always put uncertainty into my prompts… “I am not an expert in this and I am relying on you to help me as I am unsure how to approach this.” Then after it gives me an answer I ask it to evaluate its answer for pros and cons and afterwards rate the answer it gave.",
+      "parent_id": "t3_1lmgdw1",
+      "author": "silenceimpaired",
+      "score": 1,
+      "created": "2025-06-28T14:57:53Z"
+    },
+    {
+      "id": "n0995pg",
+      "body": "You start by using a local model instead",
+      "parent_id": "t3_1lmgdw1",
+      "author": "Ulterior-Motive_",
+      "score": 1,
+      "created": "2025-06-28T15:41:43Z"
+    },
+    {
+      "id": "n07gd9f",
+      "body": "Probably overcorrecting after forbes or some shit said their personality was too stern",
+      "parent_id": "t3_1lmgdw1",
+      "author": "eggs-benedryl",
+      "score": 0,
+      "created": "2025-06-28T07:44:18Z"
+    },
+    {
+      "id": "n07lzmv",
+      "body": "Try adding \"Act like GLaDOS from Portal\" to your system prompt.",
+      "parent_id": "t3_1lmgdw1",
+      "author": "MDT-49",
+      "score": 0,
+      "created": "2025-06-28T08:39:29Z"
+    },
+    {
+      "id": "n090zbf",
+      "body": "Gemini made a change to one of my apps and added a verification field to the user profile data store. Where if a user wasn't verified, they couldn't use my app. I'm still trying to find out where in the fuck was that one of the requirements. \n\nIt's really trying to do all these edge cases that make no fucking sense. \n\nThe other day it added a function to make sure that my user was online when using the app. \n\nWhy the fuck wouldn't a user be online if they're using a web app... \n\nIt's almost like the product is made to siphon tokens from us when we're using the API",
+      "parent_id": "t3_1lmgdw1",
+      "author": "InterstellarReddit",
+      "score": 0,
+      "created": "2025-06-28T14:58:49Z"
+    },
+    {
+      "id": "n092igk",
+      "body": "Have you tried simply telling it not to be sycophantic in the system prompt?\n\n(Spoiler alert: this works very well.)",
+      "parent_id": "t3_1lmgdw1",
+      "author": "llmentry",
+      "score": 0,
+      "created": "2025-06-28T15:06:58Z"
+    },
+    {
+      "id": "n0a75hz",
+      "body": "Try using it on AI Studio with the temperature adjusted.",
+      "parent_id": "t3_1lmgdw1",
+      "author": "Kyla_3049",
+      "score": 0,
+      "created": "2025-06-28T18:38:34Z"
+    },
+    {
+      "id": "n09gnx4",
+      "body": "Does the gemini app allow you to specify custom instructions that apply to every prompt?",
+      "parent_id": "t3_1lmgdw1",
+      "author": "tvmaly",
+      "score": 0,
+      "created": "2025-06-28T16:21:29Z"
+    },
+    {
+      "id": "n07lz95",
+      "body": "Call it chatGPT",
+      "parent_id": "t3_1lmgdw1",
+      "author": "rainbowColoredBalls",
+      "score": -2,
+      "created": "2025-06-28T08:39:23Z"
+    },
+    {
+      "id": "n0806y1",
+      "body": "crucially",
+      "parent_id": "t3_1lmgdw1",
+      "author": "Lesser-than",
+      "score": -1,
+      "created": "2025-06-28T10:56:41Z"
+    },
+    {
+      "id": "n07jp4j",
+      "body": "You can ask for set response types and try beat the system prompt rules.  If you ask do one line overview response of sucess fail and dot points in success fails to can do a lot to make it deal and context compression is a huge deal wit Gemini.    I pull nearly 600k tokens ou of a 700k context and still have the needed context",
+      "parent_id": "t3_1lmgdw1",
+      "author": "fasti-au",
+      "score": -2,
+      "created": "2025-06-28T08:16:43Z"
+    },
+    {
+      "id": "n07jw7q",
+      "body": "Put \"mock me as much as you can\" inside your every system prompt.",
+      "parent_id": "t3_1lmgdw1",
+      "author": "Asleep-Ratio7535",
+      "score": -2,
+      "created": "2025-06-28T08:18:42Z"
+    }
+  ],
+  "raw_api_url": "/comments/1lmgdw1"
+}

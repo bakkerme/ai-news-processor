@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/bakkerme/ai-news-processor/internal/persona"
-	"github.com/bakkerme/ai-news-processor/internal/rss"
+	"github.com/bakkerme/ai-news-processor/internal/feeds"
 	"github.com/bakkerme/ai-news-processor/models"
 )
 
@@ -57,13 +57,13 @@ func GetMockSummaryResponse(relevantItems []models.Item) *models.SummaryResponse
 	}
 }
 
-func GetMockBenchmarkData(items []models.Item, personaObj persona.Persona, entries []rss.Entry) models.RunData {
+func GetMockBenchmarkData(items []models.Item, personaObj persona.Persona, entries []feeds.Entry) models.RunData {
 	// First, enrich the items with Entry field (like in real processing)
 	enrichedItems := make([]models.Item, len(items))
 	copy(enrichedItems, items)
 
 	// Create entry map for efficient lookup
-	entryMap := make(map[string]rss.Entry)
+	entryMap := make(map[string]feeds.Entry)
 	for _, entry := range entries {
 		entryMap[entry.ID] = entry
 	}

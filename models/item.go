@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/bakkerme/ai-news-processor/internal/rss"
+	"github.com/bakkerme/ai-news-processor/internal/feeds"
 )
 
 // Item represents the structure of the JSON/YAML object
@@ -21,7 +21,7 @@ type Item struct {
 	IsRelevant          bool      `json:"isRelevant"`
 	RelevanceToCriteria string    `json:"relevanceToCriteria,omitempty"`
 	ThumbnailURL        string    `json:"thumbnailUrl,omitempty"`
-	Entry               rss.Entry `json:"entry,omitempty"`
+	Entry               feeds.Entry `json:"entry,omitempty"`
 }
 
 // ToSummaryString creates a concise string representation of the Item for summary generation

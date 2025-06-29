@@ -1,5 +1,5 @@
 name: "MachineLearningNews"
-feed_url: "https://reddit.com/r/machinelearningnews.rss"
+subreddit: "machinelearningnews"
 topic: "Machine Learning and Generative AI News"
 
 # Core identity (who the persona is)
