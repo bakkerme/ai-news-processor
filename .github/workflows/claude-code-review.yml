@@ -49,7 +49,7 @@ jobs:
             - Security concerns
             - Test coverage
             
-            Be constructive and helpful in your feedback.
+            Be concise, constructive and helpful in your feedback.
           
           # Optional: Customize review based on file types
           # direct_prompt: |
