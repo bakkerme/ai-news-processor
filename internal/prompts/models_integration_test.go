@@ -24,7 +24,7 @@ func TestRealModelsIntegration(t *testing.T) {
 
 		// Verify it has the expected structure based on the real models.ItemSubset struct
 		expectedFields := []string{
-			"title", "id", "overview", "summary", "commentSummary", "isRelevant",
+			"id", "overview", "summary", "commentSummary", "isRelevant",
 		}
 
 		for _, field := range expectedFields {

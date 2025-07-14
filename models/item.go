@@ -10,17 +10,17 @@ import (
 
 // Item represents the structure of the JSON/YAML object
 type Item struct {
-	Title               string    `json:"title"`
-	ID                  string    `json:"id"`
-	Overview            []string  `json:"overview"`
-	Summary             string    `json:"summary"`
-	CommentSummary      string    `json:"commentSummary,omitempty"`
-	ImageSummary        string    `json:"imageDescription,omitempty"`
-	WebContentSummary   string    `json:"webContentSummary,omitempty"`
-	Link                string    `json:"link,omitempty"`
-	IsRelevant          bool      `json:"isRelevant"`
-	RelevanceToCriteria string    `json:"relevanceToCriteria,omitempty"`
-	ThumbnailURL        string    `json:"thumbnailUrl,omitempty"`
+	Title               string      `json:"title"`
+	ID                  string      `json:"id"`
+	Overview            []string    `json:"overview"`
+	Summary             string      `json:"summary"`
+	CommentSummary      string      `json:"commentSummary,omitempty"`
+	ImageSummary        string      `json:"imageDescription,omitempty"`
+	WebContentSummary   string      `json:"webContentSummary,omitempty"`
+	Link                string      `json:"link,omitempty"`
+	IsRelevant          bool        `json:"isRelevant"`
+	RelevanceToCriteria string      `json:"relevanceToCriteria,omitempty"`
+	ThumbnailURL        string      `json:"thumbnailUrl,omitempty"`
 	Entry               feeds.Entry `json:"entry,omitempty"`
 }
 
@@ -38,7 +38,6 @@ func (item *Item) ToSummaryString() string {
 }
 
 type ItemSubset struct {
-	Title               string   `json:"title"`
 	ID                  string   `json:"id"`
 	Overview            []string `json:"overview"`
 	Summary             string   `json:"summary"`

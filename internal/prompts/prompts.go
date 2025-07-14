@@ -42,7 +42,6 @@ For each item, provide a newsletter-style explanation that includes:
 	* Should highlight the most important aspects without going into deep technical detail
 * "Summary"
 	* 1 - 2 paragraphs, extracting key points of interest from the post, image description, comments, factoring in relevant, factual information from the comments
-	* The comements may contain critical information that fills in the gaps in the post. If so, take advantage of that.
 	* Extrapolate on the details of these key points of interest
 	* Provide highly detailed technical analysis, if applicable
 * "CommentSummary"

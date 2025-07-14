@@ -12,13 +12,13 @@ import (
 
 	"github.com/bakkerme/ai-news-processor/internal/contentextractor"
 	"github.com/bakkerme/ai-news-processor/internal/customerrors"
+	"github.com/bakkerme/ai-news-processor/internal/feeds"
 	"github.com/bakkerme/ai-news-processor/internal/fetcher"
 	httputil "github.com/bakkerme/ai-news-processor/internal/http"
 	"github.com/bakkerme/ai-news-processor/internal/http/retry"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
 	"github.com/bakkerme/ai-news-processor/internal/persona"
 	"github.com/bakkerme/ai-news-processor/internal/prompts"
-	"github.com/bakkerme/ai-news-processor/internal/feeds"
 	"github.com/bakkerme/ai-news-processor/internal/urlextraction"
 	"github.com/bakkerme/ai-news-processor/models"
 )
@@ -275,7 +275,7 @@ func (p *Processor) summarizeWebSite(pageTitle string, url *url.URL, content str
 	userPrompt := fmt.Sprintf("Please provide a concise summary of the following article content (aim for 300-500 words):\n\n%s\n\nTitle: %s\n\nURL: %s", content, pageTitle, url)
 
 	// disable qwen thinking
-	userPrompt += "\n/no_thinking"
+	// userPrompt += "\n/no_thinking"
 
 	// Function to execute the LLM call
 	processFn := func() (string, error) {
