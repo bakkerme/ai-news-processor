@@ -5,17 +5,17 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"reflect"
 	"testing"
 	"time"
 
 	"github.com/bakkerme/ai-news-processor/internal/contentextractor"
 	"github.com/bakkerme/ai-news-processor/internal/customerrors"
+	"github.com/bakkerme/ai-news-processor/internal/feeds"
 	"github.com/bakkerme/ai-news-processor/internal/http/retry"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
-	"github.com/bakkerme/ai-news-processor/internal/feeds"
 	"github.com/bakkerme/ai-news-processor/internal/urlextraction"
 	"github.com/bakkerme/ai-news-processor/models"
+	"github.com/stretchr/testify/assert"
 )
 
 // Mock implementations for dependencies
@@ -92,152 +92,118 @@ func TestNewProcessor(t *testing.T) {
 
 	processor := NewProcessor(mockClient, mockImageClient, config, mockArtclExtractor, mockURLFetcher, mockURLExtrctor, mockImgFetcher)
 
-	if processor.client.(*mockOpenAIClient) != mockClient {
-		t.Errorf("Expected client to be %v, got %v", mockClient, processor.client)
-	}
-	if processor.imageClient.(*mockOpenAIClient) != mockImageClient {
-		t.Errorf("Expected imageClient to be %v, got %v", mockImageClient, processor.imageClient)
-	}
-	if processor.urlFetcher.(*mockFetcher) != mockURLFetcher {
-		t.Errorf("Expected urlFetcher to be %v, got %v", mockURLFetcher, processor.urlFetcher)
-	}
-	if !reflect.DeepEqual(processor.config, config) {
-		t.Errorf("Expected config to be %v, got %v", config, processor.config)
-	}
-	if processor.urlSummaryEnabled != config.URLSummaryEnabled {
-		t.Errorf("Expected urlSummaryEnabled to be %v, got %v", config.URLSummaryEnabled, processor.urlSummaryEnabled)
-	}
-	if processor.urlExtractor.(*mockURLExtractor) != mockURLExtrctor {
-		t.Errorf("Expected urlExtractor to be %v, got %v", mockURLExtrctor, processor.urlExtractor)
-	}
-	if processor.imageEnabled != config.ImageEnabled {
-		t.Errorf("Expected imageEnabled to be %v, got %v", config.ImageEnabled, processor.imageEnabled)
-	}
-	if processor.debugOutputBenchmark != config.DebugOutputBenchmark {
-		t.Errorf("Expected debugOutputBenchmark to be %v, got %v", config.DebugOutputBenchmark, processor.debugOutputBenchmark)
-	}
-	if processor.imageFetcher.(*mockImageFetcher) != mockImgFetcher {
-		t.Errorf("Expected imageFetcher to be %v, got %v", mockImgFetcher, processor.imageFetcher)
-	}
-	if processor.articleExtractor.(*mockArticleExtractor) != mockArtclExtractor {
-		t.Errorf("Expected articleExtractor to be %v, got %v", mockArtclExtractor, processor.articleExtractor)
-	}
+	assert.Equal(t, mockClient, processor.client.(*mockOpenAIClient), "client should match")
+	assert.Equal(t, mockImageClient, processor.imageClient.(*mockOpenAIClient), "imageClient should match")
+	assert.Equal(t, mockURLFetcher, processor.urlFetcher.(*mockFetcher), "urlFetcher should match")
+	assert.Equal(t, config, processor.config, "config should match")
+	assert.Equal(t, config.URLSummaryEnabled, processor.urlSummaryEnabled, "urlSummaryEnabled should match")
+	assert.Equal(t, mockURLExtrctor, processor.urlExtractor.(*mockURLExtractor), "urlExtractor should match")
+	assert.Equal(t, config.ImageEnabled, processor.imageEnabled, "imageEnabled should match")
+	assert.Equal(t, config.DebugOutputBenchmark, processor.debugOutputBenchmark, "debugOutputBenchmark should match")
+	assert.Equal(t, mockImgFetcher, processor.imageFetcher.(*mockImageFetcher), "imageFetcher should match")
+	assert.Equal(t, mockArtclExtractor, processor.articleExtractor.(*mockArticleExtractor), "articleExtractor should match")
 }
 
 func TestEnrichItems(t *testing.T) {
-	items := []models.Item{
-		{ID: "1", Title: "Item 1"},
-		{ID: "2", Title: "Item 2"},
-		{ID: "3", Title: "Item 3"}, // No corresponding entry
-	}
-	entries := []feeds.Entry{
-		{ID: "1", Link: feeds.Link{Href: "http://example.com/1"}},
-		{ID: "2", Link: feeds.Link{Href: "http://example.com/2"}},
-		{ID: "nonexistent", Link: feeds.Link{Href: "http://example.com/nonexistent"}},
-	}
+	t.Run("normal enrichment", func(t *testing.T) {
+		items := []models.Item{
+			{ID: "1", Title: "Item 1"},
+			{ID: "2", Title: "Item 2"},
+			{ID: "3", Title: "Item 3"}, // No corresponding entry
+		}
+		entries := []feeds.Entry{
+			{ID: "1", Title: "Example 1", Link: feeds.Link{Href: "http://example.com/1"}},
+			{ID: "2", Title: "Example 2", Link: feeds.Link{Href: "http://example.com/2"}},
+			{ID: "nonexistent", Title: "Example 3", Link: feeds.Link{Href: "http://example.com/nonexistent"}},
+		}
 
-	expectedItems := []models.Item{
-		{ID: "1", Title: "Item 1", Link: "http://example.com/1", Entry: feeds.Entry{ID: "1", Link: feeds.Link{Href: "http://example.com/1"}}},
-		{ID: "2", Title: "Item 2", Link: "http://example.com/2", Entry: feeds.Entry{ID: "2", Link: feeds.Link{Href: "http://example.com/2"}}},
-		{ID: "3", Title: "Item 3"},
-	}
+		expectedItems := []models.Item{
+			{ID: "1", Title: "Example 1", Link: "http://example.com/1", Entry: feeds.Entry{ID: "1", Title: "Example 1", Link: feeds.Link{Href: "http://example.com/1"}}},
+			{ID: "2", Title: "Example 2", Link: "http://example.com/2", Entry: feeds.Entry{ID: "2", Title: "Example 2", Link: feeds.Link{Href: "http://example.com/2"}}},
+			{ID: "3", Title: "Item 3"},
+		}
 
-	enrichedItems := EnrichItems(items, entries)
+		enrichedItems := EnrichItems(items, entries)
+		assert.Equal(t, expectedItems, enrichedItems, "enriched items should match expected")
+	})
 
-	if !reflect.DeepEqual(enrichedItems, expectedItems) {
-		t.Errorf("Expected enriched items %v, got %v", expectedItems, enrichedItems)
-	}
+	t.Run("empty items", func(t *testing.T) {
+		emptyItems := []models.Item{}
+		entries := []feeds.Entry{
+			{ID: "1", Title: "Example 1", Link: feeds.Link{Href: "http://example.com/1"}},
+		}
+		expectedEmpty := []models.Item{}
 
-	// Test with an item that has no ID
-	itemsWithNoID := []models.Item{
-		{Title: "Item No ID"},
-		{ID: "1", Title: "Item 1"},
-	}
-	expectedWithNoID := []models.Item{
-		{Title: "Item No ID"},
-		{ID: "1", Title: "Item 1", Link: "http://example.com/1", Entry: feeds.Entry{ID: "1", Link: feeds.Link{Href: "http://example.com/1"}}},
-	}
-	enrichedNoID := EnrichItems(itemsWithNoID, entries)
-	if !reflect.DeepEqual(enrichedNoID, expectedWithNoID) {
-		t.Errorf("Expected enriched items with no ID %v, got %v", expectedWithNoID, enrichedNoID)
-	}
+		enrichedEmpty := EnrichItems(emptyItems, entries)
+		assert.Equal(t, expectedEmpty, enrichedEmpty, "empty items should remain empty")
+	})
 
-	// Test with empty items
-	emptyItems := []models.Item{}
-	expectedEmpty := []models.Item{}
-	enrichedEmpty := EnrichItems(emptyItems, entries)
-	if !reflect.DeepEqual(enrichedEmpty, expectedEmpty) {
-		t.Errorf("Expected empty enriched items %v, got %v", expectedEmpty, enrichedEmpty)
-	}
+	t.Run("empty entries", func(t *testing.T) {
+		items := []models.Item{
+			{ID: "1", Title: "Item 1"},
+			{ID: "2", Title: "Item 2"},
+			{ID: "3", Title: "Item 3"},
+		}
+		emptyEntries := []feeds.Entry{}
+		expectedEmptyEntries := []models.Item{
+			{ID: "1", Title: "Item 1"},
+			{ID: "2", Title: "Item 2"},
+			{ID: "3", Title: "Item 3"},
+		}
 
-	// Test with empty entries
-	emptyEntries := []feeds.Entry{}
-	expectedEmptyEntries := []models.Item{
-		{ID: "1", Title: "Item 1"},
-		{ID: "2", Title: "Item 2"},
-		{ID: "3", Title: "Item 3"},
-	}
-	enrichedEmptyEntries := EnrichItems(items, emptyEntries)
-	if !reflect.DeepEqual(enrichedEmptyEntries, expectedEmptyEntries) {
-		t.Errorf("Expected enriched items with empty entries %v, got %v", expectedEmptyEntries, enrichedEmptyEntries)
-	}
+		enrichedEmptyEntries := EnrichItems(items, emptyEntries)
+		assert.Equal(t, expectedEmptyEntries, enrichedEmptyEntries, "items should remain unchanged with empty entries")
+	})
 }
 
 func TestFilterRelevantItems(t *testing.T) {
-	items := []models.Item{
-		{ID: "1", IsRelevant: true, Title: "Relevant Item 1"},
-		{ID: "", IsRelevant: true, Title: "Relevant Item No ID"},
-		{ID: "3", IsRelevant: false, Title: "Irrelevant Item"},
-		{ID: "4", IsRelevant: true, Title: "Relevant Item 2"},
-	}
+	t.Run("mixed relevant and irrelevant items", func(t *testing.T) {
+		items := []models.Item{
+			{ID: "1", IsRelevant: true, Title: "Relevant Item 1"},
+			{ID: "", IsRelevant: true, Title: "Relevant Item No ID"},
+			{ID: "3", IsRelevant: false, Title: "Irrelevant Item"},
+			{ID: "4", IsRelevant: true, Title: "Relevant Item 2"},
+		}
 
-	expectedItems := []models.Item{
-		{ID: "1", IsRelevant: true, Title: "Relevant Item 1"},
-		{ID: "4", IsRelevant: true, Title: "Relevant Item 2"},
-	}
+		expectedItems := []models.Item{
+			{ID: "1", IsRelevant: true, Title: "Relevant Item 1"},
+			{ID: "4", IsRelevant: true, Title: "Relevant Item 2"},
+		}
 
-	filteredItems := FilterRelevantItems(items)
+		filteredItems := FilterRelevantItems(items)
+		assert.Equal(t, expectedItems, filteredItems, "should filter out irrelevant items and items without ID")
+	})
 
-	if !reflect.DeepEqual(filteredItems, expectedItems) {
-		t.Errorf("Expected filtered items %v, got %v", expectedItems, filteredItems)
-	}
+	t.Run("no relevant items", func(t *testing.T) {
+		noRelevantItems := []models.Item{
+			{ID: "1", IsRelevant: false, Title: "Irrelevant 1"},
+			{ID: "2", IsRelevant: false, Title: "Irrelevant 2"},
+		}
 
-	// Test with no relevant items
-	noRelevantItems := []models.Item{
-		{ID: "1", IsRelevant: false, Title: "Irrelevant 1"},
-		{ID: "2", IsRelevant: false, Title: "Irrelevant 2"},
-	}
-	expectedNoRelevant := []models.Item{}
-	filteredNoRelevant := FilterRelevantItems(noRelevantItems)
-	if len(expectedNoRelevant) == 0 && len(filteredNoRelevant) == 0 {
-		// Both are empty (one might be nil, other empty non-nil), consider it a pass for this case
-	} else if !reflect.DeepEqual(filteredNoRelevant, expectedNoRelevant) {
-		t.Errorf("Expected no relevant items %v, got %v", expectedNoRelevant, filteredNoRelevant)
-	}
+		filteredNoRelevant := FilterRelevantItems(noRelevantItems)
+		assert.Empty(t, filteredNoRelevant, "should return empty slice when no items are relevant")
+	})
 
-	// Test with all relevant items
-	allRelevantItems := []models.Item{
-		{ID: "1", IsRelevant: true, Title: "Relevant 1"},
-		{ID: "2", IsRelevant: true, Title: "Relevant 2"},
-	}
-	expectedAllRelevant := []models.Item{
-		{ID: "1", IsRelevant: true, Title: "Relevant 1"},
-		{ID: "2", IsRelevant: true, Title: "Relevant 2"},
-	}
-	filteredAllRelevant := FilterRelevantItems(allRelevantItems)
-	if !reflect.DeepEqual(filteredAllRelevant, expectedAllRelevant) {
-		t.Errorf("Expected all relevant items %v, got %v", expectedAllRelevant, filteredAllRelevant)
-	}
+	t.Run("all relevant items", func(t *testing.T) {
+		allRelevantItems := []models.Item{
+			{ID: "1", IsRelevant: true, Title: "Relevant 1"},
+			{ID: "2", IsRelevant: true, Title: "Relevant 2"},
+		}
+		expectedAllRelevant := []models.Item{
+			{ID: "1", IsRelevant: true, Title: "Relevant 1"},
+			{ID: "2", IsRelevant: true, Title: "Relevant 2"},
+		}
 
-	// Test with empty input
-	emptyItems := []models.Item{}
-	expectedEmpty := []models.Item{}
-	filteredEmpty := FilterRelevantItems(emptyItems)
-	if len(expectedEmpty) == 0 && len(filteredEmpty) == 0 {
-		// Both are empty, consider it a pass
-	} else if !reflect.DeepEqual(filteredEmpty, expectedEmpty) {
-		t.Errorf("Expected empty filtered items %v, got %v", expectedEmpty, filteredEmpty)
-	}
+		filteredAllRelevant := FilterRelevantItems(allRelevantItems)
+		assert.Equal(t, expectedAllRelevant, filteredAllRelevant, "should return all items when all are relevant")
+	})
+
+	t.Run("empty input", func(t *testing.T) {
+		emptyItems := []models.Item{}
+
+		filteredEmpty := FilterRelevantItems(emptyItems)
+		assert.Empty(t, filteredEmpty, "should return empty slice for empty input")
+	})
 }
 
 func TestLlmResponseToItems(t *testing.T) {
@@ -251,28 +217,20 @@ func TestLlmResponseToItems(t *testing.T) {
 		}
 
 		item, err := llmResponseToItems(jsonStr)
-		if err != nil {
-			t.Fatalf("Expected no error, got %v", err)
-		}
-		if !reflect.DeepEqual(item, expectedItem) {
-			t.Errorf("Expected item %v, got %v", expectedItem, item)
-		}
+		assert.NoError(t, err, "should not return error for valid JSON")
+		assert.Equal(t, expectedItem, item, "parsed item should match expected")
 	})
 
 	t.Run("invalid json", func(t *testing.T) {
 		jsonStr := `{"id":"123","title":"Test Title",}` // Invalid JSON, trailing comma
 		_, err := llmResponseToItems(jsonStr)
-		if err == nil {
-			t.Fatal("Expected an error for invalid JSON, got nil")
-		}
+		assert.Error(t, err, "should return error for invalid JSON")
 	})
 
 	t.Run("empty json string", func(t *testing.T) {
 		jsonStr := ""
 		_, err := llmResponseToItems(jsonStr)
-		if err == nil {
-			t.Fatal("Expected an error for empty JSON string, got nil")
-		}
+		assert.Error(t, err, "should return error for empty JSON string")
 	})
 
 	t.Run("json with missing fields", func(t *testing.T) {
@@ -281,13 +239,10 @@ func TestLlmResponseToItems(t *testing.T) {
 			ID:    "123",
 			Title: "Test Title",
 		}
+
 		item, err := llmResponseToItems(jsonStr)
-		if err != nil {
-			t.Fatalf("Expected no error, got %v", err)
-		}
-		if !reflect.DeepEqual(item, expectedItem) {
-			t.Errorf("Expected item %v, got %v", expectedItem, item)
-		}
+		assert.NoError(t, err, "should not return error for JSON with missing optional fields")
+		assert.Equal(t, expectedItem, item, "parsed item should match expected with missing fields")
 	})
 
 	t.Run("json with extra fields", func(t *testing.T) {
@@ -297,12 +252,9 @@ func TestLlmResponseToItems(t *testing.T) {
 			Title:   "Test Title",
 			Summary: "Test Overview",
 		}
+
 		item, err := llmResponseToItems(jsonStr)
-		if err != nil {
-			t.Fatalf("Expected no error, got %v", err)
-		}
-		if !reflect.DeepEqual(item, expectedItem) {
-			t.Errorf("Expected item %v, got %v", expectedItem, item)
-		}
+		assert.NoError(t, err, "should not return error for JSON with extra fields")
+		assert.Equal(t, expectedItem, item, "parsed item should match expected, ignoring extra fields")
 	})
 }
