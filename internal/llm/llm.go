@@ -499,6 +499,8 @@ func EnrichItems(items []models.Item, entries []feeds.Entry) []models.Item {
 			continue
 		}
 
+		enrichedItems[i].Title = entry.Title
+
 		// Populate the Entry field with the associated RSS entry
 		enrichedItems[i].Entry = *entry
 		enrichedItems[i].Link = entry.Link.Href
