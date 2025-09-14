@@ -36,11 +36,10 @@ func NewRSSProvider(enableDump bool) *RSSProvider {
 
 // FetchFeed implements feeds.FeedProvider.FetchFeed for RSS feeds
 func (r *RSSProvider) FetchFeed(ctx context.Context, p persona.Persona) (*feeds.Feed, error) {
-	// TODO: Extract RSS URL from persona - for now use a placeholder
-	// This will be updated when persona struct is extended with RSS fields
-	rssURL := "" // Will be extracted from persona.FeedURL when available
+	// Extract RSS URL from persona
+	rssURL := p.FeedURL
 	if rssURL == "" {
-		return nil, fmt.Errorf("RSS URL not configured for persona %s - persona system needs RSS URL field", p.Name)
+		return nil, fmt.Errorf("RSS URL not configured for persona %s - feed_url field is required for RSS provider", p.Name)
 	}
 
 	log.Printf("Fetching generic RSS feed from %s for persona %s", rssURL, p.Name)
@@ -256,6 +255,12 @@ func isImageURL(urlStr string) bool {
 		if strings.HasSuffix(lowerURL, ext) || strings.Contains(lowerURL, ext+"?") {
 			return true
 		}
+	}
+
+	// Check for common generic image hosting patterns
+	// This is more conservative than the Reddit-specific version
+	if strings.Contains(lowerURL, "/image/") || strings.Contains(lowerURL, "/img/") || strings.Contains(lowerURL, "/images/") {
+		return true
 	}
 
 	return false

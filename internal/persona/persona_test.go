@@ -3,6 +3,7 @@ package persona
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -60,9 +61,10 @@ func TestLoadPersonas_WithCommentThreshold(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	// Create test persona YAML with comment threshold
+	// Create test persona YAML with comment threshold (RSS provider)
 	personaWithThreshold := `name: "TestPersona"
-feed_url: "https://reddit.com/r/test.rss"
+provider: "rss"
+feed_url: "https://example.com/test.rss"
 topic: "Test Topic"
 persona_identity: "test persona"
 base_prompt_task: "test task"
@@ -77,9 +79,10 @@ summary_analysis:
   - "test analysis"
 comment_threshold: 15`
 
-	// Create test persona YAML without comment threshold
+	// Create test persona YAML without comment threshold (Reddit provider)
 	personaWithoutThreshold := `name: "TestPersona2"
-feed_url: "https://reddit.com/r/test2.rss"
+provider: "reddit"
+subreddit: "test2"
 topic: "Test Topic 2"
 persona_identity: "test persona 2"
 base_prompt_task: "test task 2"
@@ -148,6 +151,139 @@ summary_analysis:
 	}
 	if personaWithout.GetCommentThreshold(10) != 10 {
 		t.Error("Expected default threshold to be used")
+	}
+}
+
+func TestPersona_GetProvider(t *testing.T) {
+	tests := []struct {
+		name     string
+		persona  Persona
+		expected string
+	}{
+		{
+			name: "uses explicit reddit provider",
+			persona: Persona{
+				Name:     "Test",
+				Provider: "reddit",
+			},
+			expected: "reddit",
+		},
+		{
+			name: "uses explicit rss provider",
+			persona: Persona{
+				Name:     "Test",
+				Provider: "rss",
+			},
+			expected: "rss",
+		},
+		{
+			name: "defaults to reddit when provider is empty",
+			persona: Persona{
+				Name:     "Test",
+				Provider: "",
+			},
+			expected: "reddit",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.persona.GetProvider()
+			if result != tt.expected {
+				t.Errorf("GetProvider() = %s, expected %s", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestPersona_Validate(t *testing.T) {
+	tests := []struct {
+		name        string
+		persona     Persona
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name: "valid reddit persona",
+			persona: Persona{
+				Name:      "Test",
+				Provider:  "reddit",
+				Subreddit: "test",
+			},
+			expectError: false,
+		},
+		{
+			name: "valid rss persona",
+			persona: Persona{
+				Name:     "Test",
+				Provider: "rss",
+				FeedURL:  "https://example.com/feed.rss",
+			},
+			expectError: false,
+		},
+		{
+			name: "reddit persona missing subreddit",
+			persona: Persona{
+				Name:     "Test",
+				Provider: "reddit",
+			},
+			expectError: true,
+			errorMsg:    "subreddit is required for reddit provider",
+		},
+		{
+			name: "rss persona missing feed_url",
+			persona: Persona{
+				Name:     "Test",
+				Provider: "rss",
+			},
+			expectError: true,
+			errorMsg:    "feed_url is required for rss provider",
+		},
+		{
+			name: "rss persona with invalid URL",
+			persona: Persona{
+				Name:     "Test",
+				Provider: "rss",
+				FeedURL:  "invalid-url",
+			},
+			expectError: true,
+			errorMsg:    "feed_url must be a valid HTTP/HTTPS URL",
+		},
+		{
+			name: "unsupported provider",
+			persona: Persona{
+				Name:     "Test",
+				Provider: "unsupported",
+			},
+			expectError: true,
+			errorMsg:    "unsupported provider 'unsupported'",
+		},
+		{
+			name: "default reddit provider missing subreddit",
+			persona: Persona{
+				Name: "Test",
+				// Provider defaults to "reddit"
+			},
+			expectError: true,
+			errorMsg:    "subreddit is required for reddit provider",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.persona.Validate()
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("Expected error but got none")
+				} else if tt.errorMsg != "" && !strings.Contains(err.Error(), tt.errorMsg) {
+					t.Errorf("Expected error to contain '%s', but got: %s", tt.errorMsg, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Expected no error but got: %s", err.Error())
+				}
+			}
+		})
 	}
 }
 
