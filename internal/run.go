@@ -18,6 +18,7 @@ import (
 	"github.com/bakkerme/ai-news-processor/internal/persona"
 	"github.com/bakkerme/ai-news-processor/internal/prompts"
 	"github.com/bakkerme/ai-news-processor/internal/providers"
+	"github.com/bakkerme/ai-news-processor/internal/providers/rss"
 	"github.com/bakkerme/ai-news-processor/internal/qualityfilter"
 	"github.com/bakkerme/ai-news-processor/internal/specification"
 	"github.com/bakkerme/ai-news-processor/internal/urlextraction"
@@ -70,32 +71,54 @@ func Run() {
 		panic(err)
 	}
 
-	// Create appropriate feed provider based on configuration
-	var feedProvider feeds.FeedProvider
-	if s.DebugMockFeeds {
-		log.Println("Using mock feed provider")
-		// Use the persona name from the first selected persona for mock data
-		// Each persona will still use its own mock data in processing
-		feedProvider = providers.NewMockProvider(selectedPersonas[0].Name)
-	} else {
-		log.Println("Using Reddit API provider")
-		var err error
-		feedProvider, err = providers.NewRedditProvider(
-			s.RedditClientID,
-			s.RedditSecret,
-			s.RedditUsername,
-			s.RedditPassword,
-			s.DebugRedditDump,
-		)
-		if err != nil {
-			log.Fatalf("Failed to create Reddit API provider: %v", err)
+	// Create provider factory function
+	createProvider := func(providerType string, personaName string) (feeds.FeedProvider, error) {
+		if s.DebugMockFeeds {
+			log.Printf("Using mock feed provider for persona %s", personaName)
+			return providers.NewMockProvider(personaName), nil
+		}
+
+		switch providerType {
+		case "reddit":
+			log.Printf("Using Reddit API provider for persona %s", personaName)
+			return providers.NewRedditProvider(
+				s.RedditClientID,
+				s.RedditSecret,
+				s.RedditUsername,
+				s.RedditPassword,
+				s.DebugRedditDump,
+			)
+		case "rss":
+			log.Printf("Using RSS provider for persona %s", personaName)
+			return rss.NewRSSProvider(s.DebugRedditDump), nil // Reuse debug flag for RSS dumps
+		default:
+			return nil, fmt.Errorf("unsupported provider type: %s", providerType)
 		}
 	}
 
 	// Process each persona
 	for _, persona := range selectedPersonas {
-		log.Printf("Processing persona: %s\n", persona.Name)
-		urlExtractor := urlextraction.NewRedditExtractor()
+		log.Printf("Processing persona: %s (provider: %s)\n", persona.Name, persona.GetProvider())
+
+		// Create provider specific to this persona
+		feedProvider, err := createProvider(persona.GetProvider(), persona.Name)
+		if err != nil {
+			log.Printf("Failed to create provider for persona %s: %v\n", persona.Name, err)
+			continue
+		}
+
+		// Create appropriate URL extractor based on provider type
+		var urlExtractor urlextraction.Extractor
+		switch persona.GetProvider() {
+		case "reddit":
+			urlExtractor = urlextraction.NewRedditExtractor()
+		case "rss":
+			// For now, use the Reddit extractor as it handles generic URLs well
+			// TODO: Consider creating a generic URL extractor in the future
+			urlExtractor = urlextraction.NewRedditExtractor()
+		default:
+			urlExtractor = urlextraction.NewRedditExtractor()
+		}
 
 		// 1. Fetch and process feed using FeedProvider
 		entries, err := feeds.FetchAndProcessFeed(feedProvider, urlExtractor, persona, s.DebugRedditDump)
@@ -175,9 +198,6 @@ func Run() {
 			// Since this is a mock, there is no error from processing
 			err = nil
 		}
-
-		// 5. Enrich items with links from RSS entries
-		items = llm.EnrichItems(items, entries)
 
 		// 6. Filter for relevant items
 		relevantItems := llm.FilterRelevantItems(items)

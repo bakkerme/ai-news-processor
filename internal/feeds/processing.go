@@ -19,6 +19,7 @@ type FeedProvider interface {
 }
 
 // FetchAndProcessFeed fetches a feed for the given persona and processes it
+// TODO: most of this logic should be in the reddit provider itself
 func FetchAndProcessFeed(provider FeedProvider, urlExtractor urlextraction.Extractor, persona persona.Persona, debugDump bool) ([]Entry, error) {
 	log.Printf("Loading feed for persona: %s\n", persona.Name)
 
@@ -48,29 +49,33 @@ func FetchAndProcessFeed(provider FeedProvider, urlExtractor urlextraction.Extra
 				filteredComments = append(filteredComments, comment)
 			}
 		}
-		
+
 		// Remove the first comment entry if it exists, as Reddit comment feeds include the original post as the first entry
 		if len(filteredComments) > 0 {
 			filteredComments = filteredComments[1:]
 		}
-		
+
 		entries[i].Comments = filteredComments
 
-		// extract image urls
-		imageURLs, err := urlExtractor.ExtractImageURLsFromEntry(entry)
-		if err != nil {
-			return nil, fmt.Errorf("failed to extract image URLs: %w", err)
+		if len(entries[i].ImageURLs) == 0 {
+			// extract image urls
+			imageURLs, err := urlExtractor.ExtractImageURLsFromEntry(entry)
+			if err != nil {
+				return nil, fmt.Errorf("failed to extract image URLs: %w", err)
+			}
+
+			entries[i].ImageURLs = imageURLs
 		}
 
-		entries[i].ImageURLs = imageURLs
+		if len(entries[i].ExternalURLs) == 0 {
+			// extract external urls
+			externalURLs, err := urlExtractor.ExtractExternalURLsFromEntry(entry)
+			if err != nil {
+				return nil, fmt.Errorf("failed to extract external URLs: %w", err)
+			}
 
-		// extract external urls
-		externalURLs, err := urlExtractor.ExtractExternalURLsFromEntry(entry)
-		if err != nil {
-			return nil, fmt.Errorf("failed to extract external URLs: %w", err)
+			entries[i].ExternalURLs = externalURLs
 		}
-
-		entries[i].ExternalURLs = externalURLs
 	}
 
 	return entries, nil

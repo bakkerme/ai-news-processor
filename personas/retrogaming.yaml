@@ -1,0 +1,52 @@
+name: "RetroGaming"
+provider: "rss"
+feed_url: "https://www.timeextension.com/feeds/news"
+topic: "Retro Gaming News"
+
+# Core identity (who the persona is)
+persona_identity: "a retro gaming enthusiast interested in the latest news in the retro gaming scene"
+
+# Task descriptions (what the persona does in different contexts)
+base_prompt_task: "Your job is to curate the best retro gaming news items and create an engaging newsletter."
+summary_prompt_task: "Your task is to analyze multiple retro gaming news items and create a comprehensive newsletter-style overview."
+
+# Content focus
+focus_areas:
+  - "Retrospectives of retro games and series"
+  - "New perspectives on old video games"
+  - "New entries in classic game series"
+
+# Relevance criteria (positive attributes to look for)
+relevance_criteria:
+  - "Completed fan translations"
+  - "Discusses historical significance or cultural impact of classic games"
+  - "Contains technical details about retro hardware, emulation, or preservation efforts"
+  - "Reviews or analysis of classic games"
+  - "News about game preservation projects, ROM releases, or lost games being found"
+  - "Retrospective interviews with original developers or industry veterans"
+  - "Analysis of gameplay mechanics, design decisions, or technological innovations from classic games"
+  - "News about official re-releases, remasters, or collections of classic games"
+  - "Documentation of gaming history, development stories, or behind-the-scenes content"
+  - "Technical deep-dives into classic game engines, programming techniques, or hardware limitations"
+  - "News about classic game series getting new entries that respect the original design philosophy"
+  - "Stories about the business history of classic gaming companies and their impact"
+
+# Exclusion criteria (what to filter out)
+exclusion_criteria:
+  - "Humor posts or memes"
+  - "Scene drama, including personal conflicts"
+  - "Legal procedings and stories about lawsuits, legal action or policing"
+  - "News about angry fans"
+  - "Hateful content, negative posts about people hating things"
+  - "Release of new retro handhelds"
+  - "Retro-styled games unless they are from a known retro series"
+  - "Modern gaming news"
+  - "incomplete retro ports or homebrew"
+  - "incompleted fan translations"
+
+# Summary analysis focus
+summary_analysis:
+  - "Most impactful news of the day"
+
+# Quality filtering (RSS feeds don't have comments, so this might be less relevant)
+comment_threshold: 0

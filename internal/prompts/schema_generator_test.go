@@ -23,8 +23,8 @@ func TestJSONExampleGenerator(t *testing.T) {
 		}
 
 		// Check that key fields are present and have expected values
-		if parsed["id"].(string) != "t3_1keo3te" {
-			t.Errorf("Expected id to be 't3_1keo3te', got %v", parsed["id"])
+		if parsed["id"].(string) != "unique_id_example" {
+			t.Errorf("Expected id to be 'unique_id_example', got %v", parsed["id"])
 		}
 		if parsed["isRelevant"].(bool) != true {
 			t.Errorf("Expected isRelevant to be true, got %v", parsed["isRelevant"])
@@ -65,8 +65,8 @@ func TestJSONExampleGenerator(t *testing.T) {
 			if keyDev["text"].(string) != "Key development description..." {
 				t.Errorf("Expected text to be 'Key development description...', got %v", keyDev["text"])
 			}
-			if keyDev["itemID"].(string) != "t3_1keo3te" {
-				t.Errorf("Expected itemID to be 't3_1keo3te', got %v", keyDev["itemID"])
+			if keyDev["itemID"].(string) != "unique_id_example" {
+				t.Errorf("Expected itemID to be 'unique_id_example', got %v", keyDev["itemID"])
 			}
 		}
 
@@ -108,7 +108,7 @@ func TestPromptGeneration(t *testing.T) {
 		}
 
 		// Verify the JSON example contains the expected structure
-		if !strings.Contains(itemExample, `"id":"t3_1keo3te"`) {
+		if !strings.Contains(itemExample, `"id":"unique_id_example"`) {
 			t.Errorf("Item example should contain expected ID format")
 		}
 		if !strings.Contains(itemExample, `"isRelevant":true`) {

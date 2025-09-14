@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -57,7 +58,14 @@ func (r *RSSProvider) FetchFeed(ctx context.Context, p persona.Persona) (*feeds.
 	}
 
 	// Set raw data for debugging
-	feed.RawData = fmt.Sprintf("RSS feed from %s", rssURL)
+	feed.RawData = rssContent
+
+	// Dump RSS content if enabled
+	if r.enableDump {
+		if err := r.dumpRSSFeed(rssURL, rssContent, p.Name); err != nil {
+			log.Printf("Warning: Failed to dump RSS feed: %v", err)
+		}
+	}
 
 	return feed, nil
 }
@@ -133,11 +141,31 @@ func (r *RSSProvider) rssItemToEntry(item RSSItem) feeds.Entry {
 		entry.Link = feeds.Link{Href: item.Link}
 	}
 
-	// Extract external URLs from content
-	entry.ExternalURLs = extractURLsFromContent(item.Description)
+	// First, load the link as an external URL if valid
+	if item.Link != "" {
+		if parsedURL, err := url.Parse(item.Link); err == nil {
+			entry.ExternalURLs = append(entry.ExternalURLs, *parsedURL)
+		}
+	}
 
-	// Extract image URLs from content
-	entry.ImageURLs = extractImageURLsFromContent(item.Description)
+	// Extract external URLs from content
+	entry.ExternalURLs = append(entry.ExternalURLs, extractURLsFromContent(item.Description)...)
+
+	// Convert media content to image URLs if applicable
+	if item.MediaContent.URL != "" {
+		if isImageURL(item.MediaContent.URL) {
+			if parsedURL, err := url.Parse(item.MediaContent.URL); err == nil {
+				entry.ImageURLs = append(entry.ImageURLs, *parsedURL)
+			}
+		}
+	}
+
+	// Convert media thumbnail to image URLs if applicable
+	if item.MediaThumbnail.URL != "" {
+		if isImageURL(item.MediaThumbnail.URL) {
+			entry.MediaThumbnail = feeds.MediaThumbnail{URL: item.MediaThumbnail.URL}
+		}
+	}
 
 	// Initialize empty maps/slices
 	if entry.ExternalURLs == nil {
@@ -224,27 +252,6 @@ func extractURLsFromContent(content string) []url.URL {
 	return urls
 }
 
-// extractImageURLsFromContent extracts image URLs from HTML content
-func extractImageURLsFromContent(content string) []url.URL {
-	var urls []url.URL
-
-	// Extract URLs from img src attributes
-	imgRegex := regexp.MustCompile(`<img[^>]+src="([^"]+)"`)
-	matches := imgRegex.FindAllStringSubmatch(content, -1)
-
-	for _, match := range matches {
-		if len(match) > 1 {
-			if parsedURL, err := url.Parse(match[1]); err == nil {
-				if isImageURL(parsedURL.String()) {
-					urls = append(urls, *parsedURL)
-				}
-			}
-		}
-	}
-
-	return urls
-}
-
 // isImageURL checks if a URL points to an image (generic implementation)
 func isImageURL(urlStr string) bool {
 	lowerURL := strings.ToLower(urlStr)
@@ -266,6 +273,26 @@ func isImageURL(urlStr string) bool {
 	return false
 }
 
+// dumpRSSFeed saves RSS content to disk for debugging and mock data generation
+func (r *RSSProvider) dumpRSSFeed(feedURL, content, personaName string) error {
+	// Create directory structure: feed_mocks/rss/{personaName}/
+	processedName := strings.ToLower(strings.ReplaceAll(personaName, " ", ""))
+	dir := fmt.Sprintf("feed_mocks/rss/%s", processedName)
+
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("failed to create dump directory: %w", err)
+	}
+
+	// Save main feed as {personaName}.xml
+	feedPath := fmt.Sprintf("%s/%s.xml", dir, processedName)
+	if err := os.WriteFile(feedPath, []byte(content), 0644); err != nil {
+		return fmt.Errorf("failed to write RSS dump: %w", err)
+	}
+
+	log.Printf("RSS feed dumped to %s", feedPath)
+	return nil
+}
+
 // RSS XML structures for parsing
 type RSSFeed struct {
 	XMLName xml.Name   `xml:"rss"`
@@ -279,11 +306,24 @@ type RSSChannel struct {
 }
 
 type RSSItem struct {
-	Title       string       `xml:"title"`
-	Link        string       `xml:"link"`
-	Description string       `xml:"description"`
-	GUID        string       `xml:"guid"`
-	PubDate     RSSTimestamp `xml:"pubDate"`
+	Title          string            `xml:"title"`
+	Link           string            `xml:"link"`
+	Description    string            `xml:"description"`
+	GUID           string            `xml:"guid"`
+	PubDate        RSSTimestamp      `xml:"pubDate"`
+	MediaContent   MediaContent      `xml:"http://search.yahoo.com/mrss/ content"`
+	MediaThumbnail MediaThumbnailXML `xml:"http://search.yahoo.com/mrss/ thumbnail"`
+}
+
+// MediaContent represents media:content elements with attributes
+type MediaContent struct {
+	URL  string `xml:"url,attr"`
+	Type string `xml:"type,attr"`
+}
+
+// MediaThumbnailXML represents media:thumbnail elements with attributes
+type MediaThumbnailXML struct {
+	URL string `xml:"url,attr"`
 }
 
 // RSSTimestamp handles various RSS date formats

@@ -150,7 +150,7 @@ func (g *JSONExampleGenerator) setExampleValue(fieldValue reflect.Value, field r
 func (g *JSONExampleGenerator) getStringExample(jsonName string) string {
 	switch strings.ToLower(jsonName) {
 	case "id", "itemid":
-		return "t3_1keo3te"
+		return "unique_id_example"
 	case "overview":
 		return "- This is an point of interest in the post\n- It highlights a key aspect of the content\n- Provides a brief overview for readers"
 	case "title":

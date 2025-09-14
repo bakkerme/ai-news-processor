@@ -149,6 +149,17 @@ func (p *Processor) ProcessEntries(systemPrompt string, entries []feeds.Entry, p
 			continue
 		}
 
+		item.Title = entry.Title
+
+		item.Entry = entry // Associate the processed item with the original entry
+		item.Link = entry.Link.Href
+
+		if len(entry.ImageURLs) > 0 {
+			item.ThumbnailURL = entry.ImageURLs[0].String()
+		} else if entry.MediaThumbnail.URL != "" {
+			item.ThumbnailURL = entry.MediaThumbnail.URL
+		}
+
 		entryProcessingTime := time.Since(entryStartTime).Milliseconds()
 
 		log.Printf("Processed item %d successfully\n", i)
@@ -480,39 +491,6 @@ func (p *Processor) retrySummaryFunc(processFn func() (*models.SummaryResponse, 
 		return nil, fmt.Errorf("max retries exceeded for %s: %w", processType, lastErr)
 	}
 	return result, nil
-}
-
-// EnrichItems adds links from RSS entries to items based on item ID
-func EnrichItems(items []models.Item, entries []feeds.Entry) []models.Item {
-	enrichedItems := make([]models.Item, len(items))
-	copy(enrichedItems, items)
-
-	for i, item := range enrichedItems {
-		id := item.ID
-		if id == "" {
-			continue
-		}
-
-		entry := feeds.FindEntryByID(id, entries)
-		if entry == nil {
-			log.Printf("could not find item with ID %s in RSS entry\n", id)
-			continue
-		}
-
-		enrichedItems[i].Title = entry.Title
-
-		// Populate the Entry field with the associated RSS entry
-		enrichedItems[i].Entry = *entry
-		enrichedItems[i].Link = entry.Link.Href
-
-		if len(entry.ImageURLs) > 0 {
-			enrichedItems[i].ThumbnailURL = entry.ImageURLs[0].String()
-		} else if entry.MediaThumbnail.URL != "" {
-			enrichedItems[i].ThumbnailURL = entry.MediaThumbnail.URL
-		}
-	}
-
-	return enrichedItems
 }
 
 // FilterRelevantItems filters items by relevance and non-empty ID

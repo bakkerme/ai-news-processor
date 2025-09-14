@@ -72,8 +72,8 @@ func TestRealModelsIntegration(t *testing.T) {
 		}
 
 		// Verify some key fields were set
-		if item.ID != "t3_1keo3te" {
-			t.Errorf("Expected ID to be 't3_1keo3te', got '%s'", item.ID)
+		if item.ID != "unique_id_example" {
+			t.Errorf("Expected ID to be 'unique_id_example', got '%s'", item.ID)
 		}
 		if !item.IsRelevant {
 			t.Errorf("Expected IsRelevant to be true, got %v", item.IsRelevant)
@@ -101,8 +101,8 @@ func TestRealModelsIntegration(t *testing.T) {
 
 		if len(summary.KeyDevelopments) > 0 {
 			keyDev := summary.KeyDevelopments[0]
-			if keyDev.ItemID != "t3_1keo3te" {
-				t.Errorf("Expected ItemID to be 't3_1keo3te', got '%s'", keyDev.ItemID)
+			if keyDev.ItemID != "unique_id_example" {
+				t.Errorf("Expected ItemID to be 'unique_id_example', got '%s'", keyDev.ItemID)
 			}
 		}
 
@@ -120,6 +120,9 @@ func TestRealModelsIntegration(t *testing.T) {
 
 		// Check that the JSON field names match the struct tags from models.ItemSubset
 		// This validates that we're reading the tags correctly
+		if !strings.Contains(example, `"title"`) {
+			t.Errorf("Expected to find 'title' field (from JSON tag)")
+		}
 		if !strings.Contains(example, `"overview"`) {
 			t.Errorf("Expected to find 'overview' field (from JSON tag)")
 		}
