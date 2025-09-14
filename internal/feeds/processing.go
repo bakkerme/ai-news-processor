@@ -5,23 +5,24 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/bakkerme/ai-news-processor/internal/persona"
 	"github.com/bakkerme/ai-news-processor/internal/urlextraction"
 )
 
 // FeedProvider defines the interface for fetching and processing feed data
 type FeedProvider interface {
-	// FetchFeed retrieves and processes a feed from the given subreddit
-	FetchFeed(ctx context.Context, subreddit string) (*Feed, error)
+	// FetchFeed retrieves and processes a feed for the given persona
+	FetchFeed(ctx context.Context, persona persona.Persona) (*Feed, error)
 
 	// FetchComments retrieves and processes comments for a specific entry
 	FetchComments(ctx context.Context, entry Entry) (*CommentFeed, error)
 }
 
-// FetchAndProcessFeed fetches a feed from the given subreddit and processes it
-func FetchAndProcessFeed(provider FeedProvider, urlExtractor urlextraction.Extractor, subreddit string, debugDump bool, personaName string) ([]Entry, error) {
-	log.Printf("Loading feed for subreddit: %s\n", subreddit)
+// FetchAndProcessFeed fetches a feed for the given persona and processes it
+func FetchAndProcessFeed(provider FeedProvider, urlExtractor urlextraction.Extractor, persona persona.Persona, debugDump bool) ([]Entry, error) {
+	log.Printf("Loading feed for persona: %s\n", persona.Name)
 
-	feed, err := provider.FetchFeed(context.Background(), subreddit)
+	feed, err := provider.FetchFeed(context.Background(), persona)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load feed data: %w", err)
 	}

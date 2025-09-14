@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/bakkerme/ai-news-processor/internal/feeds"
+	"github.com/bakkerme/ai-news-processor/internal/persona"
 )
 
 // MockProvider implements the feeds.FeedProvider interface using JSON mock data
@@ -25,8 +26,8 @@ func NewMockProvider(personaName string) *MockProvider {
 }
 
 // FetchFeed implements feeds.FeedProvider.FetchFeed for mocks
-func (m *MockProvider) FetchFeed(ctx context.Context, subreddit string) (*feeds.Feed, error) {
-	return m.GetMockFeed(ctx, m.PersonaName)
+func (m *MockProvider) FetchFeed(ctx context.Context, p persona.Persona) (*feeds.Feed, error) {
+	return m.GetMockFeed(ctx, p.Name)
 }
 
 // FetchComments implements feeds.FeedProvider.FetchComments for mocks

@@ -98,7 +98,7 @@ func Run() {
 		urlExtractor := urlextraction.NewRedditExtractor()
 
 		// 1. Fetch and process feed using FeedProvider
-		entries, err := feeds.FetchAndProcessFeed(feedProvider, urlExtractor, persona.Subreddit, s.DebugRedditDump, persona.Name)
+		entries, err := feeds.FetchAndProcessFeed(feedProvider, urlExtractor, persona, s.DebugRedditDump)
 		if err != nil {
 			log.Printf("Failed to process feed for persona %s: %v\n", persona.Name, err)
 			continue

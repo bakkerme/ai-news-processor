@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/bakkerme/ai-news-processor/internal/feeds"
+	"github.com/bakkerme/ai-news-processor/internal/persona"
 	"github.com/vartanbeno/go-reddit/v2/reddit"
 )
 
@@ -39,20 +40,20 @@ func NewRedditProvider(clientID, clientSecret, username, password string, enable
 }
 
 // FetchFeed implements feeds.FeedProvider.FetchFeed
-func (r *RedditProvider) FetchFeed(ctx context.Context, subreddit string) (*feeds.Feed, error) {
-	log.Printf("Fetching posts from r/%s via Reddit API", subreddit)
+func (r *RedditProvider) FetchFeed(ctx context.Context, p persona.Persona) (*feeds.Feed, error) {
+	log.Printf("Fetching posts from r/%s via Reddit API", p.Subreddit)
 
 	// Fetch posts from Reddit API
-	posts, _, err := r.client.Subreddit.HotPosts(ctx, subreddit, &reddit.ListOptions{
+	posts, _, err := r.client.Subreddit.HotPosts(ctx, p.Subreddit, &reddit.ListOptions{
 		Limit: 25, // Match RSS default limit
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch posts from r/%s: %w", subreddit, err)
+		return nil, fmt.Errorf("failed to fetch posts from r/%s: %w", p.Subreddit, err)
 	}
 
 	// Dump Reddit API data if enabled
 	if r.enableDump {
-		if err := r.dumpRedditFeed(subreddit, posts, subreddit); err != nil {
+		if err := r.dumpRedditFeed(p.Subreddit, posts, p.Subreddit); err != nil {
 			log.Printf("Warning: Failed to dump Reddit feed: %v", err)
 		}
 	}
@@ -65,7 +66,7 @@ func (r *RedditProvider) FetchFeed(ctx context.Context, subreddit string) (*feed
 
 	feed := &feeds.Feed{
 		Entries: entries,
-		RawData: fmt.Sprintf("Reddit API feed for r/%s", subreddit),
+		RawData: fmt.Sprintf("Reddit API feed for r/%s", p.Subreddit),
 	}
 
 	return feed, nil
@@ -226,27 +227,6 @@ func isImageURL(urlStr string) bool {
 	return false
 }
 
-// extractSubredditFromURL extracts subreddit name from URL
-// Example: "https://www.reddit.com/r/LocalLLaMA/.rss" -> "LocalLLaMA"
-func extractSubredditFromURL(feedURL string) (string, error) {
-	// Parse URL to extract subreddit name
-	parsedURL, err := url.Parse(feedURL)
-	if err != nil {
-		return "", fmt.Errorf("invalid URL: %w", err)
-	}
-
-	// Extract subreddit from path like "/r/LocalLLaMA/.rss"
-	pathParts := strings.Split(strings.Trim(parsedURL.Path, "/"), "/")
-	if len(pathParts) < 2 || pathParts[0] != "r" {
-		return "", fmt.Errorf("invalid subreddit URL format: %s", feedURL)
-	}
-
-	subreddit := pathParts[1]
-	// Remove .rss suffix if present
-	subreddit = strings.TrimSuffix(subreddit, ".rss")
-
-	return subreddit, nil
-}
 
 // extractSubredditFromPermalink extracts subreddit from Reddit permalink
 // Example: "https://www.reddit.com/r/LocalLLaMA/comments/abc123/title/" -> "LocalLLaMA"

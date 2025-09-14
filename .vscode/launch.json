@@ -13,7 +13,6 @@
             "args": ["-persona", "LocalLLaMa"],
             "envFile": [
                 "${workspaceFolder}/.env",
-                "${workspaceFolder}/.envdebug"
             ]
         },
         {
@@ -24,7 +23,6 @@
             "program": "./benchmark",
             "envFile": [
                 "${workspaceFolder}/.env",
-                "${workspaceFolder}/.envdebug",
             ],
             "cwd": "${workspaceFolder}",
         }
