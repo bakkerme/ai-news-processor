@@ -25,7 +25,7 @@ An item is not relevant if it matches the following criteria:
 {{range .ExclusionCriteria}}* {{.}}
 {{end}}
 
-{{if .ImageDescription}}
+{{if and .ImageDescription .IncludeImageAnalysis}}
 The following image description was generated from the post:
 {{.ImageDescription}}
 {{end}}
@@ -36,31 +36,32 @@ For each item, provide a newsletter-style explanation that includes:
 * "ID"
 * "Title"
 * "Overview"
-	* An array of 2-3 concise bullet points summarizing the post content
+	* An array of {{.OverviewBulletPoints}} concise bullet points summarizing the post content
 	* Each array element should be a complete sentence or bullet point
 	* Designed to help readers quickly decide if they want to read the full post
 	* Should highlight the most important aspects without going into deep technical detail
 * "Summary"
-	* 1 - 2 paragraphs, extracting key points of interest from the post, image description, comments, factoring in relevant, factual information from the comments
+	* {{.SummaryParagraphs}}, extracting key points of interest from the post{{if .IncludeImageAnalysis}}, image description{{end}}{{if .IncludeCommentSummary}}, comments, factoring in relevant, factual information from the comments{{end}}
 	* Extrapolate on the details of these key points of interest
-	* Provide highly detailed technical analysis, if applicable
-* "CommentSummary"
-  * 1 - 2 paragraphs that
-    * Captures the community sentiment
+{{if .IncludeCommentSummary}}* "CommentSummary"
+* {{.CommentParagraphs}} that
+	* Captures the community sentiment
     * Highlights interesting discussions
     * Notes any concerns or criticisms
+{{end}}
 * "RelevanceToCriteria"
   * In one sentence, explain if the item meets the relevance criteria or not. Does it match the exclusion criteria?
 * "IsRelevant"
   * A final judgement boolean flag. If the item matches any of the exclusion criteria, IsRelevant should be false.
 
-Write in a conversational, engaging style while maintaining technical accuracy. Don't be afraid to geek out about interesting technical details!
+{{.WritingStyleInstruction}}
 
 Do not start with 'This post...' or 'This item...'.
 
 Keep responses concise but comprehensive. Aim for:
-* Summary: 2-3 sentences per paragraph (500-800 words total)
-* CommentSummary: 2-3 sentences per paragraph (300-600 words total)
+* Summary: 2-3 sentences per paragraph ({{.SummaryWordCount}})
+{{if .IncludeCommentSummary}}* CommentSummary: 2-3 sentences per paragraph ({{.CommentWordCount}})
+{{end}}
 
 Respond only with valid JSON. Put JSON in ` + "```json" + ` tags. Do not add "" within the JSON other than what is required by the JSON format.
 Use the following JSON structure:
@@ -108,8 +109,8 @@ func ComposePrompt(p persona.Persona, imageDescription string) (string, error) {
 		return "", err
 	}
 
-	// Generate JSON example automatically from real struct
-	itemJSONExample, err := GetRealItemJSONExample()
+	// Generate JSON example automatically from real struct, tailored to persona configuration
+	itemJSONExample, err := GetRealItemJSONExampleForPersona(p.GetIncludeCommentSummary())
 	if err != nil {
 		return "", fmt.Errorf("failed to generate item JSON example: %w", err)
 	}
@@ -117,12 +118,32 @@ func ComposePrompt(p persona.Persona, imageDescription string) (string, error) {
 	// Create a data structure for the template that includes the image description and generated JSON example
 	data := struct {
 		persona.Persona
-		ImageDescription string
-		ItemJSONExample  string
+		ImageDescription          string
+		ItemJSONExample           string
+		IncludeImageAnalysis      bool
+		IncludeCommentSummary     bool
+		OverviewBulletPoints      string
+		SummaryParagraphs         string
+		SummaryWordCount          string
+		CommentParagraphs         string
+		CommentWordCount          string
+		TechnicalDepthInstruction string
+		WritingStyleInstruction   string
+		IncludeTechGeek           bool
 	}{
-		Persona:          p,
-		ImageDescription: imageDescription,
-		ItemJSONExample:  itemJSONExample,
+		Persona:                   p,
+		ImageDescription:          imageDescription,
+		ItemJSONExample:           itemJSONExample,
+		IncludeImageAnalysis:      p.GetIncludeImageAnalysis(),
+		IncludeCommentSummary:     p.GetIncludeCommentSummary(),
+		OverviewBulletPoints:      p.GetOverviewBulletPoints(),
+		SummaryParagraphs:         p.GetSummaryParagraphs(),
+		SummaryWordCount:          p.GetSummaryWordCount(),
+		CommentParagraphs:         p.GetCommentParagraphs(),
+		CommentWordCount:          p.GetCommentWordCount(),
+		TechnicalDepthInstruction: p.GetTechnicalDepthInstruction(),
+		WritingStyleInstruction:   p.GetWritingStyleInstruction(),
+		IncludeTechGeek:           p.GetIncludeTechGeek(),
 	}
 
 	var buf bytes.Buffer

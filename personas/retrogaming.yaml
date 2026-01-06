@@ -50,3 +50,21 @@ summary_analysis:
 
 # Quality filtering (RSS feeds don't have comments, so this might be less relevant)
 comment_threshold: 0
+
+# Prompt customization for RSS persona
+prompt_config:
+  # RSS feeds typically don't have comments, so disable comment summary
+  include_comment_summary: false
+
+  # RSS articles often have less content, so reduce requirements slightly
+  summary_paragraphs: 1
+  summary_word_count: 400
+  overview_bullet_points: 3
+
+  # Keep image analysis for RSS articles that might have embedded images
+  include_image_analysis: false
+
+  # Retro gaming audience appreciates technical depth
+  technical_depth: "advanced"
+  writing_style: "conversational"
+  include_tech_geek: true

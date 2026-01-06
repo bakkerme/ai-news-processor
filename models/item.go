@@ -39,6 +39,7 @@ func (item *Item) ToSummaryString() string {
 
 type ItemSubset struct {
 	ID                  string   `json:"id"`
+	Title               string   `json:"title"`
 	Overview            []string `json:"overview"`
 	Summary             string   `json:"summary"`
 	CommentSummary      string   `json:"commentSummary,omitempty"`

@@ -43,3 +43,23 @@ summary_analysis:
 
 # Quality filtering
 comment_threshold: 10
+
+# Prompt customization for Reddit persona - demonstrate high-detail technical analysis
+prompt_config:
+  # Reddit has rich comments, so include them
+  include_comment_summary: true
+
+  # AI community likes detailed analysis
+  summary_paragraphs: 2
+  summary_word_count: 750
+  comment_paragraphs: 2
+  comment_word_count: 500
+  overview_bullet_points: 3
+
+  # Include image analysis for charts, diagrams, architecture diagrams
+  include_image_analysis: true
+
+  # Maximum technical depth for AI research community
+  technical_depth: "advanced"
+  writing_style: "technical"
+  include_tech_geek: true
