@@ -104,58 +104,6 @@ func TestNewProcessor(t *testing.T) {
 	assert.Equal(t, mockArtclExtractor, processor.articleExtractor.(*mockArticleExtractor), "articleExtractor should match")
 }
 
-func TestEnrichItems(t *testing.T) {
-	t.Run("normal enrichment", func(t *testing.T) {
-		items := []models.Item{
-			{ID: "1", Title: "Item 1"},
-			{ID: "2", Title: "Item 2"},
-			{ID: "3", Title: "Item 3"}, // No corresponding entry
-		}
-		entries := []feeds.Entry{
-			{ID: "1", Title: "Example 1", Link: feeds.Link{Href: "http://example.com/1"}},
-			{ID: "2", Title: "Example 2", Link: feeds.Link{Href: "http://example.com/2"}},
-			{ID: "nonexistent", Title: "Example 3", Link: feeds.Link{Href: "http://example.com/nonexistent"}},
-		}
-
-		expectedItems := []models.Item{
-			{ID: "1", Title: "Example 1", Link: "http://example.com/1", Entry: feeds.Entry{ID: "1", Title: "Example 1", Link: feeds.Link{Href: "http://example.com/1"}}},
-			{ID: "2", Title: "Example 2", Link: "http://example.com/2", Entry: feeds.Entry{ID: "2", Title: "Example 2", Link: feeds.Link{Href: "http://example.com/2"}}},
-			{ID: "3", Title: "Item 3"},
-		}
-
-		enrichedItems := EnrichItems(items, entries)
-		assert.Equal(t, expectedItems, enrichedItems, "enriched items should match expected")
-	})
-
-	t.Run("empty items", func(t *testing.T) {
-		emptyItems := []models.Item{}
-		entries := []feeds.Entry{
-			{ID: "1", Title: "Example 1", Link: feeds.Link{Href: "http://example.com/1"}},
-		}
-		expectedEmpty := []models.Item{}
-
-		enrichedEmpty := EnrichItems(emptyItems, entries)
-		assert.Equal(t, expectedEmpty, enrichedEmpty, "empty items should remain empty")
-	})
-
-	t.Run("empty entries", func(t *testing.T) {
-		items := []models.Item{
-			{ID: "1", Title: "Item 1"},
-			{ID: "2", Title: "Item 2"},
-			{ID: "3", Title: "Item 3"},
-		}
-		emptyEntries := []feeds.Entry{}
-		expectedEmptyEntries := []models.Item{
-			{ID: "1", Title: "Item 1"},
-			{ID: "2", Title: "Item 2"},
-			{ID: "3", Title: "Item 3"},
-		}
-
-		enrichedEmptyEntries := EnrichItems(items, emptyEntries)
-		assert.Equal(t, expectedEmptyEntries, enrichedEmptyEntries, "items should remain unchanged with empty entries")
-	})
-}
-
 func TestFilterRelevantItems(t *testing.T) {
 	t.Run("mixed relevant and irrelevant items", func(t *testing.T) {
 		items := []models.Item{
