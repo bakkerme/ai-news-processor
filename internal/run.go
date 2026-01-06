@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"path/filepath"
 	"time"
 
 	"github.com/bakkerme/ai-news-processor/internal/bench"
@@ -20,6 +21,7 @@ import (
 	"github.com/bakkerme/ai-news-processor/internal/providers"
 	"github.com/bakkerme/ai-news-processor/internal/providers/rss"
 	"github.com/bakkerme/ai-news-processor/internal/qualityfilter"
+	"github.com/bakkerme/ai-news-processor/internal/sentlog"
 	"github.com/bakkerme/ai-news-processor/internal/specification"
 	"github.com/bakkerme/ai-news-processor/internal/urlextraction"
 	"github.com/bakkerme/ai-news-processor/models"
@@ -97,6 +99,17 @@ func Run() {
 	}
 
 	// Process each persona
+	sentLogBase := s.SentLogBasePath
+	if sentLogBase == "" {
+		sentLogBase = "."
+	}
+	sentLogPath := filepath.Join(sentLogBase, "sent_post_ids.json")
+	sentIDs, err := sentlog.LoadSentIDs(sentLogPath)
+	if err != nil {
+		log.Printf("Warning: could not load sent log: %v", err)
+		sentIDs = make(map[string]struct{})
+	}
+
 	for _, persona := range selectedPersonas {
 		log.Printf("Processing persona: %s (provider: %s)\n", persona.Name, persona.GetProvider())
 
@@ -201,6 +214,7 @@ func Run() {
 
 		// 6. Filter for relevant items
 		relevantItems := llm.FilterRelevantItems(items)
+		relevantItems = filterUnsentItems(relevantItems, sentIDs)
 		if len(relevantItems) == 0 {
 			log.Println("no items to render as an email")
 			continue
@@ -244,8 +258,37 @@ func Run() {
 				log.Printf("Could not send email for persona %s: %v\n", persona.Name, err)
 				continue
 			}
+			// Persist newly emailed items so future runs skip them.
+			for _, item := range relevantItems {
+				if item.ID == "" {
+					continue
+				}
+				sentIDs[item.ID] = struct{}{}
+			}
+			if err := sentlog.SaveSentIDs(sentLogPath, sentIDs); err != nil {
+				log.Printf("Warning: could not persist sent log: %v", err)
+			}
 		} else {
 			log.Println("Skipping email")
 		}
 	}
+}
+
+func filterUnsentItems(items []models.Item, sentIDs map[string]struct{}) []models.Item {
+	sentCount := 0
+	unsentItems := make([]models.Item, 0, len(items))
+	for _, item := range items {
+		if item.ID == "" {
+			continue
+		}
+		if _, exists := sentIDs[item.ID]; exists {
+			sentCount++
+			continue
+		}
+		unsentItems = append(unsentItems, item)
+	}
+	if sentCount > 0 {
+		log.Printf("Skipping %d items already emailed", sentCount)
+	}
+	return unsentItems
 }

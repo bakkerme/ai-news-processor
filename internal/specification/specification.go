@@ -36,6 +36,8 @@ type Specification struct {
 
 	PersonasPath string
 
+	SentLogBasePath string
+
 	AuditServiceUrl string
 
 	SendBenchmarkToAuditService bool
@@ -150,6 +152,8 @@ func GetConfig() (*Specification, error) {
 		QualityFilterThreshold: getIntEnv("ANP_QUALITY_FILTER_THRESHOLD", 10),
 
 		PersonasPath: os.Getenv("ANP_PERSONAS_PATH"),
+
+		SentLogBasePath: os.Getenv("ANP_SENT_LOG_BASE_PATH"),
 
 		AuditServiceUrl: os.Getenv("ANP_AUDIT_SERVICE_URL"),
 
