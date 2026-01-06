@@ -120,8 +120,8 @@ func TestRealModelsIntegration(t *testing.T) {
 
 		// Check that the JSON field names match the struct tags from models.ItemSubset
 		// This validates that we're reading the tags correctly
-		if !strings.Contains(example, `"title"`) {
-			t.Errorf("Expected to find 'title' field (from JSON tag)")
+		if !strings.Contains(example, `"id"`) {
+			t.Errorf("Expected to find 'id' field (from JSON tag)")
 		}
 		if !strings.Contains(example, `"overview"`) {
 			t.Errorf("Expected to find 'overview' field (from JSON tag)")
