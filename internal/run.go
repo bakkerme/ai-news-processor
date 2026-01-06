@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"path/filepath"
 	"time"
 
 	"github.com/bakkerme/ai-news-processor/internal/bench"
@@ -98,7 +99,11 @@ func Run() {
 	}
 
 	// Process each persona
-	sentLogPath := "sent_post_ids.json"
+	sentLogBase := s.SentLogBasePath
+	if sentLogBase == "" {
+		sentLogBase = "."
+	}
+	sentLogPath := filepath.Join(sentLogBase, "sent_post_ids.json")
 	sentIDs, err := sentlog.LoadSentIDs(sentLogPath)
 	if err != nil {
 		log.Printf("Warning: could not load sent log: %v", err)
