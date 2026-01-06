@@ -10,7 +10,6 @@ import (
 
 	"github.com/bakkerme/ai-news-processor/internal/contentextractor"
 	"github.com/bakkerme/ai-news-processor/internal/customerrors"
-	"github.com/bakkerme/ai-news-processor/internal/feeds"
 	"github.com/bakkerme/ai-news-processor/internal/http/retry"
 	"github.com/bakkerme/ai-news-processor/internal/openai"
 	"github.com/bakkerme/ai-news-processor/internal/urlextraction"
