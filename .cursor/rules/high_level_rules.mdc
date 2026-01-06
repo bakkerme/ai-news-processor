@@ -1,7 +1,0 @@
----
-description: 
-globs: 
-alwaysApply: true
----
-* When asked to propose a change, do to make the change, just describe what you might do
-* If you're being asked to create tests, do not change the code implementation without stopping and asking the user.

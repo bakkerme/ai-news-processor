@@ -1,6 +1,0 @@
----
-description: 
-globs: *.go
-alwaysApply: false
----
-- Do not use the 'ioutil' package as it is deprecated. Use the 'os' package instead.
